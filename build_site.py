@@ -59,6 +59,7 @@ def attach_odds(rows, date, sport):
             r.setdefault('notes', []).append(f"line moved {first[nm]:+d} -> {o:+d} ({mv:+.1f} pts implied)")
 for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB')
 for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL')
+attach_odds(board['nfl'], today, 'NFL'); attach_odds(board['mlb'], today, 'MLB')
 slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 
