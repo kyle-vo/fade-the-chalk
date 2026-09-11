@@ -25,7 +25,7 @@ def rget(url, params, **kw):
     return r
 API = "https://api.the-odds-api.com/v4"
 REGION = os.environ.get('ODDS_REGION', 'us')         # one region = 1 credit per event per market
-BOOKS = os.environ.get('ODDS_BOOKS', '')             # e.g. "draftkings,fanduel" to narrow; blank = all in region
+BOOKS = os.environ.get('ODDS_BOOKS', 'fliff,draftkings,fanduel,betmgm,betrivers,bovada,betonlineag,pinnacle')   # up to 10 named books = 1 credit per game; Fliff first because that's the book you bet at
 MARKETS = {'MLB': ('baseball_mlb', 'batter_home_runs'), 'NFL': ('americanfootball_nfl', 'player_anytime_td')}
 norm = lambda s: re.sub(r'[^a-z ]', '', unicodedata.normalize('NFD', s or '').encode('ascii', 'ignore').decode().lower()).strip()
 
@@ -35,8 +35,9 @@ def pull(sport_key, market, day_filter=None):
     out = {}; used = 0
     for ev in r.json():
         if day_filter and not day_filter(ev['commence_time']): continue
-        p = {'apiKey': KEY, 'regions': REGION, 'markets': market, 'oddsFormat': 'american'}
+        p = {'apiKey': KEY, 'markets': market, 'oddsFormat': 'american'}
         if BOOKS: p['bookmakers'] = BOOKS
+        else: p['regions'] = REGION
         o = rget(f"{API}/sports/{sport_key}/events/{ev['id']}/odds", p)
         used = f"{o.headers.get('x-requests-used', '?')} used / {o.headers.get('x-requests-remaining', '?')} left on key #{_ki + 1}"
         if o.status_code != 200: continue
@@ -47,8 +48,8 @@ def pull(sport_key, market, day_filter=None):
                     if oc.get('name') == 'No' or oc.get('name') == 'Under': continue
                     nm = norm(oc.get('description') or oc.get('name'))
                     out.setdefault(nm, {'books': {}, 'game': f"{ev['away_team']} @ {ev['home_team']}"})['books'][bk['key']] = int(oc['price'])
-    for v in out.values(): v['best'] = max(v['books'].values())
-    print(f"  {sport_key}/{market}: {len(out)} players priced (credits used this month: {used})")
+    for v in out.values(): v['best'] = max(v['books'].values()); v['fliff'] = v['books'].get('fliff')
+    print(f"  {sport_key}/{market}: {len(out)} players priced, {sum(1 for v in out.values() if v['fliff'] is not None)} on Fliff (credits used this month: {used})")
     return out
 
 if __name__ == '__main__':
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     json.dump(props, open(os.path.join(DATA, 'props.json'), 'w', encoding='utf-8'))
     snap_path = os.path.join(BT, f'odds_{date}.json')
     snaps = json.load(open(snap_path, encoding='utf-8')) if os.path.exists(snap_path) else []
-    snaps.append({'at': props['_at'], 'MLB': {k: v['best'] for k, v in props['MLB'].items()}, 'NFL': {k: v['best'] for k, v in props['NFL'].items()}, 'books': {sp: {k: v['books'] for k, v in props[sp].items()} for sp in ('MLB', 'NFL')}})
+    snaps.append({'at': props['_at'], 'MLB': {k: (v['fliff'] if v['fliff'] is not None else v['best']) for k, v in props['MLB'].items()}, 'NFL': {k: (v['fliff'] if v['fliff'] is not None else v['best']) for k, v in props['NFL'].items()}, 'books': {sp: {k: v['books'] for k, v in props[sp].items()} for sp in ('MLB', 'NFL')}})
     print(f"key #{_ki + 1} used this run")
     json.dump(snaps, open(snap_path, 'w', encoding='utf-8'))
     print(f"snapshot {len(snaps)} saved for {date}")
