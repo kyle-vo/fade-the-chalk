@@ -49,7 +49,7 @@ def book_skew(books):
     """retail implied % minus offshore implied %: positive = public books are shorter = the crowd is on him."""
     pub = [_implied(o) for b, o in books.items() if b in PUBLIC_BOOKS]; shp = [_implied(o) for b, o in books.items() if b in SHARP_BOOKS]
     if not pub or not shp: return None
-    return round((sum(pub) / len(pub) - sum(shp) / len(shp)) * 100, 1)
+    return round(max(-5.0, min(5.0, (sum(pub) / len(pub) - sum(shp) / len(shp)) * 100)), 1)   # capped: a stale book is not the crowd
 def attach_odds(rows, date, sport):
     """Book odds from the latest snapshot of that date (closing line), movement vs the first snapshot -> heat bump."""
     sp = os.path.join(BT, f'odds_{date}.json')
