@@ -68,7 +68,7 @@ if __name__ == '__main__':
     json.dump(props, open(os.path.join(DATA, 'props.json'), 'w', encoding='utf-8'))
     snap_path = os.path.join(BT, f'odds_{date}.json')
     snaps = json.load(open(snap_path, encoding='utf-8')) if os.path.exists(snap_path) else []
-    snaps.append({'at': props['_at'], 'MLB': {k: v['best'] for k, v in props['MLB'].items()}, 'NFL': {k: v['best'] for k, v in props['NFL'].items()}})
+    snaps.append({'at': props['_at'], 'MLB': {k: v['best'] for k, v in props['MLB'].items()}, 'NFL': {k: v['best'] for k, v in props['NFL'].items()}, 'books': {sp: {k: v['books'] for k, v in props[sp].items()} for sp in ('MLB', 'NFL')}})
     print(f"key #{_ki + 1} used this run")
     json.dump(snaps, open(snap_path, 'w', encoding='utf-8'))
     print(f"snapshot {len(snaps)} saved for {date}")

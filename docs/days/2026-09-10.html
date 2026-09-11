@@ -63,7 +63,7 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the sportsbook price (auto-filled from The Odds API when a key is set, or type it; ▲ = line shortened since first pull, money came in). <b>Edge</b> = model % minus the book's implied %.
-<b>Heat</b> = how obvious / over-bet the name is (leaderboard rank, hot streak, narrative park, primetime). Enter a real public-bet % and it replaces heat.<br>
+<b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). Typing a real public-bet % overrides all of it.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
@@ -120,7 +120,7 @@ function render(){
       <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? 'auto from book' + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
-      <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="%"></td>
+      <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="${r.skew != null ? 'skew ' + (r.skew > 0 ? '+' : '') + r.skew : '%'}" title="${r.skew != null ? 'retail books minus offshore, in implied %: positive = crowd on him. Type a real public % to override.' : 'type a public bet % if you have one'}"></td>
       <td><span class="v ${x.v}">${x.v}</span></td><td class="num">${x.nasty.toFixed(1)}</td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" data-f="on" ${e.on ? 'checked' : ''} title="paper bet"> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${resultCell(r)}</td>`;

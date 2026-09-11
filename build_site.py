@@ -43,6 +43,13 @@ for lock in sorted(glob.glob(os.path.join(BT, 'nfl_*.json'))):
 import unicodedata, re as _re
 _norm = lambda x: _re.sub(r'[^a-z ]', '', unicodedata.normalize('NFD', x or '').encode('ascii', 'ignore').decode().lower()).strip()
 def _implied(o): return (-o) / (-o + 100) if o < 0 else 100 / (o + 100)
+PUBLIC_BOOKS = ('draftkings', 'fanduel', 'betmgm', 'espnbet', 'fanatics', 'williamhill_us', 'betrivers')
+SHARP_BOOKS = ('bovada', 'betonlineag', 'pinnacle', 'lowvig', 'betus', 'mybookieag')
+def book_skew(books):
+    """retail implied % minus offshore implied %: positive = public books are shorter = the crowd is on him."""
+    pub = [_implied(o) for b, o in books.items() if b in PUBLIC_BOOKS]; shp = [_implied(o) for b, o in books.items() if b in SHARP_BOOKS]
+    if not pub or not shp: return None
+    return round((sum(pub) / len(pub) - sum(shp) / len(shp)) * 100, 1)
 def attach_odds(rows, date, sport):
     """Book odds from the latest snapshot of that date (closing line), movement vs the first snapshot -> heat bump."""
     sp = os.path.join(BT, f'odds_{date}.json')
@@ -52,6 +59,11 @@ def attach_odds(rows, date, sport):
         nm = _norm(r['name']); o = last.get(nm)
         if o is None: continue
         r['book'] = o
+        sk = book_skew(snaps[-1].get('books', {}).get(sport, {}).get(nm, {}))
+        if sk is not None:
+            r['skew'] = sk
+            r['heat'] = round(min(100, max(0, r['heat'] + (12 if sk >= 2.5 else 6 if sk >= 1.2 else -6 if sk <= -1.2 else 0))))
+            r.setdefault('notes', []).append(f"book skew {sk:+.1f} pts (retail books vs offshore; + = public money on him)")
         if nm in first and len(snaps) > 1:
             mv = (_implied(o) - _implied(first[nm])) * 100   # + = price shortened = money came in
             r['move'] = round(mv, 1)
@@ -60,7 +72,7 @@ def attach_odds(rows, date, sport):
 for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB')
 for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL')
 attach_odds(board['nfl'], today, 'NFL'); attach_odds(board['mlb'], today, 'MLB')
-slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move')}
+slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 
 # ---------- templates ----------
@@ -174,7 +186,7 @@ function render(){
       <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? 'auto from book' + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
-      <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="%"></td>
+      <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="${r.skew != null ? 'skew ' + (r.skew > 0 ? '+' : '') + r.skew : '%'}" title="${r.skew != null ? 'retail books minus offshore, in implied %: positive = crowd on him. Type a real public % to override.' : 'type a public bet % if you have one'}"></td>
       <td><span class="v ${x.v}">${x.v}</span></td><td class="num">${x.nasty.toFixed(1)}</td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" data-f="on" ${e.on ? 'checked' : ''} title="paper bet"> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${resultCell(r)}</td>`;
@@ -236,7 +248,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the sportsbook price (auto-filled from The Odds API when a key is set, or type it; ▲ = line shortened since first pull, money came in). <b>Edge</b> = model % minus the book's implied %.
-<b>Heat</b> = how obvious / over-bet the name is (leaderboard rank, hot streak, narrative park, primetime). Enter a real public-bet % and it replaces heat.<br>
+<b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). Typing a real public-bet % overrides all of it.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
