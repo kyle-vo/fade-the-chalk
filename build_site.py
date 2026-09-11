@@ -73,10 +73,26 @@ def attach_odds(rows, date, sport):
             r['move'] = round(mv, 1)
             r['heat'] = round(min(100, max(0, r['heat'] + (15 if mv >= 3 else 8 if mv >= 1.5 else -8 if mv <= -1.5 else 0))))
             r.setdefault('notes', []).append(f"line moved {first[nm]:+d} -> {o:+d} ({mv:+.1f} pts implied)")
-for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB')
+def attach_kalshi(rows, date, sport):
+    """Kalshi = the public's own price with money behind it. yes price -> crowd %; volume -> how many are on him."""
+    kp = os.path.join(BT, f'kalshi_{sport.lower()}_{date}.json')
+    if not os.path.exists(kp): return
+    snaps = J(kp); ms = snaps[-1]['markets']; first = snaps[0]['markets']
+    vols = sorted(v['vol'] for v in ms.values()); top = vols[int(len(vols) * 0.75)] if vols else 0
+    for r in rows:
+        k = ms.get(_norm(r['name']))
+        if not k: continue
+        r['kalshi'] = k['yes']; r['kvol'] = k['vol']; r['koi'] = k['oi']
+        gap = (k['yes'] - r['prob']) * 100                      # crowd above the model = they love him more than the numbers do
+        bump = (12 if gap >= 6 else 6 if gap >= 3 else -6 if gap <= -3 else 0) + (10 if k['vol'] >= top and k['vol'] > 0 else 0)
+        if _norm(r['name']) in first and len(snaps) > 1:
+            km = (k['yes'] - first[_norm(r['name'])]['yes']) * 100; r['kmove'] = round(km, 1); bump += 8 if km >= 3 else -5 if km <= -3 else 0
+        r['heat'] = round(min(100, max(0, r['heat'] + bump)))
+        r.setdefault('notes', []).append(f"Kalshi: crowd says {k['yes'] * 100:.0f}% (model {r['prob'] * 100:.0f}%), ${k['vol']:,} traded" + (f", moved {r['kmove']:+.1f} pts" if 'kmove' in r else ''))
+for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB'); attach_kalshi(_rows, _d, 'MLB')
 for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL')
-attach_odds(board['nfl'], today, 'NFL'); attach_odds(board['mlb'], today, 'MLB')
-slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt')}
+attach_odds(board['nfl'], today, 'NFL'); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB')
+slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 
 # ---------- templates ----------
@@ -190,7 +206,7 @@ function render(){
       <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.bookUsed === 'fliff' ? 'Fliff price' : r.bookUsed === 'underdog' ? 'Underdog price (not on Fliff)' : 'not on Fliff or Underdog - best price elsewhere') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && r.bookUsed === 'underdog' ? '<span class="tm">UD</span>' : r.book && r.bookUsed === 'best' ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
-      <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="${r.skew != null ? 'skew ' + (r.skew > 0 ? '+' : '') + r.skew : '%'}" title="${r.skew != null ? 'retail books minus offshore, in implied %: positive = crowd on him. Type a real public % to override.' : 'type a public bet % if you have one'}"></td>
+      <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="${r.kalshi != null ? Math.round(r.kalshi * 100) + '% $' + (r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol) : r.skew != null ? 'skew ' + (r.skew > 0 ? '+' : '') + r.skew : '%'}" title="${r.kalshi != null ? 'Kalshi: the crowd prices him at ' + Math.round(r.kalshi * 100) + '% with $' + r.kvol.toLocaleString() + ' traded' + (r.kmove ? ', moved ' + (r.kmove > 0 ? '+' : '') + r.kmove + ' pts' : '') + '. Type a real public % to override.' : r.skew != null ? 'retail books minus offshore, in implied %: positive = crowd on him. Type a real public % to override.' : 'type a public bet % if you have one'}">${r.kmove ? `<span class="tm ${r.kmove > 0 ? 'neg' : 'pos'}">${r.kmove > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td><span class="v ${x.v}">${x.v}</span></td><td class="num">${x.nasty.toFixed(1)}</td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" data-f="on" ${e.on ? 'checked' : ''} title="paper bet"> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${resultCell(r)}</td>`;
@@ -252,7 +268,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the Fliff price, auto-filled (UD = Underdog's price because Fliff doesn't list him; * = neither lists him, best price elsewhere shown; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
-<b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). Typing a real public-bet % overrides all of it.<br>
+<b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). For MLB the Public column shows <b>Kalshi</b>: the prediction-market crowd's own price for him and how many dollars they've put on it; crowd above the model, heavy volume, or a rising price all raise Heat. Typing a real public-bet % overrides all of it.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
@@ -298,6 +314,12 @@ const bk = [[0, .08], [.08, .12], [.12, .16], [.16, .20], [.20, .25], [.25, 1]];
 document.querySelector('#calib tbody').innerHTML = bk.map(([lo, hi]) => { const b = G.filter(r => r.prob >= lo && r.prob < hi); if (!b.length) return ''; const p = b.reduce((s, r) => s + r.prob, 0) / b.length, a = b.reduce((s, r) => s + r.hit, 0) / b.length; return `<tr><td>${(lo * 100).toFixed(0)}–${hi === 1 ? '100' : (hi * 100).toFixed(0)}%</td><td class="num">${b.length}</td><td class="num">${(p * 100).toFixed(1)}%</td><td class="num">${(a * 100).toFixed(1)}%</td><td class="num ${a >= p ? 'pos' : 'neg'}">${((a - p) * 100 >= 0 ? '+' : '')}${((a - p) * 100).toFixed(1)}</td></tr>`; }).join('');
 const hb = [[0, 35, 'Cold (< 35)'], [35, 60, 'Warm (35–60)'], [60, 101, 'Hot (60+)']];
 document.querySelector('#heat tbody').innerHTML = hb.map(([lo, hi, lab]) => { const b = G.filter(r => r.heat >= lo && r.heat < hi); if (!b.length) return ''; const p = b.reduce((s, r) => s + r.prob, 0), a = b.reduce((s, r) => s + r.hit, 0); return `<tr><td>${lab}</td><td class="num">${b.length}</td><td class="num">${(p / b.length * 100).toFixed(1)}%</td><td class="num">${(a / b.length * 100).toFixed(1)}%</td><td class="num ${a / p >= 1 ? 'pos' : 'neg'}">${(a / p).toFixed(2)}</td></tr>`; }).join('');
+// ---- kalshi volume terciles ----
+const K = G.filter(r => r.kalshi != null && r.kvol != null);
+if (K.length) { const vs = K.map(r => r.kvol).sort((a, b) => a - b); const t1 = vs[Math.floor(vs.length / 3)], t2 = vs[Math.floor(vs.length * 2 / 3)];
+  const kb = [[0, t1, 'Light money'], [t1, t2, 'Medium'], [t2, 1e12, 'Heavy money']];
+  document.querySelector('#kvol tbody').innerHTML = kb.map(([lo, hi, lab]) => { const b = K.filter(r => r.kvol >= lo && r.kvol < hi); if (!b.length) return ''; const p = b.reduce((s, r) => s + r.prob, 0), c = b.reduce((s, r) => s + r.kalshi, 0), a = b.reduce((s, r) => s + r.hit, 0); return `<tr><td>${lab}</td><td class="num">${b.length}</td><td class="num">${(p / b.length * 100).toFixed(1)}%</td><td class="num">${(c / b.length * 100).toFixed(1)}%</td><td class="num">${(a / b.length * 100).toFixed(1)}%</td><td class="num ${a / c >= 1 ? 'pos' : 'neg'}">${(a / c).toFixed(2)}</td></tr>`; }).join(''); }
+else document.querySelector('#kvol tbody').innerHTML = '<tr><td colspan="6" class="tm">No graded days with Kalshi data yet. Fills in from tomorrow.</td></tr>';
 // ---- chart ----
 const svg = document.querySelector('#chart'); const W = 800, Hh = 220, pad = 34;
 const series = [['Top 5 by model %', '#ffb020'], ['Sleepers (20%+, heat < 35)', '#2fd47a'], ['Chalk (20%+, heat 60+)', '#ff4d5e']];
@@ -326,7 +348,8 @@ def track_page():
 <div class="wrap"><table id="strat"><thead><tr><th>Strategy</th><th>Bets</th><th>Record</th><th>Hit %</th><th>Model said</th><th>Units</th><th>ROI</th></tr></thead><tbody></tbody></table></div>
 <div class="grid2" style="margin-top:18px">
 <div class="mini"><h2>Calibration <small>does 25% mean 25%?</small></h2><div class="wrap"><table id="calib"><thead><tr><th>Model %</th><th>n</th><th>Predicted</th><th>Actual</th><th>Diff</th></tr></thead><tbody></tbody></table></div></div>
-<div class="mini"><h2>The rigged test <small>do the crowd's names underperform their own numbers?</small></h2><div class="wrap"><table id="heat"><thead><tr><th>Heat</th><th>n</th><th>Predicted</th><th>Actual</th><th>Actual ÷ predicted</th></tr></thead><tbody></tbody></table></div></div>
+<div class="mini"><h2>The rigged test, Kalshi money <small>hitters with the most public dollars on them: do they underperform?</small></h2><div class="wrap"><table id="kvol"><thead><tr><th>Kalshi volume</th><th>n</th><th>Model said</th><th>Crowd said</th><th>Actual</th><th>Actual ÷ crowd</th></tr></thead><tbody></tbody></table></div></div>
+<div class="mini"><h2>The rigged test, heat <small>do the crowd's names underperform their own numbers?</small></h2><div class="wrap"><table id="heat"><thead><tr><th>Heat</th><th>n</th><th>Predicted</th><th>Actual</th><th>Actual ÷ predicted</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 <p class="note" style="margin-top:14px">Picks are locked before first pitch and graded from box scores afterward; results never change a lock. Days before {min(days) if days else ''} were reconstructed from posted lineups with season stats as of the build, which leaks a little. Model v2 (from 2026-09-12): base rate regressed less toward league, weak hitters dampened, level scaled 0.92 - fitted on those same days, so judge it on days after that.</p>
 </div>
