@@ -9,6 +9,10 @@ KEYF = os.path.join(HERE, 'odds_key.txt')
 _raw = os.environ.get('ODDS_API_KEYS') or os.environ.get('ODDS_API_KEY') or (open(KEYF).read().strip() if os.path.exists(KEYF) else '')
 KEYS = [k.strip() for k in _raw.split(',') if k.strip()]; KEY = KEYS[0] if KEYS else ''
 _ki = 0
+_rr = os.path.join(DATA, 'odds_key_rr.txt')
+try: _ki = (int(open(_rr).read().strip()) + 1) % max(1, len(KEYS))
+except Exception: _ki = 0
+if KEYS: KEY = KEYS[_ki]; open(_rr, 'w').write(str(_ki))
 def rget(url, params, **kw):
     """GET with key rotation: on 401/402/429 (bad, exhausted, throttled) move to the next key."""
     global _ki, KEY
@@ -51,12 +55,20 @@ if __name__ == '__main__':
     if not KEYS:
         print("no odds key - put your The Odds API key in odds_key.txt (free at https://the-odds-api.com). Skipping."); sys.exit(0)
     date = os.environ.get('EDGE_DATE') or datetime.date.today().isoformat()
+    cache = os.path.join(DATA, 'props.json'); ttl = int(os.environ.get('ODDS_CACHE_MIN', '90'))
+    if os.path.exists(cache) and '--force' not in sys.argv:
+        try:
+            c = json.load(open(cache, encoding='utf-8')); age = (datetime.datetime.now() - datetime.datetime.fromisoformat(c.get('_at', '2000-01-01T00:00'))).total_seconds() / 60
+            if c.get('_date') == date and age < ttl and (c.get('MLB') or c.get('NFL')):
+                print(f"odds cache is {age:.0f} min old (limit {ttl}) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull."); sys.exit(0)
+        except Exception: pass
     # MLB: only that calendar day's games (US Eastern-ish: commence within date .. date+1 05:00Z)
     lo = f"{date}T04:00:00Z"; hi = (datetime.date.fromisoformat(date) + datetime.timedelta(days=1)).isoformat() + "T09:00:00Z"
-    props = {'MLB': pull(*MARKETS['MLB'], day_filter=lambda t: lo <= t <= hi), 'NFL': pull(*MARKETS['NFL'], day_filter=lambda t: t <= (datetime.date.fromisoformat(date) + datetime.timedelta(days=7)).isoformat())}
+    props = {'_at': datetime.datetime.now().isoformat(timespec='minutes'), '_date': date, 'MLB': pull(*MARKETS['MLB'], day_filter=lambda t: lo <= t <= hi), 'NFL': pull(*MARKETS['NFL'], day_filter=lambda t: t <= (datetime.date.fromisoformat(date) + datetime.timedelta(days=7)).isoformat())}
     json.dump(props, open(os.path.join(DATA, 'props.json'), 'w', encoding='utf-8'))
     snap_path = os.path.join(BT, f'odds_{date}.json')
     snaps = json.load(open(snap_path, encoding='utf-8')) if os.path.exists(snap_path) else []
-    snaps.append({'at': datetime.datetime.now().isoformat(timespec='minutes'), 'MLB': {k: v['best'] for k, v in props['MLB'].items()}, 'NFL': {k: v['best'] for k, v in props['NFL'].items()}})
+    snaps.append({'at': props['_at'], 'MLB': {k: v['best'] for k, v in props['MLB'].items()}, 'NFL': {k: v['best'] for k, v in props['NFL'].items()}})
+    print(f"key #{_ki + 1} used this run")
     json.dump(snaps, open(snap_path, 'w', encoding='utf-8'))
     print(f"snapshot {len(snaps)} saved for {date}")
