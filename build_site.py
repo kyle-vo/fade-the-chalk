@@ -125,6 +125,7 @@ tr.row:hover td{background:#181e26}
 td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
 .nm{font-weight:700}.tm{color:var(--mute);font-size:12px}
 input.odds,input.pub,input.stk{width:60px;background:#0e1115;border:1px solid var(--line);color:var(--ink);padding:4px 6px;border-radius:5px;font:12px var(--mono);text-align:right}input.stk{width:44px}
+span.crowd{font-family:var(--mono);font-size:12px;color:var(--ink);margin-right:6px;white-space:nowrap}span.crowd b{color:var(--acc);font-weight:600}input.pub{width:42px}
 input.bet{accent-color:var(--acc);width:16px;height:16px;vertical-align:middle}
 .bar{display:inline-block;height:8px;border-radius:4px;background:#2b3440;width:60px;vertical-align:middle;position:relative;overflow:hidden}.bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#4aa3ff,#ff4d5e)}
 .v{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.4px}
@@ -178,8 +179,8 @@ function verdict(r){
   return { edge, heat, v, nasty, imp, live };
 }
 const COLS = {
-  mlb: [['Player','name'],['Slot','slot'],['Game','game'],['vs SP','pitcher'],['Season','hr'],['L15','l15hr'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Public %','pub'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']],
-  nfl: [['Player','name'],['Pos','pos'],['Game','game'],['Line','spread'],['Team imp.','implied'],['2025 TD','prevTD'],['Share','share'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Public %','pub'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']]
+  mlb: [['Player','name'],['Slot','slot'],['Game','game'],['vs SP','pitcher'],['Season','hr'],['L15','l15hr'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (Kalshi)','kvol'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']],
+  nfl: [['Player','name'],['Pos','pos'],['Game','game'],['Line','spread'],['Team imp.','implied'],['2025 TD','prevTD'],['Share','share'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (skew)','skew'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']]
 };
 function resultCell(r){
   if (r.dnp) return '<span class="res d">DNP</span>';
@@ -191,7 +192,7 @@ function render(){
   const q = norm($('#q').value), minp = +$('#minp').value / 100, maxh = +$('#maxh').value, hide = $('#hidedone').checked, only = $('#onlyplays').checked, onlybets = $('#onlybets').checked;
   let list = rows.filter(x => (!hide || !x.live || PAGE.graded) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
       (!q || norm(x.r.name).includes(q) || norm(x.r.team).includes(q) || norm(x.r.game).includes(q) || norm(x.r.teamName || '').includes(q)));
-  const get = x => ({ nasty: x.nasty, prob: x.r.prob, edge: x.edge == null ? -9 : x.edge, heat: x.heat, time: x.r.time, name: x.r.name, slot: x.r.slot, hr: x.r.hr, l15hr: x.r.l15hr, fair: x.r.fair, prevTD: x.r.prevTD, share: x.r.share, implied: x.r.implied, v: x.v, game: x.r.game, pitcher: x.r.pitcher, pos: x.r.pos, spread: x.r.spread, odds: +(store[key(x.r)]||{}).odds || 0, pub: +(store[key(x.r)]||{}).pub || 0, bet: (store[key(x.r)]||{}).on ? 1 : 0, hit: x.r.hit == null ? -1 : x.r.hit })[sortKey];
+  const get = x => ({ nasty: x.nasty, prob: x.r.prob, edge: x.edge == null ? -9 : x.edge, heat: x.heat, time: x.r.time, name: x.r.name, slot: x.r.slot, hr: x.r.hr, l15hr: x.r.l15hr, fair: x.r.fair, prevTD: x.r.prevTD, share: x.r.share, implied: x.r.implied, v: x.v, game: x.r.game, pitcher: x.r.pitcher, pos: x.r.pos, spread: x.r.spread, odds: +(store[key(x.r)]||{}).odds || 0, pub: +(store[key(x.r)]||{}).pub || 0, kvol: x.r.kvol || 0, skew: x.r.skew == null ? -99 : x.r.skew, bet: (store[key(x.r)]||{}).on ? 1 : 0, hit: x.r.hit == null ? -1 : x.r.hit })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   $('#tbl thead').innerHTML = '<tr>' + COLS[tab].map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''}">${l}${k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('') + '</tr>';
   const tb = $('#tbl tbody'); tb.innerHTML = '';
@@ -206,7 +207,7 @@ function render(){
       <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.bookUsed === 'fliff' ? 'Fliff price' : r.bookUsed === 'underdog' ? 'Underdog price (not on Fliff)' : 'not on Fliff or Underdog - best price elsewhere') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && r.bookUsed === 'underdog' ? '<span class="tm">UD</span>' : r.book && r.bookUsed === 'best' ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
-      <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="${r.kalshi != null ? Math.round(r.kalshi * 100) + '% $' + (r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol) : r.skew != null ? 'skew ' + (r.skew > 0 ? '+' : '') + r.skew : '%'}" title="${r.kalshi != null ? 'Kalshi: the crowd prices him at ' + Math.round(r.kalshi * 100) + '% with $' + r.kvol.toLocaleString() + ' traded' + (r.kmove ? ', moved ' + (r.kmove > 0 ? '+' : '') + r.kmove + ' pts' : '') + '. Type a real public % to override.' : r.skew != null ? 'retail books minus offshore, in implied %: positive = crowd on him. Type a real public % to override.' : 'type a public bet % if you have one'}">${r.kmove ? `<span class="tm ${r.kmove > 0 ? 'neg' : 'pos'}">${r.kmove > 0 ? '▲' : '▼'}</span>` : ''}</td>
+      <td>${r.kalshi != null ? `<span class="crowd" title="Kalshi: the crowd prices him at ${Math.round(r.kalshi * 100)}% with $${r.kvol.toLocaleString()} traded${r.kmove ? ', moved ' + (r.kmove > 0 ? '+' : '') + r.kmove + ' pts' : ''}">${Math.round(r.kalshi * 100)}% <b>$${r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol}</b>${r.kmove ? `<span class="${r.kmove > 0 ? 'neg' : 'pos'}"> ${r.kmove > 0 ? '▲' : '▼'}</span>` : ''}</span>` : r.skew != null ? `<span class="crowd" title="retail books minus offshore, in implied %: positive = crowd on him">skew ${r.skew > 0 ? '+' : ''}${r.skew}</span>` : ''}<input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="%" title="type a real public bet % to override"></td>
       <td><span class="v ${x.v}">${x.v}</span></td><td class="num">${x.nasty.toFixed(1)}</td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" data-f="on" ${e.on ? 'checked' : ''} title="paper bet"> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${resultCell(r)}</td>`;
