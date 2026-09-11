@@ -61,6 +61,7 @@ def attach_odds(rows, date, sport):
         r['book'] = o
         bks = snaps[-1].get('books', {}).get(sport, {}).get(nm, {})
         r['onFliff'] = 'fliff' in bks
+        r['bookUsed'] = 'fliff' if 'fliff' in bks else 'underdog' if 'underdog' in bks else 'best'
         if bks: r['bestBook'] = max(bks.values()); r['bestAt'] = max(bks, key=bks.get)
         sk = book_skew(snaps[-1].get('books', {}).get(sport, {}).get(nm, {}))
         if sk is not None:
@@ -75,7 +76,7 @@ def attach_odds(rows, date, sport):
 for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB')
 for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL')
 attach_odds(board['nfl'], today, 'NFL'); attach_odds(board['mlb'], today, 'MLB')
-slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bestBook', 'bestAt')}
+slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 
 # ---------- templates ----------
@@ -186,7 +187,7 @@ function render(){
     const tr = document.createElement('tr'); tr.className = 'row';
     const common = `<td><span class="nm">${r.name}</span> <span class="tm">${r.team}${r.inj ? ' · ' + r.inj : ''}${r.lateLock ? ' · late lock' : ''}</span></td>`;
     const tail = `<td class="num">${(r.prob * 100).toFixed(1)}%</td><td class="num">${fmtOdds(r.fair)}</td>
-      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.onFliff ? 'Fliff price' : 'not on Fliff - best price elsewhere') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && !r.onFliff ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
+      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.bookUsed === 'fliff' ? 'Fliff price' : r.bookUsed === 'underdog' ? 'Underdog price (not on Fliff)' : 'not on Fliff or Underdog - best price elsewhere') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && r.bookUsed === 'underdog' ? '<span class="tm">UD</span>' : r.book && r.bookUsed === 'best' ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
       <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="${r.skew != null ? 'skew ' + (r.skew > 0 ? '+' : '') + r.skew : '%'}" title="${r.skew != null ? 'retail books minus offshore, in implied %: positive = crowd on him. Type a real public % to override.' : 'type a public bet % if you have one'}"></td>
@@ -250,7 +251,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 </div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
-<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the Fliff price, auto-filled (* = not offered on Fliff, best price elsewhere shown instead; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
+<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the Fliff price, auto-filled (UD = Underdog's price because Fliff doesn't list him; * = neither lists him, best price elsewhere shown; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). Typing a real public-bet % overrides all of it.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
