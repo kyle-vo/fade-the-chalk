@@ -90,7 +90,10 @@ def mlb():
                 if bat == 'S': bat_eff = 'L' if sp_hand == 'R' else 'R'
                 else: bat_eff = bat
                 pa, hr = st['plateAppearances'], st['homeRuns']
-                base = (hr + 200 * LG) / (pa + 200)                       # regressed season HR/PA
+                base = (hr + 120 * LG) / (pa + 120)                       # regressed season HR/PA (k=120: own rate matters more than league)
+                # calibration from graded days 9/3-9/10: weak hitters (< 0.8x league) homered far less than a league-mean pull implied
+                weak = 1.0 if base / LG >= 0.8 else max(0.45, 0.45 + (base / LG - 0.6) / 0.2 * 0.55)
+                CAL = 0.92 * weak                                            # 0.92 = global level correction (model ran ~12% hot)
                 code = 'vl' if sp_hand == 'L' else 'vr'
                 shr, spa = split(hs, pid, code)
                 plat = ((shr + 150 * base) / (spa + 150)) / base if spa else 1.0
@@ -104,8 +107,8 @@ def mlb():
                 l15hr, l15pa = last15(pid); hot = (l15hr / l15pa) if l15pa else 0
                 form = clamp(1 + 0.10 * ((hot / LG) - (base / LG)) / 3, 0.92, 1.10)   # hot hand is mostly noise: tiny weight
                 exp_pa = SLOT_PA[slot] + (0.10 if side == 'away' else 0); sp_pa = SLOT_SP[slot]
-                p_sp = clamp(base * plat * sp_fac * pf * wf * run_env * form, 0, 0.25)
-                p_bp = clamp(base * plat * bp_fac * pf * wf * run_env * form, 0, 0.25)
+                p_sp = clamp(base * plat * sp_fac * pf * wf * run_env * form * CAL, 0, 0.25)
+                p_bp = clamp(base * plat * bp_fac * pf * wf * run_env * form * CAL, 0, 0.25)
                 prob = 1 - (1 - p_sp) ** sp_pa * (1 - p_bp) ** (exp_pa - sp_pa)
                 # ---- public heat: how obvious is this name today (0-100) ----
                 rank = lg_hr_rank.get(pid, 400)
@@ -121,7 +124,7 @@ def mlb():
                              'hr': hr, 'pa': pa, 'hrRank': rank, 'l15hr': l15hr, 'l15pa': l15pa,
                              'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat),
                              'factors': {'base': round(base / LG, 2), 'platoon': round(plat, 2), 'pitcher': round(sp_fac, 2), 'bullpen': round(bp_fac, 2),
-                                         'park': round(pf, 2), 'weather': round(wf, 2), 'runEnv': round(run_env, 2), 'form': round(form, 2), 'expPA': round(exp_pa, 1)},
+                                         'park': round(pf, 2), 'weather': round(wf, 2), 'runEnv': round(run_env, 2), 'form': round(form, 2), 'cal': round(CAL, 2), 'expPA': round(exp_pa, 1)},
                              'notes': [f"SP {sp['fullName'] if sp else 'TBD'} ({sp_hand}) HR/BF {sp_rate / LG:.2f}x lg" + (f", vs {bat_eff}HB {sp_plat:.2f}x" if pbf else ''),
                                        f"{'S' if bat == 'S' else bat}HB vs {sp_hand}HP {plat:.2f}x own rate", f"park {pf:.2f} | {wnote}",
                                        f"last 15 g: {l15hr} HR / {l15pa} PA", 'lineup posted' if posted else 'LINEUP NOT POSTED - projected by PA']})

@@ -327,7 +327,7 @@ def track_page():
 <div class="mini"><h2>Calibration <small>does 25% mean 25%?</small></h2><div class="wrap"><table id="calib"><thead><tr><th>Model %</th><th>n</th><th>Predicted</th><th>Actual</th><th>Diff</th></tr></thead><tbody></tbody></table></div></div>
 <div class="mini"><h2>The rigged test <small>do the crowd's names underperform their own numbers?</small></h2><div class="wrap"><table id="heat"><thead><tr><th>Heat</th><th>n</th><th>Predicted</th><th>Actual</th><th>Actual ÷ predicted</th></tr></thead><tbody></tbody></table></div></div>
 </div>
-<p class="note" style="margin-top:14px">Picks are locked before first pitch and graded from box scores afterward; results never change a lock. Days before {min(days) if days else ''} were reconstructed from posted lineups with season stats as of the build, which leaks a little.</p>
+<p class="note" style="margin-top:14px">Picks are locked before first pitch and graded from box scores afterward; results never change a lock. Days before {min(days) if days else ''} were reconstructed from posted lineups with season stats as of the build, which leaks a little. Model v2 (from 2026-09-12): base rate regressed less toward league, weak hitters dampened, level scaled 0.92 - fitted on those same days, so judge it on days after that.</p>
 </div>
 <script>const HISTORY = {jd(HISTORY)};{TRACK_JS}</script>"""
 
