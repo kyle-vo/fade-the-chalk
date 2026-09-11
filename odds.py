@@ -6,7 +6,19 @@ import os, json, sys, datetime, unicodedata, re, requests
 HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, 'data'); BT = os.path.join(HERE, 'backtest')
 os.makedirs(DATA, exist_ok=True); os.makedirs(BT, exist_ok=True)
 KEYF = os.path.join(HERE, 'odds_key.txt')
-KEY = os.environ.get('ODDS_API_KEY') or (open(KEYF).read().strip() if os.path.exists(KEYF) else '')
+_raw = os.environ.get('ODDS_API_KEYS') or os.environ.get('ODDS_API_KEY') or (open(KEYF).read().strip() if os.path.exists(KEYF) else '')
+KEYS = [k.strip() for k in _raw.split(',') if k.strip()]; KEY = KEYS[0] if KEYS else ''
+_ki = 0
+def rget(url, params, **kw):
+    """GET with key rotation: on 401/402/429 (bad, exhausted, throttled) move to the next key."""
+    global _ki, KEY
+    for _ in range(len(KEYS)):
+        params['apiKey'] = KEY
+        r = requests.get(url, params=params, timeout=30, **kw)
+        if r.status_code in (401, 402, 429):
+            print(f"  key #{_ki + 1} {r.status_code}, rotating"); _ki = (_ki + 1) % len(KEYS); KEY = KEYS[_ki]; continue
+        return r
+    return r
 API = "https://api.the-odds-api.com/v4"
 REGION = os.environ.get('ODDS_REGION', 'us')         # one region = 1 credit per event per market
 BOOKS = os.environ.get('ODDS_BOOKS', '')             # e.g. "draftkings,fanduel" to narrow; blank = all in region
@@ -14,15 +26,15 @@ MARKETS = {'MLB': ('baseball_mlb', 'batter_home_runs'), 'NFL': ('americanfootbal
 norm = lambda s: re.sub(r'[^a-z ]', '', unicodedata.normalize('NFD', s or '').encode('ascii', 'ignore').decode().lower()).strip()
 
 def pull(sport_key, market, day_filter=None):
-    r = requests.get(f"{API}/sports/{sport_key}/events", params={'apiKey': KEY}, timeout=30)
+    r = rget(f"{API}/sports/{sport_key}/events", {})
     if r.status_code != 200: print(f"  events {sport_key}: {r.status_code} {r.text[:120]}"); return {}
     out = {}; used = 0
     for ev in r.json():
         if day_filter and not day_filter(ev['commence_time']): continue
         p = {'apiKey': KEY, 'regions': REGION, 'markets': market, 'oddsFormat': 'american'}
         if BOOKS: p['bookmakers'] = BOOKS
-        o = requests.get(f"{API}/sports/{sport_key}/events/{ev['id']}/odds", params=p, timeout=30)
-        used = o.headers.get('x-requests-used', used)
+        o = rget(f"{API}/sports/{sport_key}/events/{ev['id']}/odds", p)
+        used = f"{o.headers.get('x-requests-used', '?')} used / {o.headers.get('x-requests-remaining', '?')} left on key #{_ki + 1}"
         if o.status_code != 200: continue
         for bk in o.json().get('bookmakers', []):
             for mk in bk.get('markets', []):
@@ -36,7 +48,7 @@ def pull(sport_key, market, day_filter=None):
     return out
 
 if __name__ == '__main__':
-    if not KEY:
+    if not KEYS:
         print("no odds key - put your The Odds API key in odds_key.txt (free at https://the-odds-api.com). Skipping."); sys.exit(0)
     date = os.environ.get('EDGE_DATE') or datetime.date.today().isoformat()
     # MLB: only that calendar day's games (US Eastern-ish: commence within date .. date+1 05:00Z)
