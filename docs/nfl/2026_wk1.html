@@ -62,7 +62,7 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 </div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
-<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = what you were offered (type it). <b>Edge</b> = model % minus the book's implied %.
+<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the sportsbook price (auto-filled from The Odds API when a key is set, or type it; ▲ = line shortened since first pull, money came in). <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how obvious / over-bet the name is (leaderboard rank, hot streak, narrative park, primetime). Enter a real public-bet % and it replaces heat.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
@@ -79,7 +79,7 @@ const implied = o => { o = +o; if (!o || isNaN(o)) return null; return o < 0 ? (
 const fmtOdds = o => o > 0 ? '+' + o : '' + o;
 const key = r => r.date + '|' + r.sport + ':' + r.id;
 function verdict(r){
-  const e = store[key(r)] || {}; const imp = implied(e.odds); const edge = imp == null ? null : r.prob - imp;
+  const e = store[key(r)] || {}; const oddsIn = e.odds || r.book; const imp = implied(oddsIn); const edge = imp == null ? null : r.prob - imp;
   const heat = e.pub != null && e.pub !== '' ? +e.pub : r.heat;
   const live = r.hit != null || r.dnp || !/Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled');
   let v = 'PASS';
@@ -117,7 +117,7 @@ function render(){
     const tr = document.createElement('tr'); tr.className = 'row';
     const common = `<td><span class="nm">${r.name}</span> <span class="tm">${r.team}${r.inj ? ' · ' + r.inj : ''}${r.lateLock ? ' · late lock' : ''}</span></td>`;
     const tail = `<td class="num">${(r.prob * 100).toFixed(1)}%</td><td class="num">${fmtOdds(r.fair)}</td>
-      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="+000"></td>
+      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? 'auto from book' + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
       <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="%"></td>

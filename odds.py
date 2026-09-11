@@ -1,0 +1,50 @@
+"""Pull real sportsbook prop odds from The Odds API (free key: https://the-odds-api.com).
+Key: put it in odds_key.txt next to this file, or set ODDS_API_KEY.
+Writes data/props.json  {sport: {normalized name: {'best': +250, 'books': {'draftkings': +250, ...}}}}
+and appends a snapshot to backtest/odds_<date>.json so line movement can be measured (money coming in = crowd)."""
+import os, json, sys, datetime, unicodedata, re, requests
+HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, 'data'); BT = os.path.join(HERE, 'backtest')
+os.makedirs(DATA, exist_ok=True); os.makedirs(BT, exist_ok=True)
+KEYF = os.path.join(HERE, 'odds_key.txt')
+KEY = os.environ.get('ODDS_API_KEY') or (open(KEYF).read().strip() if os.path.exists(KEYF) else '')
+API = "https://api.the-odds-api.com/v4"
+REGION = os.environ.get('ODDS_REGION', 'us')         # one region = 1 credit per event per market
+BOOKS = os.environ.get('ODDS_BOOKS', '')             # e.g. "draftkings,fanduel" to narrow; blank = all in region
+MARKETS = {'MLB': ('baseball_mlb', 'batter_home_runs'), 'NFL': ('americanfootball_nfl', 'player_anytime_td')}
+norm = lambda s: re.sub(r'[^a-z ]', '', unicodedata.normalize('NFD', s or '').encode('ascii', 'ignore').decode().lower()).strip()
+
+def pull(sport_key, market, day_filter=None):
+    r = requests.get(f"{API}/sports/{sport_key}/events", params={'apiKey': KEY}, timeout=30)
+    if r.status_code != 200: print(f"  events {sport_key}: {r.status_code} {r.text[:120]}"); return {}
+    out = {}; used = 0
+    for ev in r.json():
+        if day_filter and not day_filter(ev['commence_time']): continue
+        p = {'apiKey': KEY, 'regions': REGION, 'markets': market, 'oddsFormat': 'american'}
+        if BOOKS: p['bookmakers'] = BOOKS
+        o = requests.get(f"{API}/sports/{sport_key}/events/{ev['id']}/odds", params=p, timeout=30)
+        used = o.headers.get('x-requests-used', used)
+        if o.status_code != 200: continue
+        for bk in o.json().get('bookmakers', []):
+            for mk in bk.get('markets', []):
+                for oc in mk.get('outcomes', []):
+                    if oc.get('name') not in ('Yes', 'Over') and 'point' in oc and oc['point'] != 0.5: continue
+                    if oc.get('name') == 'No' or oc.get('name') == 'Under': continue
+                    nm = norm(oc.get('description') or oc.get('name'))
+                    out.setdefault(nm, {'books': {}, 'game': f"{ev['away_team']} @ {ev['home_team']}"})['books'][bk['key']] = int(oc['price'])
+    for v in out.values(): v['best'] = max(v['books'].values())
+    print(f"  {sport_key}/{market}: {len(out)} players priced (credits used this month: {used})")
+    return out
+
+if __name__ == '__main__':
+    if not KEY:
+        print("no odds key - put your The Odds API key in odds_key.txt (free at https://the-odds-api.com). Skipping."); sys.exit(0)
+    date = os.environ.get('EDGE_DATE') or datetime.date.today().isoformat()
+    # MLB: only that calendar day's games (US Eastern-ish: commence within date .. date+1 05:00Z)
+    lo = f"{date}T04:00:00Z"; hi = (datetime.date.fromisoformat(date) + datetime.timedelta(days=1)).isoformat() + "T09:00:00Z"
+    props = {'MLB': pull(*MARKETS['MLB'], day_filter=lambda t: lo <= t <= hi), 'NFL': pull(*MARKETS['NFL'], day_filter=lambda t: t <= (datetime.date.fromisoformat(date) + datetime.timedelta(days=7)).isoformat())}
+    json.dump(props, open(os.path.join(DATA, 'props.json'), 'w', encoding='utf-8'))
+    snap_path = os.path.join(BT, f'odds_{date}.json')
+    snaps = json.load(open(snap_path, encoding='utf-8')) if os.path.exists(snap_path) else []
+    snaps.append({'at': datetime.datetime.now().isoformat(timespec='minutes'), 'MLB': {k: v['best'] for k, v in props['MLB'].items()}, 'NFL': {k: v['best'] for k, v in props['NFL'].items()}})
+    json.dump(snaps, open(snap_path, 'w', encoding='utf-8'))
+    print(f"snapshot {len(snaps)} saved for {date}")

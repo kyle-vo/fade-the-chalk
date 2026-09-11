@@ -40,7 +40,26 @@ for lock in sorted(glob.glob(os.path.join(BT, 'nfl_*.json'))):
             else: r['hit'] = 0; r['actual'] = 0; r['dnp'] = True   # on roster, no touches
         else: r['hit'] = None
     weeks[wk] = rows
-slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock')}
+import unicodedata, re as _re
+_norm = lambda x: _re.sub(r'[^a-z ]', '', unicodedata.normalize('NFD', x or '').encode('ascii', 'ignore').decode().lower()).strip()
+def _implied(o): return (-o) / (-o + 100) if o < 0 else 100 / (o + 100)
+def attach_odds(rows, date, sport):
+    """Book odds from the latest snapshot of that date (closing line), movement vs the first snapshot -> heat bump."""
+    sp = os.path.join(BT, f'odds_{date}.json')
+    if not os.path.exists(sp): return
+    snaps = J(sp); first, last = snaps[0].get(sport, {}), snaps[-1].get(sport, {})
+    for r in rows:
+        nm = _norm(r['name']); o = last.get(nm)
+        if o is None: continue
+        r['book'] = o
+        if nm in first and len(snaps) > 1:
+            mv = (_implied(o) - _implied(first[nm])) * 100   # + = price shortened = money came in
+            r['move'] = round(mv, 1)
+            r['heat'] = round(min(100, max(0, r['heat'] + (15 if mv >= 3 else 8 if mv >= 1.5 else -8 if mv <= -1.5 else 0))))
+            r.setdefault('notes', []).append(f"line moved {first[nm]:+d} -> {o:+d} ({mv:+.1f} pts implied)")
+for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB')
+for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL')
+slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 
 # ---------- templates ----------
@@ -113,7 +132,7 @@ const implied = o => { o = +o; if (!o || isNaN(o)) return null; return o < 0 ? (
 const fmtOdds = o => o > 0 ? '+' + o : '' + o;
 const key = r => r.date + '|' + r.sport + ':' + r.id;
 function verdict(r){
-  const e = store[key(r)] || {}; const imp = implied(e.odds); const edge = imp == null ? null : r.prob - imp;
+  const e = store[key(r)] || {}; const oddsIn = e.odds || r.book; const imp = implied(oddsIn); const edge = imp == null ? null : r.prob - imp;
   const heat = e.pub != null && e.pub !== '' ? +e.pub : r.heat;
   const live = r.hit != null || r.dnp || !/Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled');
   let v = 'PASS';
@@ -151,7 +170,7 @@ function render(){
     const tr = document.createElement('tr'); tr.className = 'row';
     const common = `<td><span class="nm">${r.name}</span> <span class="tm">${r.team}${r.inj ? ' · ' + r.inj : ''}${r.lateLock ? ' · late lock' : ''}</span></td>`;
     const tail = `<td class="num">${(r.prob * 100).toFixed(1)}%</td><td class="num">${fmtOdds(r.fair)}</td>
-      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="+000"></td>
+      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? 'auto from book' + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
       <td><input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="%"></td>
@@ -215,7 +234,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 </div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
-<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = what you were offered (type it). <b>Edge</b> = model % minus the book's implied %.
+<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the sportsbook price (auto-filled from The Odds API when a key is set, or type it; ▲ = line shortened since first pull, money came in). <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how obvious / over-bet the name is (leaderboard rank, hot streak, narrative park, primetime). Enter a real public-bet % and it replaces heat.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
@@ -232,8 +251,8 @@ const fmt = o => o > 0 ? '+' + o : '' + o;
 // ---- your paper bets ----
 const bets = [];
 for (const [k, e] of Object.entries(store)) { if (!e.on) continue; const r = byKey[k]; if (!r) continue;
-  const odds = +e.odds || r.fair, stake = +e.stake || 1; const settled = r.hit != null && !r.dnp;
-  bets.push({ r, odds, stake, atFair: !e.odds, settled, pnl: settled ? pay(odds, stake, r.hit) : 0, void: !!r.dnp }); }
+  const odds = +e.odds || r.book || r.fair, stake = +e.stake || 1; const settled = r.hit != null && !r.dnp;
+  bets.push({ r, odds, stake, atFair: !e.odds && !r.book, settled, pnl: settled ? pay(odds, stake, r.hit) : 0, void: !!r.dnp }); }
 bets.sort((a, b) => a.r.date < b.r.date ? -1 : a.r.date > b.r.date ? 1 : 0);
 const settled = bets.filter(b => b.settled); const units = settled.reduce((s, b) => s + b.pnl, 0); const staked = settled.reduce((s, b) => s + b.stake, 0);
 document.querySelector('#mykpi').innerHTML = `<div>paper bets<b>${bets.length}</b></div><div>settled<b>${settled.length}</b></div><div>record<b>${settled.filter(b => b.r.hit).length}-${settled.filter(b => !b.r.hit).length}</b></div><div>units<b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)}</b></div><div>ROI<b class="${units >= 0 ? 'pos' : 'neg'}">${staked ? (units / staked * 100).toFixed(1) : '0.0'}%</b></div><div>pending<b>${bets.filter(b => !b.settled && !b.void).length}</b></div>`;
