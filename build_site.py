@@ -53,16 +53,19 @@ def attach_odds(rows, date, sport):
     """Book odds from the latest snapshot of that date (closing line), movement vs the first snapshot -> heat bump."""
     sp = os.path.join(BT, f'odds_{date}.json')
     if not os.path.exists(sp): return
-    snaps = J(sp); first, last = snaps[0].get(sport, {}), snaps[-1].get(sport, {})
+    snaps = J(sp); first, last, lastbooks = {}, {}, {}
+    for sn in snaps:                                   # latest sighting wins; first sighting = the opener
+        for nm, o in sn.get(sport, {}).items():
+            first.setdefault(nm, o); last[nm] = o; lastbooks[nm] = sn.get('books', {}).get(sport, {}).get(nm, lastbooks.get(nm, {}))
     for r in rows:
         nm = _norm(r['name']); o = last.get(nm)
         if o is None: continue
         r['book'] = o
-        bks = snaps[-1].get('books', {}).get(sport, {}).get(nm, {})
+        bks = lastbooks.get(nm, {})
         r['onFliff'] = 'fliff' in bks
         r['bookUsed'] = 'fliff' if 'fliff' in bks else 'underdog' if 'underdog' in bks else 'best'
         if bks: r['bestBook'] = max(bks.values()); r['bestAt'] = max(bks, key=bks.get)
-        sk = book_skew(snaps[-1].get('books', {}).get(sport, {}).get(nm, {}))
+        sk = book_skew(bks)
         if sk is not None:
             r['skew'] = sk
             r['heat'] = round(min(100, max(0, r['heat'] + (12 if sk >= 2.5 else 6 if sk >= 1.2 else -6 if sk <= -1.2 else 0))))
@@ -76,7 +79,9 @@ def attach_kalshi(rows, date, sport):
     """Kalshi = the public's own price with money behind it. yes price -> crowd %; volume -> how many are on him."""
     kp = os.path.join(BT, f'kalshi_{sport.lower()}_{date}.json')
     if not os.path.exists(kp): return
-    snaps = J(kp); ms = snaps[-1]['markets']; first = snaps[0]['markets']
+    snaps = J(kp); ms, first = {}, {}
+    for sn in snaps:
+        for nm, m in sn['markets'].items(): first.setdefault(nm, m); ms[nm] = m   # keep the last price/volume seen before the market closed
     vols = sorted(v['vol'] for v in ms.values()); top = vols[int(len(vols) * 0.75)] if vols else 0
     for r in rows:
         k = ms.get(_norm(r['name']))
@@ -184,12 +189,14 @@ const COLS = {
 function resultCell(r){
   if (r.dnp) return '<span class="res d">DNP</span>';
   if (r.hit == null) return '<span class="res n">—</span>';
-  return r.hit ? `<span class="res y">✓ ${r.sport === 'MLB' ? 'HR' : 'TD'}${r.actual > 1 ? ' x' + r.actual : ''}</span>` : '<span class="res n">✗</span>';
+  const line = r.sport === 'MLB' && r.actualPA ? ` <span class="tm">${r.actual} HR / ${r.actualPA} PA</span>` : r.sport === 'NFL' && r.hit != null ? ` <span class="tm">${r.actual} TD</span>` : '';
+  return r.hit ? `<span class="res y">✓ ${r.sport === 'MLB' ? 'HR' : 'TD'}${r.actual > 1 ? ' x' + r.actual : ''}</span>${line}` : `<span class="res n">✗</span>${line}`;
 }
 function render(){
   const rows = (PAGE.rows[tab] || []).map(r => ({ r, ...verdict(r) }));
   const q = norm($('#q').value), minp = +$('#minp').value / 100, maxh = +$('#maxh').value, hide = $('#hidedone').checked, only = $('#onlyplays').checked, onlybets = $('#onlybets').checked;
-  let list = rows.filter(x => (!hide || !x.live || PAGE.graded) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
+  const onlyhits = $('#onlyhits').checked;
+  let list = rows.filter(x => (!hide || !x.live || x.r.hit != null) && (!onlyhits || x.r.hit === 1) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
       (!q || norm(x.r.name).includes(q) || norm(x.r.team).includes(q) || norm(x.r.game).includes(q) || norm(x.r.teamName || '').includes(q)));
   const get = x => ({ nasty: x.nasty, prob: x.r.prob, edge: x.edge == null ? -9 : x.edge, heat: x.heat, time: x.r.time, name: x.r.name, slot: x.r.slot, hr: x.r.hr, l15hr: x.r.l15hr, fair: x.r.fair, prevTD: x.r.prevTD, share: x.r.share, implied: x.r.implied, v: x.v, game: x.r.game, pitcher: x.r.pitcher, pos: x.r.pos, spread: x.r.spread, odds: +(store[key(x.r)]||{}).odds || 0, pub: +(store[key(x.r)]||{}).pub || 0, kvol: x.r.kvol || 0, skew: x.r.skew == null ? -99 : x.r.skew, bet: (store[key(x.r)]||{}).on ? 1 : 0, hit: x.r.hit == null ? -1 : x.r.hit })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
@@ -201,7 +208,7 @@ function render(){
     if (e.on) n.bets++; if (r.hit != null) { n.graded++; n.exp += r.prob; n.act += r.hit; }
     const when = new Date(r.time).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     const tr = document.createElement('tr'); tr.className = 'row';
-    const common = `<td><span class="nm">${r.name}</span> <span class="tm">${r.team}${r.inj ? ' · ' + r.inj : ''}${r.lateLock ? ' · late lock' : ''}</span></td>`;
+    const common = `<td>${r.hit === 1 ? '<span class="res y">✓</span> ' : ''}<span class="nm">${r.name}</span> <span class="tm">${r.team}${r.inj ? ' · ' + r.inj : ''}${r.lateLock ? ' · late lock' : ''}</span></td>`;
     const tail = `<td class="num">${(r.prob * 100).toFixed(1)}%</td><td class="num">${fmtOdds(r.fair)}</td>
       <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.bookUsed === 'fliff' ? 'Fliff price' : r.bookUsed === 'underdog' ? 'Underdog price (not on Fliff)' : 'not on Fliff or Underdog - best price elsewhere') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && r.bookUsed === 'underdog' ? '<span class="tm">UD</span>' : r.book && r.bookUsed === 'best' ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
@@ -235,7 +242,7 @@ function applyPaste(){
   save(); render();
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; render(); }));
-['#q', '#minp', '#maxh', '#hidedone', '#onlyplays', '#onlybets'].forEach(s => $(s).addEventListener('input', render));
+['#q', '#minp', '#maxh', '#hidedone', '#onlyplays', '#onlybets', '#onlyhits'].forEach(s => $(s).addEventListener('input', render));
 $('#sort').addEventListener('change', () => { sortKey = $('#sort').value; sortDir = sortKey === 'time' ? 1 : -1; render(); });
 $('#apply').addEventListener('click', applyPaste);
 $('#clear').addEventListener('click', () => { for (const k of Object.keys(store)) if (k.startsWith(PAGE.datePrefix)) delete store[k]; save(); render(); });
@@ -263,6 +270,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <label><input type="checkbox" id="hidedone" {'' if graded else 'checked'}> hide started games</label>
 <label><input type="checkbox" id="onlyplays"> only SLEEPER / VALUE / TRAP</label>
 <label><input type="checkbox" id="onlybets"> only my paper bets</label>
+<label><input type="checkbox" id="onlyhits"> ✓ only homered / scored</label>
 <label>sort <select id="sort"><option value="nasty" {'' if graded else 'selected'}>nasty score</option><option value="prob" {'selected' if graded else ''}>model %</option><option value="edge">edge</option><option value="heat">public heat</option><option value="hit">result</option><option value="time">game time</option></select></label>
 </div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
@@ -270,7 +278,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the Fliff price, auto-filled (UD = Underdog's price because Fliff doesn't list him; * = neither lists him, best price elsewhere shown; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). For MLB the Public column shows <b>Kalshi</b>: the prediction-market crowd's own price for him and how many dollars they've put on it; crowd above the model, heavy volume, or a rising price all raise Heat. Typing a real public-bet % overrides all of it.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
-<b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
+<b>Result</b> fills in as games go final and stays on the page with the crowd money, so hits can be checked against where the public was. <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
 </div>
 <script>const PAGE = {jd(page)};{BOARD_JS}</script>"""
