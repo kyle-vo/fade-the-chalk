@@ -118,7 +118,7 @@ def mlb():
                 heat += 15 * clamp((pf - 1) / 0.25, 0, 1)                          # "he's in Coors / Yankee Stadium" narrative
                 heat += 12 * clamp((sp_rate / LG - 1) / 0.5, 0, 1)                 # "bad pitcher" narrative
                 heat += 8 * (1 if slot < 4 else 0)
-                rows.append({'sport': 'MLB', 'gamePk': g['gamePk'], 'id': pid, 'name': pl.get('fullName') or per.get('fullName'), 'team': team['abbreviation'] if 'abbreviation' in team else team['name'],
+                rows.append({'sport': 'MLB', 'gamePk': g['gamePk'], 'date': g.get('officialDate') or g['gameDate'][:10], 'id': pid, 'name': pl.get('fullName') or per.get('fullName'), 'team': team['abbreviation'] if 'abbreviation' in team else team['name'],
                              'teamName': team['name'], 'opp': oppteam['name'], 'game': gname, 'state': state, 'time': g['gameDate'], 'venue': venue,
                              'slot': slot + 1, 'lineupPosted': posted, 'bat': bat, 'pitcher': sp['fullName'] if sp else 'TBD', 'pHand': sp_hand,
                              'hr': hr, 'pa': pa, 'hrRank': rank, 'l15hr': l15hr, 'l15pa': l15pa,

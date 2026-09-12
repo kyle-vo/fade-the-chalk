@@ -9,9 +9,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); BT = os.path.join(HERE, 'back
 for d in ('', 'days', 'nfl'): os.makedirs(os.path.join(SITE, d), exist_ok=True)
 J = lambda p: json.load(open(p, encoding='utf-8'))
 jd = lambda o: json.dumps(o).replace('</', '<' + chr(92) + '/')
-jd = lambda o: json.dumps(o).replace('</', '<' + chr(92) + '/')
 board = J(os.path.join(HERE, 'output', 'board.json'))
-today = board['mlb'][0]['time'][:10] if board['mlb'] else datetime.date.today().isoformat()
+today = (board['mlb'][0].get('date') or board['mlb'][0]['time'][:10]) if board['mlb'] else datetime.date.today().isoformat()
 
 # ---------- assemble history ----------
 days = {}

@@ -19,7 +19,7 @@ def merge(path, new_rows, gkey):
     return len(keep), len(fresh), len(late)
 
 if board['mlb']:
-    date = os.environ.get('EDGE_DATE') or board['mlb'][0]['time'][:10]
+    date = os.environ.get('EDGE_DATE') or board['mlb'][0].get('date') or board['mlb'][0]['time'][:10]   # officialDate = local calendar day, not UTC
     for r in board['mlb']: r['date'] = date
     k, f, l = merge(os.path.join(BT, f'pred_{date}.json'), board['mlb'], 'gamePk')
     print(f"MLB {date}: kept {k} frozen, refreshed {f}, late {l}")
