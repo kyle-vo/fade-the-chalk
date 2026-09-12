@@ -49,16 +49,28 @@ def book_skew(books):
     pub = [_implied(o) for b, o in books.items() if b in PUBLIC_BOOKS]; shp = [_implied(o) for b, o in books.items() if b in SHARP_BOOKS]
     if not pub or not shp: return None
     return round(max(-5.0, min(5.0, (sum(pub) / len(pub) - sum(shp) / len(shp)) * 100)), 1)   # capped: a stale book is not the crowd
+_LOCALTZ = datetime.datetime.now().astimezone().tzinfo
+def _snap_utc(at): return datetime.datetime.fromisoformat(at).replace(tzinfo=_LOCALTZ).astimezone(datetime.timezone.utc)
+def _start_utc(r):
+    t = r.get('time') or ''
+    try: return datetime.datetime.fromisoformat(t.replace('Z', '+00:00'))
+    except ValueError: return None
+def _pregame(snaps, r):
+    """only snapshots taken before this player's game started (in-game prices are contaminated by the outcome)"""
+    st = _start_utc(r)
+    ok = [sn for sn in snaps if st is None or _snap_utc(sn['at']) <= st]
+    return ok or snaps[:1]
 def attach_odds(rows, date, sport):
     """Book odds from the latest snapshot of that date (closing line), movement vs the first snapshot -> heat bump."""
     sp = os.path.join(BT, f'odds_{date}.json')
     if not os.path.exists(sp): return
-    snaps = J(sp); first, last, lastbooks = {}, {}, {}
-    for sn in snaps:                                   # latest sighting wins; first sighting = the opener
-        for nm, o in sn.get(sport, {}).items():
-            first.setdefault(nm, o); last[nm] = o; lastbooks[nm] = sn.get('books', {}).get(sport, {}).get(nm, lastbooks.get(nm, {}))
+    snaps = J(sp)
     for r in rows:
-        nm = _norm(r['name']); o = last.get(nm)
+        nm = _norm(r['name']); first, last, lastbooks = {}, {}, {}
+        for sn in _pregame(snaps, r):                  # latest PRE-GAME sighting wins; first sighting = the opener
+            for k2, o in sn.get(sport, {}).items():
+                first.setdefault(k2, o); last[k2] = o; lastbooks[k2] = sn.get('books', {}).get(sport, {}).get(k2, lastbooks.get(k2, {}))
+        o = last.get(nm)
         if o is None: continue
         r['book'] = o
         bks = lastbooks.get(nm, {})
@@ -79,11 +91,12 @@ def attach_kalshi(rows, date, sport):
     """Kalshi = the public's own price with money behind it. yes price -> crowd %; volume -> how many are on him."""
     kp = os.path.join(BT, f'kalshi_{sport.lower()}_{date}.json')
     if not os.path.exists(kp): return
-    snaps = J(kp); ms, first = {}, {}
-    for sn in snaps:
-        for nm, m in sn['markets'].items(): first.setdefault(nm, m); ms[nm] = m   # keep the last price/volume seen before the market closed
-    vols = sorted(v['vol'] for v in ms.values()); top = vols[int(len(vols) * 0.75)] if vols else 0
+    snaps = J(kp)
+    allv = sorted(v['vol'] for sn in snaps for v in sn['markets'].values()); top = allv[int(len(allv) * 0.75)] if allv else 0
     for r in rows:
+        ms, first = {}, {}
+        for sn in _pregame(snaps, r):                  # last PRE-GAME price and volume; in-game prices know the outcome
+            for nm, m in sn['markets'].items(): first.setdefault(nm, m); ms[nm] = m
         k = ms.get(_norm(r['name']))
         if not k: continue
         r['kalshi'] = k['yes']; r['kvol'] = k['vol']; r['koi'] = k['oi']
