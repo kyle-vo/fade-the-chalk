@@ -112,6 +112,21 @@ def fetch_nfl():
         return rows
     with cf.ThreadPoolExecutor(8) as ex: rosters = sum(ex.map(roster, teams), [])
     save('nfl_rosters.json', rosters)
+    def depth(t):
+        """offense depth chart: {athleteId: {'pos': 'RB', 'rank': 1}} (rank = order listed at that slot; wr1/wr2/wr3 are all starters)"""
+        try: d = get(f"https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/teams/{t['team']['id']}/depthcharts")
+        except Exception: return t['team']['abbreviation'], {}
+        out = {}
+        for grp in d.get('depthchart', []):
+            for slot, v in grp.get('positions', {}).items():
+                pos = v.get('position', {}).get('abbreviation')
+                if pos not in ('QB', 'RB', 'WR', 'TE', 'FB'): continue
+                for i, a in enumerate(v.get('athletes', [])):
+                    cur = out.get(a['id'])
+                    if not cur or i + 1 < cur['rank']: out[a['id']] = {'pos': pos, 'rank': i + 1, 'slot': slot}
+        return t['team']['abbreviation'], out
+    with cf.ThreadPoolExecutor(8) as ex: depths = dict(ex.map(depth, teams))
+    save('nfl_depth.json', depths); print(f"  depth charts: {sum(1 for v in depths.values() if v)} teams")
     def tstat(t):
         try: return t['team']['abbreviation'], get(f"{ESPN}/football/nfl/teams/{t['team']['id']}/statistics", season=season_prev)
         except Exception: return t['team']['abbreviation'], None

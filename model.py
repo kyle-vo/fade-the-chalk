@@ -110,6 +110,7 @@ def mlb():
                 p_sp = clamp(base * plat * sp_fac * pf * wf * run_env * form * CAL, 0, 0.25)
                 p_bp = clamp(base * plat * bp_fac * pf * wf * run_env * form * CAL, 0, 0.25)
                 prob = 1 - (1 - p_sp) ** sp_pa * (1 - p_bp) ** (exp_pa - sp_pa)
+                if pa >= 200: prob = max(prob, 0.04)                       # floor: stacked penalties overshoot on real regulars (Guerrero at 2%)
                 # ---- public heat: how obvious is this name today (0-100) ----
                 rank = lg_hr_rank.get(pid, 400)
                 heat = 0
@@ -161,6 +162,8 @@ def nfl():
             d = {s['name']: f(s.get('value')) for s in sc['stats']}
             team_off[ab] = d.get('rushingTouchdowns', 0) + d.get('receivingTouchdowns', 0)
     lg_team_td = sum(team_off.values()) / max(len(team_off), 1)
+    depth = L('nfl_depth.json') if os.path.exists(os.path.join(DATA, 'nfl_depth.json')) else {}
+    DEPTH_MULT = {'RB': {1: 1.0, 2: 0.45, 3: 0.15}, 'WR': {1: 1.0, 2: 0.35, 3: 0.15}, 'TE': {1: 1.0, 2: 0.35, 3: 0.1}, 'QB': {1: 1.0, 2: 0.0, 3: 0.0}, 'FB': {1: 0.6, 2: 0.2, 3: 0.1}}
     roster_by_team = collections.defaultdict(list)
     for r in ro: roster_by_team[r['team']].append(r)
     # implied totals from odds
@@ -198,6 +201,10 @@ def nfl():
                 else:
                     share = prior * 0.25
                 if inj == 'Questionable': share *= 0.85
+                dc = depth.get(team, {}).get(r['id'])
+                if depth.get(team):                                   # chart exists for this team
+                    if dc: share *= DEPTH_MULT.get(dc['pos'], DEPTH_MULT['WR']).get(min(dc['rank'], 3), 0.1); r['depth'] = f"{dc['pos']}{dc['rank']}"
+                    else: share *= 0.08; r['depth'] = 'not on chart'
                 cands.append((r, p, share, inj))
             tot = sum(s for _, _, s, _ in cands) or 1
             scale = 0.95 / tot if tot > 0.95 else 1.0   # a team's TD shares can't sum past ~95% (rest = defense/ST/randoms)
@@ -210,9 +217,9 @@ def nfl():
                 rows.append({'sport': 'NFL', 'eventId': g['eventId'], 'id': r['id'], 'name': r['name'], 'team': team, 'opp': opp, 'pos': r['pos'], 'game': g['name'], 'state': g['state'], 'time': g['date'],
                              'spread': g['spread'], 'total': g['total'], 'implied': round(g['implied'][team], 1), 'teamTD': round(team_td, 2),
                              'prevTD': (p['rush'] + p['rec']) if p else 0, 'prevGP': p['gp'] if p else 0, 'prevTeam': p['prevTeam'] if p else None, 'tdRank': rank,
-                             'share': round(share, 3), 'lam': round(lam, 3), 'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat), 'inj': inj or '',
+                             'share': round(share, 3), 'lam': round(lam, 3), 'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat), 'inj': inj or '', 'depth': r.get('depth', ''),
                              'notes': [f"team implied {g['implied'][team]:.1f} pts -> {team_td:.2f} off. TDs", f"2025: {int(p['rush'] + p['rec']) if p else 0} TD in {int(p['gp']) if p else 0} g" + (f" ({p['prevTeam']})" if p and p['prevTeam'] != team else ''),
-                                       f"TD share {share:.0%} -> {lam:.2f} exp. TDs", (f"INJURY: {inj}" if inj else 'healthy'), 'PRIMETIME' if g['prime'] else '']})
+                                       f"TD share {share:.0%} -> {lam:.2f} exp. TDs", (f"INJURY: {inj}" if inj else 'healthy'), f"depth chart: {r.get('depth', '?')}", 'PRIMETIME' if g['prime'] else '']})
     return rows, games
 
 if __name__ == '__main__':

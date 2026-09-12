@@ -95,7 +95,7 @@ function verdict(r){
 }
 const COLS = {
   mlb: [['Player','name'],['Slot','slot'],['Game','game'],['vs SP','pitcher'],['Season','hr'],['L15','l15hr'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (Kalshi)','kvol'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']],
-  nfl: [['Player','name'],['Pos','pos'],['Game','game'],['Line','spread'],['Team imp.','implied'],['2025 TD','prevTD'],['Share','share'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (skew)','skew'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']]
+  nfl: [['Player','name'],['Depth','pos'],['Game','game'],['Line','spread'],['Team imp.','implied'],['2025 TD','prevTD'],['Share','share'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (skew)','skew'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']]
 };
 function resultCell(r){
   if (r.dnp) return '<span class="res d">DNP</span>';
@@ -129,7 +129,7 @@ function render(){
       <td><input type="checkbox" class="bet" data-k="${key(r)}" data-f="on" ${e.on ? 'checked' : ''} title="paper bet"> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${resultCell(r)}</td>`;
     if (tab === 'mlb') tr.innerHTML = common + `<td class="num">${r.slot}${r.lineupPosted ? '' : '*'}</td><td class="tm">${r.game.replace(/ at /, ' @ ')}<br>${when}</td><td class="tm">${r.pitcher} (${r.pHand})</td><td class="num">${r.hr} HR / ${r.pa} PA</td><td class="num">${r.l15hr}</td>` + tail;
-    else tr.innerHTML = common + `<td>${r.pos}</td><td class="tm">${r.game}<br>${when}</td><td class="tm">${r.spread || '—'} / ${r.total || '—'}</td><td class="num">${r.implied}</td><td class="num">${r.prevTD} in ${r.prevGP}g${r.prevTeam && r.prevTeam !== r.team ? ' (' + r.prevTeam + ')' : ''}</td><td class="num">${(r.share * 100).toFixed(0)}%</td>` + tail;
+    else tr.innerHTML = common + `<td>${r.depth || r.pos}</td><td class="tm">${r.game}<br>${when}</td><td class="tm">${r.spread || '—'} / ${r.total || '—'}</td><td class="num">${r.implied}</td><td class="num">${r.prevTD} in ${r.prevGP}g${r.prevTeam && r.prevTeam !== r.team ? ' (' + r.prevTeam + ')' : ''}</td><td class="num">${(r.share * 100).toFixed(0)}%</td>` + tail;
     const det = document.createElement('tr'); det.className = 'det'; det.hidden = true;
     const facts = r.factors ? Object.entries(r.factors).map(([k, v]) => `<span class="f">${k} ${v}</span>`).join('') : '';
     det.innerHTML = `<td colspan="${COLS[tab].length}">${(r.notes || []).filter(Boolean).join(' &nbsp;|&nbsp; ')}<br>${facts}</td>`;
