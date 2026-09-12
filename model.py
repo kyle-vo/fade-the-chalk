@@ -163,7 +163,7 @@ def nfl():
             team_off[ab] = d.get('rushingTouchdowns', 0) + d.get('receivingTouchdowns', 0)
     lg_team_td = sum(team_off.values()) / max(len(team_off), 1)
     depth = L('nfl_depth.json') if os.path.exists(os.path.join(DATA, 'nfl_depth.json')) else {}
-    DEPTH_MULT = {'RB': {1: 1.0, 2: 0.45, 3: 0.15}, 'WR': {1: 1.0, 2: 0.35, 3: 0.15}, 'TE': {1: 1.0, 2: 0.35, 3: 0.1}, 'QB': {1: 1.0, 2: 0.0, 3: 0.0}, 'FB': {1: 0.6, 2: 0.2, 3: 0.1}}
+    DEPTH_MULT = {'RB': {1: 1.1, 2: 0.7, 3: 0.3}, 'WR': {1: 1.0, 2: 0.6, 3: 0.3}, 'TE': {1: 1.0, 2: 0.55, 3: 0.2}, 'QB': {1: 1.0, 2: 0.0, 3: 0.0}, 'FB': {1: 0.6, 2: 0.3, 3: 0.15}}   # calibrated to de-vigged market by role, Week 1 2026
     roster_by_team = collections.defaultdict(list)
     for r in ro: roster_by_team[r['team']].append(r)
     # implied totals from odds
