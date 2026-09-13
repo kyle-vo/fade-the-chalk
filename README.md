@@ -1,5 +1,7 @@
 # Fade The Chalk
 
+**Live site:** https://kyle-vo.github.io/fade-the-chalk/ — Today's board, Moneyline, past days with results, and the Track scorecard.
+
 Contrarian MLB home run / NFL anytime touchdown board. Two layers per player:
 
 1. **Model %** - what the numbers say.
