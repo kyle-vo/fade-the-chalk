@@ -137,12 +137,14 @@ def nfl_rows():
         kh = kev['sides'].get(canon(hab)) if kev else None; ka = kev['sides'].get(canon(aab)) if kev else None
         bk = next((v for (hn, an), v in ml.items() if hn == home['team']['displayName'] and an == away['team']['displayName']), {'books': {}})
         fl_h, sharp_h, skew_h = side_prices(bk['books'], 'home'); fl_a, _, _ = side_prices(bk['books'], 'away')
+        p_rating = p_home
+        if sharp_h is not None: p_home = 0.25 * p_rating + 0.75 * sharp_h          # early season: ratings are last year's; anchor to Pinnacle until 2026 games accumulate
         vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
         rows.append({'sport': 'NFL', 'eventId': e['id'], 'date': wk, 'time': e['date'], 'state': c['status']['type']['name'], 'venue': '',
             'home': hab, 'away': aab, 'homeName': home['team']['displayName'], 'awayName': away['team']['displayName'], 'homeSP': '', 'awaySP': '', 'homeRec': '', 'awayRec': '',
             'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
             'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'skewHome': skew_h,
-            'books': bk['books'], 'notes': [f"2025 point diff ratings: {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> model spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '']})
+            'books': bk['books'], 'notes': [f"2025 point diff ratings: {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> model spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '', f"ratings alone said {p_rating * 100:.0f}% home; blended 25/75 with Pinnacle" if sharp_h is not None else '']})
     return rows
 
 # ---------------- lock + grade ----------------
