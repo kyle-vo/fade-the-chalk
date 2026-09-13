@@ -60,7 +60,8 @@ function render(){
   const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: x.r.kvol || 0, pub: x.pub ?? -1, time: x.r.time, skew: x.r.skewHome ?? -99, v: x.v })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   const cols = [['Game', 'time'], ['Pick', 'model'], ['Model', 'model'], ['Robinhood', 'edge'], ['Edge', 'edge'], ['Public $ on pick', 'pub'], ['$ traded', 'kvol'], ['Pinnacle', 'skew'], ['Skew', 'skew'], ['Fliff', 'v'], ['Verdict', 'v'], ['Bet', 'v'], ['Result', 'v']];
-  $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''}">${l}</th>`).join('') + '</tr>';
+  const R = new Set(['Model', 'Robinhood', 'Edge', 'Public $ on pick', '$ traded', 'Pinnacle', 'Skew', 'Fliff']);
+  $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''} ${R.has(l) ? 'r' : ''}">${l}</th>`).join('') + '</tr>';
   const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0 };
   for (const x of list) { const r = x.r, e = store[key(r)] || {};
     if (x.v === 'SLEEPER' || x.v === 'VALUE') n.s++; if (x.v === 'FADE') n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; }
