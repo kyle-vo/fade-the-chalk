@@ -58,8 +58,7 @@ def _start_utc(r):
 def _pregame(snaps, r):
     """only snapshots taken before this player's game started (in-game prices are contaminated by the outcome)"""
     st = _start_utc(r)
-    ok = [sn for sn in snaps if st is None or _snap_utc(sn['at']) <= st]
-    return ok or snaps[:1]
+    return [sn for sn in snaps if st is None or _snap_utc(sn['at']) <= st]   # nothing pre-game = no crowd number (never leak an in-game price)
 def attach_odds(rows, date, sport):
     """Book odds from the latest snapshot of that date (closing line), movement vs the first snapshot -> heat bump."""
     sp = os.path.join(BT, f'odds_{date}.json')
