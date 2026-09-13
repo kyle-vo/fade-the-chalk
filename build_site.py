@@ -386,7 +386,9 @@ for r in board['mlb']: r.setdefault('date', today)
 for r in board['nfl']: r.setdefault('date', 'now')
 # today's page: use the locked rows for today if present (so results show once graded), else the live board
 today_rows = days.get(today, board['mlb'])
-W('index.html', board_page('Fade The Chalk', f'MLB HR + NFL anytime TD · model prob vs. the price vs. the crowd · built {gen}', 'index.html', '', today_rows, board['nfl'], False))
+cur_week = max(weeks) if weeks else None
+nfl_today = weeks[cur_week] if cur_week else board['nfl']   # locked + graded rows, same as the week page
+W('index.html', board_page('Fade The Chalk', f'MLB HR + NFL anytime TD · model prob vs. the price vs. the crowd · built {gen}', 'index.html', '', today_rows, nfl_today, False))
 for d, rows in days.items():
     graded = any(r['hit'] is not None for r in rows)
     W(f'days/{d}.html', board_page('Fade The Chalk', f'MLB home runs · {d} · {"results graded" if graded else "waiting on results"} · picks locked pre-game', 'days/' + d, '../', rows, [], graded, tabs=False))
