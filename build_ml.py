@@ -65,7 +65,7 @@ function render(){
     const skew = r.skewHome == null ? null : (r.pick === 'home' ? r.skewHome : -r.skewHome);
     const tr = document.createElement('tr'); tr.className = 'row';
     tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when}${r.homeSP ? ' · ' + r.awaySP + ' / ' + r.homeSP : ''}${r.homeRec ? ' · ' + r.awayRec + ' / ' + r.homeRec : ''}</span></td>
-      <td><span class="nm">${pickTeam}</span> <span class="tm">over ${other}</span></td>
+      <td><span class="nm">${pickTeam}</span></td>
       <td class="num">${pct(r.pickProb)}</td>
       <td class="num">${fmt(r.pickOdds)}${r.pickOdds == null ? '' : ' <span class="tm">(' + pct(implied(r.pickOdds)) + ')</span>'}</td>
       <td class="num ${r.edge == null ? '' : r.edge >= 0 ? 'pos' : 'neg'}">${r.edge == null ? '—' : (r.edge >= 0 ? '+' : '') + r.edge.toFixed(1)}</td>
