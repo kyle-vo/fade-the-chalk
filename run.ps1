@@ -10,9 +10,11 @@ python -X utf8 fetch_data.py all
 python -X utf8 model.py
 python -X utf8 odds.py
 python -X utf8 kalshi.py
+python -X utf8 ml.py
 python -X utf8 lock.py
 python -X utf8 grade.py
 python -X utf8 build_site.py
+python -X utf8 build_ml.py
 if (-not $NoPush) {
     git add -A
     git commit -m "board $(Get-Date -Format 'yyyy-MM-dd HH:mm')" --quiet

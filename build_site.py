@@ -163,7 +163,7 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 </style>"""
 
 def nav(active, root):
-    items = [('index.html', 'Today'), ('track.html', 'Track')]
+    items = [('index.html', 'Today'), ('ml.html', 'Moneyline'), ('track.html', 'Track')]
     html = ''.join(f'<a href="{root}{h}" class="{"on" if active == h else ""}">{t}</a>' for h, t in items)
     html += '<span class="lbl">MLB days</span>' + ''.join(f'<a href="{root}days/{d}.html" class="{"on" if active == "days/" + d else ""}">{d[5:]}</a>' for d in sorted(days, reverse=True)[:14])
     if weeks: html += '<span class="lbl">NFL</span>' + ''.join(f'<a href="{root}nfl/{w}.html" class="{"on" if active == "nfl/" + w else ""}">wk {w.split("wk")[1]}</a>' for w in sorted(weeks, reverse=True)[:6])
