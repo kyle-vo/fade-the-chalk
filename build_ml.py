@@ -29,7 +29,7 @@ graded = [r for rows in boards.values() for r in rows if r['homeWin'] is not Non
 
 def head(title, sub):
     nav = '<nav><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="track.html">Track</a><span class="lbl">ML days</span>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:14]) + '</nav>'
-    return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}<style>{CSS}</style><header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav}'
+    return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav}'
 
 JS = r"""
 const $ = s => document.querySelector(s); let tab = 'mlb'; let day = TODAY; let sortKey = 'edge', sortDir = -1;
