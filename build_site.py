@@ -100,6 +100,9 @@ def attach_kalshi(rows, date, sport):
         k = ms.get(_norm(r['name']))
         if not k: continue
         r['kalshi'] = k['yes']; r['kvol'] = k['vol']; r['koi'] = k['oi']
+        ask = k.get('ask') or (k['yes'] + 0.01)
+        if 0 < ask < 1:
+            r['sportsbook'] = r.get('book'); r['book'] = round(-100 * ask / (1 - ask)) if ask >= .5 else round(100 * (1 - ask) / ask); r['bookUsed'] = 'robinhood'; r['onFliff'] = False
         gap = (k['yes'] - r['prob']) * 100                      # crowd above the model = they love him more than the numbers do
         bump = (12 if gap >= 6 else 6 if gap >= 3 else -6 if gap <= -3 else 0) + (10 if k['vol'] >= top and k['vol'] > 0 else 0)
         if _norm(r['name']) in first and len(snaps) > 1:
@@ -109,7 +112,7 @@ def attach_kalshi(rows, date, sport):
 for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB'); attach_kalshi(_rows, _d, 'MLB')
 for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL')
 attach_odds(board['nfl'], today, 'NFL'); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB')
-slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove')}
+slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove', 'sportsbook')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 
 # ---------- templates ----------
@@ -139,7 +142,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.6px;position:sticky;t
 th.on{color:var(--acc)}
 td{padding:7px 8px;border-bottom:1px solid #1a2028;vertical-align:middle;white-space:nowrap}
 tr.row:hover td{background:#181e26}
-td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}td.num .bar{margin-right:6px}th{vertical-align:bottom}
 .nm{font-weight:700}.tm{color:var(--mute);font-size:12px}
 input.odds,input.pub,input.stk{width:60px;background:#0e1115;border:1px solid var(--line);color:var(--ink);padding:4px 6px;border-radius:5px;font:12px var(--mono);text-align:right}input.stk{width:44px}
 span.crowd{font-family:var(--mono);font-size:12px;color:var(--ink);margin-right:6px;white-space:nowrap}span.crowd b{color:var(--acc);font-weight:600}input.pub{width:42px}
@@ -196,7 +199,7 @@ function verdict(r){
   return { edge, heat, v, nasty, imp, live };
 }
 const COLS = {
-  mlb: [['Player','name'],['Slot','slot'],['Game','game'],['vs SP','pitcher'],['Season','hr'],['L15','l15hr'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (Kalshi)','kvol'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']],
+  mlb: [['Player','name'],['Slot','slot'],['Game','game'],['vs SP','pitcher'],['Season','hr'],['L15','l15hr'],['Model %','prob'],['Fair','fair'],['Robinhood','odds'],['Edge','edge'],['Heat','heat'],['Crowd $ (Kalshi)','kvol'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']],
   nfl: [['Player','name'],['Depth','pos'],['Game','game'],['Line','spread'],['Team imp.','implied'],['2025 TD','prevTD'],['Share','share'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (skew)','skew'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']]
 };
 function resultCell(r){
@@ -223,7 +226,7 @@ function render(){
     const tr = document.createElement('tr'); tr.className = 'row';
     const common = `<td>${r.hit === 1 ? '<span class="res y">✓</span> ' : ''}<span class="nm">${r.name}</span> <span class="tm">${r.team}${r.inj ? ' · ' + r.inj : ''}${r.lateLock ? ' · late lock' : ''}</span></td>`;
     const tail = `<td class="num">${(r.prob * 100).toFixed(1)}%</td><td class="num">${fmtOdds(r.fair)}</td>
-      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.bookUsed === 'fliff' ? 'Fliff price' : r.bookUsed === 'underdog' ? 'Underdog price (not on Fliff)' : 'not on Fliff or Underdog - best price elsewhere') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && r.bookUsed === 'underdog' ? '<span class="tm">UD</span>' : r.book && r.bookUsed === 'best' ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
+      <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.bookUsed === 'robinhood' ? 'Robinhood / Kalshi ask, as American odds' + (r.sportsbook ? '; Fliff ' + fmtOdds(r.sportsbook) : '') : r.bookUsed === 'fliff' ? 'Fliff price (no Robinhood market)' : r.bookUsed === 'underdog' ? 'Underdog price (not on Fliff)' : 'best sportsbook price') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && r.bookUsed === 'robinhood' ? '' : r.book && r.bookUsed === 'fliff' ? '<span class="tm">FL</span>' : r.book && r.bookUsed === 'underdog' ? '<span class="tm">UD</span>' : r.book && r.bookUsed === 'best' ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
       <td>${r.kalshi != null ? `<span class="crowd" title="Kalshi: the crowd prices him at ${Math.round(r.kalshi * 100)}% with $${r.kvol.toLocaleString()} traded${r.kmove ? ', moved ' + (r.kmove > 0 ? '+' : '') + r.kmove + ' pts' : ''}">${Math.round(r.kalshi * 100)}% <b>$${r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol}</b>${r.kmove ? `<span class="${r.kmove > 0 ? 'neg' : 'pos'}"> ${r.kmove > 0 ? '▲' : '▼'}</span>` : ''}</span>` : r.skew != null ? `<span class="crowd" title="retail books minus offshore, in implied %: positive = crowd on him">skew ${r.skew > 0 ? '+' : ''}${r.skew}</span>` : ''}<input class="pub" data-k="${key(r)}" data-f="pub" value="${e.pub || ''}" placeholder="%" title="type a real public bet % to override"></td>
@@ -288,7 +291,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 </div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
-<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Book</b> = the Fliff price, auto-filled (UD = Underdog's price because Fliff doesn't list him; * = neither lists him, best price elsewhere shown; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
+<b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Robinhood</b> = the Kalshi/Robinhood ask for his home run market, shown as American odds (a 22¢ contract = +355); hover for Fliff's price. FL = no Robinhood market, Fliff's price shown; UD = Underdog; * = best sportsbook price; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). For MLB the Public column shows <b>Kalshi</b>: the prediction-market crowd's own price for him and how many dollars they've put on it; crowd above the model, heavy volume, or a rising price all raise Heat. Typing a real public-bet % overrides all of it.<br>
 <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Result</b> fills in as games go final and stays on the page with the crowd money, so hits can be checked against where the public was. <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.

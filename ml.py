@@ -33,7 +33,7 @@ def kalshi_games(series):
             if not em: continue
             side = m['ticker'].rsplit('-', 1)[-1]; date = f"20{em.group(1)}-{MON[em.group(2)]:02d}-{em.group(3)}"
             bid, ask = f(m.get('yes_bid_dollars')), f(m.get('yes_ask_dollars')); px = (bid + ask) / 2 if bid and ask else (ask or f(m.get('last_price_dollars')))
-            out.setdefault(m['event_ticker'], {'date': date, 'codes': em.group(5), 'sides': {}})['sides'][canon(side)] = {'yes': round(px, 3), 'vol': round(f(m.get('volume_fp'))), 'oi': round(f(m.get('open_interest_fp'))), 'title': m['title']}
+            out.setdefault(m['event_ticker'], {'date': date, 'codes': em.group(5), 'sides': {}})['sides'][canon(side)] = {'yes': round(px, 3), 'ask': round(ask, 3) if ask else round(px, 3), 'bid': round(bid, 3), 'vol': round(f(m.get('volume_fp'))), 'oi': round(f(m.get('open_interest_fp'))), 'title': m['title']}
         cursor = d.get('cursor')
         if not cursor: break
     return out
@@ -106,7 +106,7 @@ def mlb_rows():
         bk = next((v for (hn, an), v in ml.items() if hn == h['team']['name'] and an == a['team']['name']), {'books': {}})
         fl_h, sharp_h, skew_h = side_prices(bk['books'], 'home'); fl_a, sharp_a, skew_a = side_prices(bk['books'], 'away')
         vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
-        rows.append({'sport': 'MLB', 'gamePk': g['gamePk'], 'date': today, 'time': g['gameDate'], 'state': g['status']['detailedState'], 'venue': g['venue']['name'],
+        rows.append({'sport': 'MLB', 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAwayAsk': ka['ask'] if ka else None, 'gamePk': g['gamePk'], 'date': today, 'time': g['gameDate'], 'state': g['status']['detailedState'], 'venue': g['venue']['name'],
             'home': hab, 'away': aab, 'homeName': h['team']['name'], 'awayName': a['team']['name'], 'homeSP': hp['fullName'] if hp else 'TBD', 'awaySP': ap['fullName'] if ap else 'TBD',
             'homeRec': f"{rec.get(h['team']['id'], {}).get('w', 0)}-{rec.get(h['team']['id'], {}).get('l', 0)}", 'awayRec': f"{rec.get(a['team']['id'], {}).get('w', 0)}-{rec.get(a['team']['id'], {}).get('l', 0)}",
             'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
@@ -140,7 +140,7 @@ def nfl_rows():
         p_rating = p_home
         if sharp_h is not None: p_home = 0.25 * p_rating + 0.75 * sharp_h          # early season: ratings are last year's; anchor to Pinnacle until 2026 games accumulate
         vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
-        rows.append({'sport': 'NFL', 'eventId': e['id'], 'date': wk, 'time': e['date'], 'state': c['status']['type']['name'], 'venue': '',
+        rows.append({'sport': 'NFL', 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAwayAsk': ka['ask'] if ka else None, 'eventId': e['id'], 'date': wk, 'time': e['date'], 'state': c['status']['type']['name'], 'venue': '',
             'home': hab, 'away': aab, 'homeName': home['team']['displayName'], 'awayName': away['team']['displayName'], 'homeSP': '', 'awaySP': '', 'homeRec': '', 'awayRec': '',
             'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
             'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'skewHome': skew_h,

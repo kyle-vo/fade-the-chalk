@@ -6,6 +6,7 @@ jd = lambda o: json.dumps(o).replace('</', '<' + chr(92) + '/')
 src = open(os.path.join(HERE, 'build_site.py'), encoding='utf-8').read()
 CSS = re.search(r'CSS = r"""(.*?)"""', src, re.S).group(1); FONTS = re.search(r"FONTS = '(.*?)'", src).group(1)
 def implied(o): return (-o) / (-o + 100) if o < 0 else 100 / (o + 100)
+def american(p): p = min(max(p, .01), .99); return round(-100 * p / (1 - p)) if p >= .5 else round(100 * (1 - p) / p)
 
 # ---- assemble every locked moneyline day/week with results ----
 boards = {}
@@ -15,10 +16,14 @@ for lockf in sorted(glob.glob(os.path.join(BT, 'ml_*.json'))):
         k = str(r.get('gamePk') or r.get('eventId')); g = res.get(k)
         r['homeWin'] = g['homeWin'] if g else None; r['score'] = g['score'] if g else None
         # pick side = larger model edge vs Fliff (needs a Fliff price); fall back to model favorite
-        eh = r['model'] - implied(r['fliffHome']) if r.get('fliffHome') else None; ea = (1 - r['model']) - implied(r['fliffAway']) if r.get('fliffAway') else None
+        # Robinhood = Kalshi. Price you pay = the ask; a contract pays $1. ask 0.40 -> +150.
+        ah = r.get('kalshiAsk') or (r['kalshi'] + 0.01 if r.get('kalshi') is not None else None); aa = r.get('kalshiAwayAsk') or (r['kalshiAway'] + 0.01 if r.get('kalshiAway') is not None else None)
+        r['rhHome'] = american(ah) if ah and 0 < ah < 1 else None; r['rhAway'] = american(aa) if aa and 0 < aa < 1 else None
+        eh = r['model'] - ah if ah else None; ea = (1 - r['model']) - aa if aa else None
         if eh is None and ea is None: r['pick'] = 'home' if r['model'] >= .5 else 'away'; r['edge'] = None
-        else: r['pick'] = 'home' if (eh or -9) >= (ea or -9) else 'away'; r['edge'] = round(max(eh or -9, ea or -9) * 100, 1)
-        r['pickOdds'] = r.get('fliffHome') if r['pick'] == 'home' else r.get('fliffAway')
+        else: r['pick'] = 'home' if (eh if eh is not None else -9) >= (ea if ea is not None else -9) else 'away'; r['edge'] = round(max(eh if eh is not None else -9, ea if ea is not None else -9) * 100, 1)
+        r['pickOdds'] = r.get('rhHome') if r['pick'] == 'home' else r.get('rhAway')
+        r['pickFliff'] = r.get('fliffHome') if r['pick'] == 'home' else r.get('fliffAway')
         r['pickProb'] = r['model'] if r['pick'] == 'home' else 1 - r['model']
         r['pickHit'] = None if r['homeWin'] is None else (1 if (r['homeWin'] == 1) == (r['pick'] == 'home') else 0)
     boards[tag] = rows
@@ -42,8 +47,8 @@ function verdict(r){
   const pub = r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);   // share of Kalshi money on the pick side
   const kal = r.kalshi == null ? null : (r.pick === 'home' ? r.kalshi : r.kalshiAway ?? 1 - r.kalshi);
   let v = 'PASS';
-  if (r.edge != null && r.edge >= 3 && (pub == null || pub < .6)) v = 'SLEEPER';
-  else if (r.edge != null && r.edge >= 3) v = 'VALUE';
+  if (r.edge != null && r.edge >= 2 && (pub == null || pub < .6)) v = 'SLEEPER';
+  else if (r.edge != null && r.edge >= 2) v = 'VALUE';
   else if (pub != null && pub >= .65 && r.edge != null && r.edge < 0) v = 'FADE';
   else if (r.edge != null && r.edge < -3) v = 'TRAP';
   return { pub, kal, v };
@@ -54,7 +59,7 @@ function render(){
   let list = rows.filter(x => (!only || ['SLEEPER', 'VALUE', 'FADE'].includes(x.v)) && (!hide || x.r.homeWin == null || tab === 'mlb'));
   const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: x.r.kvol || 0, pub: x.pub ?? -1, time: x.r.time, skew: x.r.skewHome ?? -99, v: x.v })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
-  const cols = [['Game', 'time'], ['Pick', 'model'], ['Model', 'model'], ['Fliff', 'edge'], ['Edge', 'edge'], ['Kalshi / Robinhood', 'kvol'], ['Public $ on pick', 'pub'], ['Pinnacle', 'skew'], ['Skew', 'skew'], ['Verdict', 'v'], ['Bet', 'v'], ['Result', 'v']];
+  const cols = [['Game', 'time'], ['Pick', 'model'], ['Model', 'model'], ['Robinhood', 'edge'], ['Edge', 'edge'], ['Public $ on pick', 'pub'], ['$ traded', 'kvol'], ['Pinnacle', 'skew'], ['Skew', 'skew'], ['Fliff', 'v'], ['Verdict', 'v'], ['Bet', 'v'], ['Result', 'v']];
   $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''}">${l}</th>`).join('') + '</tr>';
   const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0 };
   for (const x of list) { const r = x.r, e = store[key(r)] || {};
@@ -67,18 +72,19 @@ function render(){
     tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when}${r.homeSP ? ' · ' + r.awaySP + ' / ' + r.homeSP : ''}${r.homeRec ? ' · ' + r.awayRec + ' / ' + r.homeRec : ''}</span></td>
       <td><span class="nm">${pickTeam}</span></td>
       <td class="num">${pct(r.pickProb)}</td>
-      <td class="num">${fmt(r.pickOdds)}${r.pickOdds == null ? '' : ' <span class="tm">(' + pct(implied(r.pickOdds)) + ')</span>'}</td>
+      <td class="num">${r.pickOdds == null ? '—' : Math.round(implied(r.pickOdds) * 100) + '¢'} <span class="tm">${fmt(r.pickOdds)}</span></td>
       <td class="num ${r.edge == null ? '' : r.edge >= 0 ? 'pos' : 'neg'}">${r.edge == null ? '—' : (r.edge >= 0 ? '+' : '') + r.edge.toFixed(1)}</td>
-      <td><span class="crowd">${pct(x.kal)} <b>$${r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol}</b></span></td>
-      <td><span class="bar" style="width:70px"><i style="width:${x.pub == null ? 0 : x.pub * 100}%"></i></span> <span class="tm">${pct(x.pub)}</span></td>
+      <td class="num"><span class="bar"><i style="width:${x.pub == null ? 0 : x.pub * 100}%"></i></span> ${pct(x.pub)}</td>
+      <td class="num">$${r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol}</td>
       <td class="num">${pct(sharp)}</td>
       <td class="num ${skew == null ? '' : skew > 0 ? 'neg' : 'pos'}">${skew == null ? '—' : (skew > 0 ? '+' : '') + skew.toFixed(1)}</td>
+      <td class="num tm">${fmt(r.pickFliff)}</td>
       <td><span class="v ${x.v}">${x.v}</span></td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" ${e.on ? 'checked' : ''}> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${r.pickHit == null ? '<span class="res n">—</span>' : r.pickHit ? '<span class="res y">✓ ' + pickTeam + '</span>' : '<span class="res n">✗ ' + other + '</span>'}${r.score ? ' <span class="tm">' + r.score + '</span>' : ''}</td>`;
     const det = document.createElement('tr'); det.className = 'det'; det.hidden = true;
     const bk = r.books ? Object.entries(r.books).map(([k, v]) => `<span class="f">${k} ${fmt(v.away)}/${fmt(v.home)}</span>`).join('') : '';
-    det.innerHTML = `<td colspan="12">${(r.notes || []).filter(Boolean).join(' &nbsp;|&nbsp; ')}<br>Kalshi: ${r.home} ${pct(r.kalshi)} ($${(r.kvolHome || 0).toLocaleString()}) · ${r.away} ${pct(r.kalshiAway)} ($${(r.kvolAway || 0).toLocaleString()})<br>${bk}</td>`;
+    det.innerHTML = `<td colspan="13">${(r.notes || []).filter(Boolean).join(' &nbsp;|&nbsp; ')}<br>Kalshi: ${r.home} ${pct(r.kalshi)} ($${(r.kvolHome || 0).toLocaleString()}) · ${r.away} ${pct(r.kalshiAway)} ($${(r.kvolAway || 0).toLocaleString()})<br>${bk}</td>`;
     tr.addEventListener('click', ev => { if (ev.target.tagName !== 'INPUT') det.hidden = !det.hidden; });
     tb.appendChild(tr); tb.appendChild(det); }
   $('#kpi').innerHTML = `<div>games<b>${list.length}</b></div><div>plays<b>${n.s}</b></div><div>fades<b>${n.f}</b></div>` + (n.g ? `<div>graded<b>${n.g}</b></div><div>model picks<b>${n.hit}-${n.g - n.hit}</b></div><div>expected<b>${n.exp.toFixed(1)}</b></div>` : '');
@@ -93,31 +99,31 @@ const G = GRADED; const brier = (ps) => ps.length ? ps.reduce((s, [p, y]) => s +
 const bm = brier(G.map(r => [r.model, r.homeWin])), bk = brier(G.filter(r => r.kalshi != null).map(r => [r.kalshi, r.homeWin])), bs = brier(G.filter(r => r.sharpHome != null).map(r => [r.sharpHome, r.homeWin]));
 const pay = (o, y) => y ? (o > 0 ? o / 100 : 100 / -o) : -1;
 const strat = {
-  'Model pick, edge ≥ 3 at Fliff': G.filter(r => r.edge != null && r.edge >= 3),
-  'Model pick, every game with a Fliff price': G.filter(r => r.pickOdds != null),
+  'Model pick, edge ≥ 2 at Robinhood': G.filter(r => r.edge != null && r.edge >= 2),
+  'Model pick, every game with a Robinhood price': G.filter(r => r.pickOdds != null),
   'Fade the public (65%+ of Kalshi $ on the other side)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? 1 - r.pubHome : r.pubHome) >= .65)),
   'Ride the public (65%+ of Kalshi $ on the pick)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? r.pubHome : 1 - r.pubHome) >= .65)),
 };
 let sh = '';
 for (const [name, b] of Object.entries(strat)) { const w = b.filter(r => r.pickHit).length, pnl = b.reduce((s, r) => s + pay(r.pickOdds, r.pickHit), 0); sh += `<tr><td class="nm">${name}</td><td class="num">${b.length}</td><td class="num">${w}-${b.length - w}</td><td class="num ${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(1)}u</td></tr>`; }
 $('#score').innerHTML = `<div class="kpi"><div>graded games<b>${G.length}</b></div><div>model Brier<b>${bm == null ? '—' : bm.toFixed(4)}</b></div><div>Kalshi Brier<b>${bk == null ? '—' : bk.toFixed(4)}</b></div><div>Pinnacle Brier<b>${bs == null ? '—' : bs.toFixed(4)}</b></div></div>
-  <div class="wrap"><table><thead><tr><th>Strategy (flat 1u at Fliff)</th><th>Bets</th><th>Record</th><th>Units</th></tr></thead><tbody>${sh}</tbody></table></div>
+  <div class="wrap"><table><thead><tr><th>Strategy (flat 1u at Robinhood)</th><th>Bets</th><th>Record</th><th>Units</th></tr></thead><tbody>${sh}</tbody></table></div>
   <p class="note">Brier: lower is better, 0.25 is a coin flip. Who's closest to the truth, the model, the Kalshi crowd, or the sharpest book? Public $ = share of Kalshi/Robinhood dollars on that side before kickoff.</p>`;
 render();
 """
 
 def page():
-    sub = f"moneyline · model win% vs Kalshi/Robinhood vs Fliff vs Pinnacle · public money split · built {datetime.datetime.now().isoformat(timespec='minutes')}"
+    sub = f"moneyline · model win% vs Robinhood (Kalshi) vs Pinnacle · public money split · built {datetime.datetime.now().isoformat(timespec='minutes')}"
     return f"""{head('Fade The Chalk', sub)}
 <div class="tabs"><div class="tab on" data-t="mlb">MLB {today or ''}</div><div class="tab" data-t="nfl">NFL {week.replace('_', ' ') if week else ''}</div></div>
 <div class="panel">
 <div class="kpi" id="kpi"></div>
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> only SLEEPER / VALUE / FADE</label><label><input type="checkbox" id="hidedone"> hide finished</label><span class="tm">click a column to sort · click a row for the reasoning and every book's price</span></div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-<div class="legend"><b>Pick</b> = the side the model likes against Fliff's price. <b>Model</b> = win chance for that side. <b>Edge</b> = model minus Fliff's implied chance, in points; Fliff's cut on a moneyline is ~2-3 points.
-<b>Kalshi / Robinhood</b> = the prediction-market price for that side and total dollars traded on the game (Robinhood's contracts are Kalshi's). <b>Public $ on pick</b> = share of that money on the pick side: over 65% is a crowded side.
+<div class="legend"><b>Pick</b> = the side the model likes against Robinhood's price. <b>Model</b> = win chance for that side. <b>Robinhood</b> = what a $1 contract on that side costs right now (the ask), with the equivalent American odds; Robinhood's contracts are Kalshi's. <b>Edge</b> = model minus that price, in points; your fee is about a penny a contract, so +2 is real.
+<b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ traded</b> = total on the game. <b>Fliff</b> = the sportsbook price for reference.
 <b>Pinnacle</b> = the sharpest book's de-vigged chance. <b>Skew</b> = retail books vs Pinnacle for the pick side: positive = retail shading toward it = public money.<br>
-<b>SLEEPER</b> = edge ≥ 3 and under 60% of the money on it. <b>VALUE</b> = edge ≥ 3, crowded. <b>FADE</b> = 65%+ of the money on the other side and the model disagrees. <b>TRAP</b> = model says the price is 3+ points too short.
+<b>SLEEPER</b> = edge ≥ 2 and under 60% of the money on it. <b>VALUE</b> = edge ≥ 2, crowded. <b>FADE</b> = 65%+ of the money on the other side and the model disagrees. <b>TRAP</b> = model says the price is 3+ points too short.
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>
