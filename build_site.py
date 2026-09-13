@@ -109,9 +109,40 @@ def attach_kalshi(rows, date, sport):
             km = (k['yes'] - first[_norm(r['name'])]['yes']) * 100; r['kmove'] = round(km, 1); bump += 8 if km >= 3 else -5 if km <= -3 else 0
         r['heat'] = round(min(100, max(0, r['heat'] + bump)))
         r.setdefault('notes', []).append(f"Kalshi: crowd says {k['yes'] * 100:.0f}% (model {r['prob'] * 100:.0f}%), ${k['vol']:,} traded" + (f", moved {r['kmove']:+.1f} pts" if 'kmove' in r else ''))
+def attach_kalshi_nfl(rows):
+    """NFL rows span several dates in a week; merge every kalshi_nfl_<date>.json whose date falls in the week, per-player pre-game price."""
+    import glob as _g
+    files = sorted(_g.glob(os.path.join(BT, 'kalshi_nfl_*.json')))
+    if not files or not rows: return
+    times = [r['time'][:10] for r in rows if r.get('time')]
+    lo, hi = min(times), max(times)
+    snaps = []
+    for fp in files:
+        d = os.path.basename(fp)[11:21]
+        if lo[:10] <= d <= hi[:10] or (datetime.date.fromisoformat(lo) - datetime.timedelta(days=1)).isoformat() <= d <= (datetime.date.fromisoformat(hi) + datetime.timedelta(days=1)).isoformat():
+            snaps += J(fp)
+    if not snaps: return
+    snaps.sort(key=lambda sn: sn['at'])
+    allv = sorted(v['vol'] for sn in snaps for v in sn['markets'].values()); top = allv[int(len(allv) * 0.75)] if allv else 0
+    for r in rows:
+        ms, first = {}, {}
+        for sn in _pregame(snaps, r):
+            for nm, m in sn['markets'].items(): first.setdefault(nm, m); ms[nm] = m
+        k = ms.get(_norm(r['name']))
+        if not k: continue
+        r['kalshi'] = k['yes']; r['kvol'] = k['vol']; r['koi'] = k['oi']
+        ask = k.get('ask') or (k['yes'] + 0.01)
+        if 0 < ask < 1:
+            r['sportsbook'] = r.get('book'); r['book'] = round(-100 * ask / (1 - ask)) if ask >= .5 else round(100 * (1 - ask) / ask); r['bookUsed'] = 'robinhood'; r['onFliff'] = False
+        gap = (k['yes'] - r['prob']) * 100
+        bump = (12 if gap >= 6 else 6 if gap >= 3 else -6 if gap <= -3 else 0) + (10 if k['vol'] >= top and k['vol'] > 0 else 0)
+        if _norm(r['name']) in first and len(snaps) > 1:
+            km = (k['yes'] - first[_norm(r['name'])]['yes']) * 100; r['kmove'] = round(km, 1); bump += 8 if km >= 3 else -5 if km <= -3 else 0
+        r['heat'] = round(min(100, max(0, r['heat'] + bump)))
+        r.setdefault('notes', []).append(f"Kalshi/Robinhood: crowd says {k['yes'] * 100:.0f}% (model {r['prob'] * 100:.0f}%), ${k['vol']:,} traded" + (f", moved {r['kmove']:+.1f} pts" if 'kmove' in r else ''))
 for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB'); attach_kalshi(_rows, _d, 'MLB')
-for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL')
-attach_odds(board['nfl'], today, 'NFL'); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB')
+for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL'); attach_kalshi_nfl(_rows)
+attach_odds(board['nfl'], today, 'NFL'); attach_kalshi_nfl(board['nfl']); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB')
 slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove', 'sportsbook')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 
@@ -200,7 +231,7 @@ function verdict(r){
 }
 const COLS = {
   mlb: [['Player','name'],['Slot','slot'],['Game','game'],['vs SP','pitcher'],['Season','hr'],['L15','l15hr'],['Model %','prob'],['Fair','fair'],['Robinhood','odds'],['Edge','edge'],['Heat','heat'],['Crowd $ (Kalshi)','kvol'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']],
-  nfl: [['Player','name'],['Depth','pos'],['Game','game'],['Line','spread'],['Team imp.','implied'],['2025 TD','prevTD'],['Share','share'],['Model %','prob'],['Fair','fair'],['Book','odds'],['Edge','edge'],['Heat','heat'],['Crowd (skew)','skew'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']]
+  nfl: [['Player','name'],['Depth','pos'],['Game','game'],['Line','spread'],['Team imp.','implied'],['2025 TD','prevTD'],['Share','share'],['Model %','prob'],['Fair','fair'],['Robinhood','odds'],['Edge','edge'],['Heat','heat'],['Crowd $ (Kalshi)','kvol'],['Verdict','v'],['Nasty','nasty'],['Bet','bet'],['Result','hit']]
 };
 function resultCell(r){
   if (r.dnp) return '<span class="res d">DNP</span>';

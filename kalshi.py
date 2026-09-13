@@ -1,6 +1,6 @@
 """Kalshi prediction-market prices for player props = the public's opinion with money behind it.
 No key needed (public read API). Writes data/kalshi.json and appends a snapshot to backtest/kalshi_<date>.json.
-MLB: series KXMLBHR   ('<Player>: 1+ home runs?')      NFL: series KXNFLGAMETD when it has open markets."""
+MLB: series KXMLBHR   ('<Player>: 1+ home runs?')      NFL: series KXNFLTD ('<Player>: 1+ touchdowns') and KXNFLANYTD."""
 import os, re, json, datetime, unicodedata, requests
 HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, 'data'); BT = os.path.join(HERE, 'backtest')
 API = "https://api.elections.kalshi.com/trade-api/v2/markets"
@@ -33,7 +33,9 @@ def pull(series, want=re.compile(r'^(.*?): 1\+ (home run|touchdown)')):
     return out
 
 if __name__ == '__main__':
-    res = {'_at': datetime.datetime.now().isoformat(timespec='minutes'), 'MLB': pull('KXMLBHR'), 'NFL': pull('KXNFLGAMETD')}
+    nfl = pull('KXNFLTD')
+    for d, ms in pull('KXNFLANYTD').items(): nfl.setdefault(d, {}).update(ms)
+    res = {'_at': datetime.datetime.now().isoformat(timespec='minutes'), 'MLB': pull('KXMLBHR'), 'NFL': nfl}
     for sp in ('MLB', 'NFL'):
         for date, ms in sorted(res[sp].items()): print(f"  Kalshi {sp} {date}: {len(ms)} players, ${sum(v['vol'] for v in ms.values()):,} traded")
     json.dump(res, open(os.path.join(DATA, 'kalshi.json'), 'w', encoding='utf-8'))
