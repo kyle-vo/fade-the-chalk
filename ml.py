@@ -124,7 +124,23 @@ def nfl_rows():
             ab = e['team']['abbreviation']; d = {s['name']: f(s.get('value')) for s in e['stats']}
             gp = d.get('gamesPlayed') or (d.get('wins', 0) + d.get('losses', 0) + d.get('ties', 0)) or 17
             pf[ab] = ((d.get('pointsFor', 0) - d.get('pointsAgainst', 0)) / gp) if gp else 0
-    rating = {ab: (m * 17) / (17 + 8) for ab, m in pf.items()}                      # regress point diff/game with 8 games of 0
+    prior = {ab: (m * 17) / (17 + 8) for ab, m in pf.items()}                       # 2025 point diff/game, regressed
+    # 2026 results so far: every completed regular-season game this season
+    cur = {ab: [0.0, 0] for ab in prior}
+    for wk in range(1, sb['week']['number'] + 1):
+        try: wsb = get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", week=wk, seasontype=2, dates=sb['season']['year'])
+        except Exception: continue
+        for e in wsb.get('events', []):
+            c = e['competitions'][0]
+            if not c['status']['type'].get('completed'): continue
+            hm = next(x for x in c['competitors'] if x['homeAway'] == 'home'); aw = next(x for x in c['competitors'] if x['homeAway'] == 'away')
+            d = f(hm.get('score')) - f(aw.get('score')) - 2.0                         # strip home field
+            for ab, sign in ((hm['team']['abbreviation'], 1), (aw['team']['abbreviation'], -1)):
+                if ab in cur: cur[ab][0] += sign * d; cur[ab][1] += 1
+    # rating = 2026 point diff with the 2025 rating as a 6-game prior; ratings weight in the blend grows with 2026 games played
+    rating = {ab: (cur[ab][0] + prior.get(ab, 0) * 6) / (cur[ab][1] + 6) for ab in prior}
+    games_played = sum(v[1] for v in cur.values()) / max(1, len(cur))
+    W_RATING = min(0.5, 0.05 + 0.06 * games_played)                                   # week 1: 5% ratings / 95% Pinnacle; ~week 8: 50/50
     kal = kalshi_games('KXNFLGAME'); ml = book_ml('americanfootball_nfl')
     wk = f"{sb['season']['year']}_wk{sb['week']['number']}"; rows = []
     for e in sb['events']:
@@ -138,13 +154,13 @@ def nfl_rows():
         bk = next((v for (hn, an), v in ml.items() if hn == home['team']['displayName'] and an == away['team']['displayName']), {'books': {}})
         fl_h, sharp_h, skew_h = side_prices(bk['books'], 'home'); fl_a, _, _ = side_prices(bk['books'], 'away')
         p_rating = p_home
-        if sharp_h is not None: p_home = 0.25 * p_rating + 0.75 * sharp_h          # early season: ratings are last year's; anchor to Pinnacle until 2026 games accumulate
+        if sharp_h is not None: p_home = W_RATING * p_rating + (1 - W_RATING) * sharp_h   # ratings earn weight as 2026 games accumulate
         vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
         rows.append({'sport': 'NFL', 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAwayAsk': ka['ask'] if ka else None, 'eventId': e['id'], 'date': wk, 'time': e['date'], 'state': c['status']['type']['name'], 'venue': '',
             'home': hab, 'away': aab, 'homeName': home['team']['displayName'], 'awayName': away['team']['displayName'], 'homeSP': '', 'awaySP': '', 'homeRec': '', 'awayRec': '',
             'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
             'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'skewHome': skew_h,
-            'books': bk['books'], 'notes': [f"2025 point diff ratings: {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> model spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '', f"ratings alone said {p_rating * 100:.0f}% home; blended 25/75 with Pinnacle" if sharp_h is not None else '']})
+            'books': bk['books'], 'notes': [f"ratings (2026 results + 2025 prior): {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> rating spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '', f"ratings alone said {p_rating * 100:.0f}% home; weight {W_RATING:.0%} ratings / {1 - W_RATING:.0%} Pinnacle ({games_played:.1f} games of 2026 data per team)" if sharp_h is not None else '']})
     return rows
 
 # ---------------- lock + grade ----------------
