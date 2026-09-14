@@ -201,7 +201,7 @@ def nfl():
                 else:
                     share = prior * 0.25
                 if inj == 'Questionable': share *= 0.85
-                if pos == 'QB': share = min(share, 0.11)                      # a QB rarely owns more than ~11% of his team's TDs (rushing only)
+                if pos == 'QB': share = min(share, 0.08)                      # a QB rarely owns more than ~11% of his team's TDs (rushing only)
                 dc = depth.get(team, {}).get(r['id'])
                 if depth.get(team):                                   # chart exists for this team
                     if dc: share *= DEPTH_MULT.get(dc['pos'], DEPTH_MULT['WR']).get(min(dc['rank'], 3), 0.1); r['depth'] = f"{dc['pos']}{dc['rank']}"
