@@ -84,8 +84,9 @@ def fetch_mlb():
 # ---------------- NFL ----------------
 def fetch_nfl():
     print("[NFL]")
-    sb = get(f"{ESPN}/football/nfl/scoreboard")
-    save('nfl_scoreboard.json', sb)
+    wk = os.environ.get('NFL_WEEK')          # NFL_WEEK=2 pulls a specific week; default = ESPN's current week
+    sb = get(f"{ESPN}/football/nfl/scoreboard", **({'week': int(wk), 'seasontype': 2, 'dates': datetime.date.today().year} if wk else {}))
+    save('nfl_scoreboard.json', sb); print(f"  NFL week {sb['week']['number']}: {len(sb['events'])} games")
     season_prev = sb['season']['year'] - 1
     stats = {}
     for cat, sort in (('scoring', 'scoring.totalTouchdowns:desc'),):

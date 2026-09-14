@@ -2,10 +2,11 @@
 # Usage:  .\run.ps1              today's MLB slate + current NFL week
 #         .\run.ps1 2026-09-12   a specific MLB date
 #         .\run.ps1 -NoPush      build locally only
-param([string]$Date = "", [switch]$NoPush)
+param([string]$Date = "", [int]$Week = 0, [switch]$NoPush)
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 if ($Date) { $env:EDGE_DATE = $Date } else { Remove-Item Env:EDGE_DATE -ErrorAction SilentlyContinue }
+if ($Week -gt 0) { $env:NFL_WEEK = "$Week" } else { Remove-Item Env:NFL_WEEK -ErrorAction SilentlyContinue }
 python -X utf8 fetch_data.py all
 python -X utf8 model.py
 python -X utf8 odds.py
