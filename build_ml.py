@@ -22,7 +22,7 @@ for lockf in sorted(glob.glob(os.path.join(BT, 'ml_*.json'))):
         eh = r['model'] - ah if ah else None; ea = (1 - r['model']) - aa if aa else None
         if eh is None and ea is None: r['pick'] = 'home' if r['model'] >= .5 else 'away'; r['edge'] = None
         else: r['pick'] = 'home' if (eh if eh is not None else -9) >= (ea if ea is not None else -9) else 'away'; r['edge'] = round(max(eh if eh is not None else -9, ea if ea is not None else -9) * 100, 1)
-        r['pickOdds'] = r.get('rhHome') if r['pick'] == 'home' else r.get('rhAway')
+        r['pickOdds'] = r.get('rhHome') if r['pick'] == 'home' else r.get('rhAway'); r['oppOdds'] = r.get('rhAway') if r['pick'] == 'home' else r.get('rhHome')
         r['pickFliff'] = r.get('fliffHome') if r['pick'] == 'home' else r.get('fliffAway')
         r['pickProb'] = r['model'] if r['pick'] == 'home' else 1 - r['model']
         r['pickHit'] = None if r['homeWin'] is None else (1 if (r['homeWin'] == 1) == (r['pick'] == 'home') else 0)
@@ -118,6 +118,8 @@ const strat = {
   'Model favorite only (pick over 50%)': G.filter(r => r.pickOdds != null && isModelFav(r)),
   'STRONG BET only (model fav, public on other side)': G.filter(r => r.pickOdds != null && isModelFav(r) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
   'Model underdog picks (what SKIP avoids)': G.filter(r => r.pickOdds != null && !isModelFav(r)),
+  'FADE the SKIPs: bet the other team at its Robinhood price': G.filter(r => r.oppOdds != null && !isModelFav(r)).map(r => ({ ...r, pickOdds: r.oppOdds, pickHit: 1 - r.pickHit })),
+  'BET + STRONG on model side, FADE on SKIP (combined)': G.filter(r => r.pickOdds != null).map(r => isModelFav(r) ? r : (r.oppOdds != null ? { ...r, pickOdds: r.oppOdds, pickHit: 1 - r.pickHit } : r)),
   'Market favorite (Robinhood under 50¢ on the other side)': G.filter(r => r.pickOdds != null && isMarketFav(r)),
   'Model pick, edge ≥ 2 at Robinhood': G.filter(r => r.edge != null && r.edge >= 2),
   'Model pick, every game with a Robinhood price': G.filter(r => r.pickOdds != null),
@@ -148,7 +150,7 @@ There are three different "favorites" on every game and they do not agree: the s
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>
-<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'pickHit', 'pick', 'pubHome', 'pickProb')} for r in graded])};{JS}</script>"""
+<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'oppOdds', 'pickHit', 'pick', 'pubHome', 'pickProb')} for r in graded])};{JS}</script>"""
 
 open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='\n').write(page())
 
