@@ -154,13 +154,19 @@ def nfl_rows():
         bk = next((v for (hn, an), v in ml.items() if hn == home['team']['displayName'] and an == away['team']['displayName']), {'books': {}})
         fl_h, sharp_h, skew_h = side_prices(bk['books'], 'home'); fl_a, _, _ = side_prices(bk['books'], 'away')
         p_rating = p_home
-        if sharp_h is not None: p_home = W_RATING * p_rating + (1 - W_RATING) * sharp_h   # ratings earn weight as 2026 games accumulate
+        anchor = sharp_h
+        if anchor is None and vegas:                                                 # no Pinnacle yet: anchor to the posted spread instead of raw ratings
+            m_ = re.match(r'([A-Z]+)\s*([-+]?\d+(?:\.\d+)?)', vegas)
+            if m_:
+                sp = f(m_.group(2)); sp = sp if m_.group(1) == hab else -sp             # home spread, negative = home favored
+                anchor = 0.5 * (1 + math.erf(-sp / (13.5 * math.sqrt(2))))
+        if anchor is not None: p_home = W_RATING * p_rating + (1 - W_RATING) * anchor   # ratings earn weight as 2026 games accumulate
         vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
         rows.append({'sport': 'NFL', 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAwayAsk': ka['ask'] if ka else None, 'eventId': e['id'], 'date': wk, 'time': e['date'], 'state': c['status']['type']['name'], 'venue': '',
             'home': hab, 'away': aab, 'homeName': home['team']['displayName'], 'awayName': away['team']['displayName'], 'homeSP': '', 'awaySP': '', 'homeRec': '', 'awayRec': '',
             'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
             'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'skewHome': skew_h,
-            'books': bk['books'], 'notes': [f"ratings (2026 results + 2025 prior): {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> rating spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '', f"ratings alone said {p_rating * 100:.0f}% home; weight {W_RATING:.0%} ratings / {1 - W_RATING:.0%} Pinnacle ({games_played:.1f} games of 2026 data per team)" if sharp_h is not None else '']})
+            'books': bk['books'], 'notes': [f"ratings (2026 results + 2025 prior): {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> rating spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '', f"ratings alone said {p_rating * 100:.0f}% home; weight {W_RATING:.0%} ratings / {1 - W_RATING:.0%} {'Pinnacle' if sharp_h is not None else 'Vegas spread'} ({games_played:.1f} games of 2026 data per team)" if anchor is not None else 'no market anchor yet - ratings only']})
     return rows
 
 # ---------------- lock + grade ----------------
