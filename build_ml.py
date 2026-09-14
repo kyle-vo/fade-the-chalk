@@ -59,7 +59,7 @@ function verdict(r){
   const isFav = r.pickProb >= 0.5;
   let v = 'PASS';
   if (r.pickOdds != null) {
-    if (!isFav) v = 'SKIP (underdog)';
+    if (!isFav) v = 'SKIP (model dog)';
     else if (pub != null && pub < 0.5) v = 'STRONG BET';           // favorite, and the public hasn't caught on
     else v = 'BET';                                                 // favorite, public already on it - still the better side, just less edge
   }
@@ -77,7 +77,7 @@ function render(){
   $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''} ${R.has(l) ? 'r' : ''}">${l}</th>`).join('') + '</tr>';
   const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0, units: 0, staked: 0, take: 0, gave: 0 };
   for (const x of list) { const r = x.r, e = store[key(r)] || {};
-    if (x.v === 'BET' || x.v === 'STRONG BET') n.s++; if (x.v === 'SKIP (underdog)') n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; if (r.bookGave) n.gave += r.bookGave; }
+    if (x.v === 'BET' || x.v === 'STRONG BET') n.s++; if (x.v === 'SKIP (model dog)') n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; if (r.bookGave) n.gave += r.bookGave; }
     const when = new Date(r.time).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     const pickTeam = r.pick === 'home' ? r.home : r.away, other = r.pick === 'home' ? r.away : r.home;
     const sharp = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome);
@@ -113,7 +113,12 @@ document.querySelectorAll('nav a.weekl').forEach(a => a.addEventListener('click'
 const G = GRADED; const brier = (ps) => ps.length ? ps.reduce((s, [p, y]) => s + (p - y) ** 2, 0) / ps.length : null;
 const bm = brier(G.map(r => [r.model, r.homeWin])), bk = brier(G.filter(r => r.kalshi != null).map(r => [r.kalshi, r.homeWin])), bs = brier(G.filter(r => r.sharpHome != null).map(r => [r.sharpHome, r.homeWin]));
 const pay = (o, y) => y ? (o > 0 ? o / 100 : 100 / -o) : -1;
+const isModelFav = r => r.pickProb >= 0.5, isMarketFav = r => r.pickOdds != null && r.pickOdds < 0, pubOnPick = r => r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
 const strat = {
+  'Model favorite only (pick over 50%)': G.filter(r => r.pickOdds != null && isModelFav(r)),
+  'STRONG BET only (model fav, public on other side)': G.filter(r => r.pickOdds != null && isModelFav(r) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
+  'Model underdog picks (what SKIP avoids)': G.filter(r => r.pickOdds != null && !isModelFav(r)),
+  'Market favorite (Robinhood under 50¢ on the other side)': G.filter(r => r.pickOdds != null && isMarketFav(r)),
   'Model pick, edge ≥ 2 at Robinhood': G.filter(r => r.edge != null && r.edge >= 2),
   'Model pick, every game with a Robinhood price': G.filter(r => r.pickOdds != null),
   'Fade the public (65%+ of Kalshi $ on the other side)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? 1 - r.pubHome : r.pubHome) >= .65)),
@@ -138,11 +143,12 @@ def page():
 <div class="legend"><b>Pick</b> = the side the model likes against Robinhood's price. <b>Model</b> = win chance for that side. <b>Robinhood</b> = what a $1 contract on that side costs right now (the ask), with the equivalent American odds; Robinhood's contracts are Kalshi's. <b>Edge</b> = model minus that price, in points; your fee is about a penny a contract, so +2 is real.
 <b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ traded</b> = total on the game.
 <b>Book take</b> = once a game is final, the losing side's share of the Kalshi/Robinhood money on it (what the winners took from the losers); the tile sums it for the slate. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Book gave</b> = the winning side's share, the money the public got paid on. <b>Pinnacle</b> = the sharpest book's de-vigged chance.<br>
-<b>STRONG BET</b> = the model's pick is the favorite (over 50%) and the public hasn't piled on yet. <b>BET</b> = the pick is still the favorite, just already backed by the crowd - the weaker version of the same play. <b>SKIP (underdog)</b> = the model's pick is the underdog; in 28 graded games this weekend, favorite picks went 9-5 for +1.3 units and underdog picks went 4-10 for -1.3 units, so the rule is simple: only bet the favorite side.
+There are three different "favorites" on every game and they do not agree: the side the <b>model</b> has over 50%, the side <b>Robinhood</b> prices over 50¢, and the side the <b>public's money</b> is on. Only the first one predicts anything. Weekend 1, 28 graded games at Robinhood prices: model's side over 50% went 9-5 (+1.3u); the market's priced favorite went 7-5 but <i>lost</i> 1.0u (short prices); the public's side went 8-8 and lost 2.0u.<br>
+<b>STRONG BET</b> = the model has the pick over 50% and the public's money is on the other team (5-7 but +2.0u: these are model favorites you get at underdog prices). <b>BET</b> = model over 50% and the public already agrees (8-8, -2.0u: right side, but you pay the crowd's price). <b>SKIP (model dog)</b> = the model has its own pick under 50%; those went 4-10 (-1.3u). Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>
-<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'pickHit', 'pick', 'pubHome')} for r in graded])};{JS}</script>"""
+<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'pickHit', 'pick', 'pubHome', 'pickProb')} for r in graded])};{JS}</script>"""
 
 open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='\n').write(page())
 
