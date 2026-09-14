@@ -198,7 +198,30 @@ def grade():
                     res[k] = {'homeWin': 1 if hm.get('winner') else 0, 'score': f"{aw.get('score')}-{hm.get('score')}"}
         json.dump(res, open(rp, 'w', encoding='utf-8')); print(f"  ML {tag}: {len(res)}/{len(rows)} graded")
 
+def crowd_refresh():
+    """--crowd-only: no Odds API credits. Re-pull Kalshi (Robinhood) prices + money for every locked game that hasn't started, update the lock rows in place, append a snapshot."""
+    kal = {'MLB': kalshi_games('KXMLBGAME'), 'NFL': kalshi_games('KXNFLGAME')}
+    snap_rows = []; touched = 0
+    for lockf in sorted(glob.glob(os.path.join(BT, 'ml_*.json'))):
+        rows = J(lockf); changed = False
+        for r in rows:
+            if r['state'] not in PRE: continue
+            kev = next((v for v in kal[r['sport']].values() if canon(r['home']) in v['sides'] and canon(r['away']) in v['sides'] and (r['sport'] == 'NFL' or v['date'] == r['date'])), None)
+            if not kev: continue
+            kh, ka = kev['sides'].get(canon(r['home'])), kev['sides'].get(canon(r['away']))
+            vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
+            r.update({'kalshi': kh['yes'] if kh else None, 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kalshiAwayAsk': ka['ask'] if ka else None,
+                      'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0, 'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'crowdAt': datetime.datetime.now().isoformat(timespec='minutes')})
+            changed = True; touched += 1; snap_rows.append({k2: r.get(k2) for k2 in ('sport', 'gamePk', 'eventId', 'home', 'away', 'kalshi', 'kalshiAway', 'kvolHome', 'kvolAway', 'state', 'time')})
+        if changed: json.dump(rows, open(lockf, 'w', encoding='utf-8'))
+    snapf = os.path.join(BT, f'mlsnap_{today}.json'); snaps = J(snapf) if os.path.exists(snapf) else []
+    snaps.append({'at': datetime.datetime.now().isoformat(timespec='minutes'), 'crowdOnly': True, 'rows': snap_rows}); json.dump(snaps, open(snapf, 'w', encoding='utf-8'))
+    print(f"  crowd refresh: {touched} pre-game games updated from Kalshi, 0 credits")
+
 if __name__ == '__main__':
+    import sys
+    if '--crowd-only' in sys.argv:
+        crowd_refresh(); grade(); raise SystemExit
     m = mlb_rows(); n = nfl_rows()
     print(f"  ML rows: MLB {len(m)} ({sum(1 for r in m if r['kalshi'] is not None)} on Kalshi, {sum(1 for r in m if r['fliffHome'])} on Fliff) | NFL {len(n)} ({sum(1 for r in n if r['kalshi'] is not None)} on Kalshi)")
     if m: k, fr = lock(os.path.join(BT, f'ml_{today}.json'), m, 'gamePk'); print(f"  ML lock {today}: kept {k}, refreshed {fr}")
