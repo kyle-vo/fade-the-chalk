@@ -29,7 +29,7 @@ for lockf in sorted(glob.glob(os.path.join(BT, 'ml_*.json'))):
         # book take = the losing side's share of the Kalshi/Robinhood money on the game (what the winners collected from the losers)
         if r['homeWin'] is not None and r.get('pubHome') is not None and r.get('kvol'):
             loser_share = (1 - r['pubHome']) if r['homeWin'] == 1 else r['pubHome']
-            r['bookTake'] = round(loser_share * r['kvol']); r['loserShare'] = round(loser_share, 3)
+            r['bookTake'] = round(loser_share * r['kvol']); r['loserShare'] = round(loser_share, 3); r['bookGave'] = round((1 - loser_share) * r['kvol'])
         # units if you took the model pick flat 1u at Robinhood's price
         if r['pickHit'] is not None and r.get('pickOdds') is not None:
             o = r['pickOdds']; r['units'] = round((o / 100 if o > 0 else 100 / -o) if r['pickHit'] else -1.0, 3)
@@ -65,14 +65,14 @@ function render(){
   document.querySelector('.tab[data-t=mlb]').textContent = 'MLB ' + day; document.querySelector('.tab[data-t=nfl]').textContent = 'NFL ' + (week || '').replace('_', ' ');
   const only = $('#onlyplays').checked, hide = $('#hidedone').checked;
   let list = rows.filter(x => (!only || ['SLEEPER', 'VALUE', 'FADE'].includes(x.v)) && (!hide || x.r.homeWin == null || tab === 'mlb'));
-  const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: x.r.kvol || 0, pub: x.pub ?? -1, time: x.r.time, skew: x.r.skewHome ?? -99, v: x.v, take: x.r.bookTake ?? -1 })[sortKey];
+  const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: x.r.kvol || 0, pub: x.pub ?? -1, time: x.r.time, sharp: x.r.sharpHome ?? -99, v: x.v, take: x.r.bookTake ?? -1, gave: x.r.bookGave ?? -1 })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
-  const cols = [['Game', 'time'], ['Pick', 'model'], ['Model', 'model'], ['Robinhood', 'edge'], ['Edge', 'edge'], ['Public $ on pick', 'pub'], ['$ traded', 'kvol'], ['Pinnacle', 'skew'], ['Skew', 'skew'], ['Fliff', 'v'], ['Verdict', 'v'], ['Bet', 'v'], ['Result', 'v'], ['Book take', 'take']];
-  const R = new Set(['Model', 'Robinhood', 'Edge', 'Public $ on pick', '$ traded', 'Pinnacle', 'Skew', 'Fliff', 'Book take']);
+  const cols = [['Game', 'time'], ['Pick', 'model'], ['Model', 'model'], ['Robinhood', 'edge'], ['Edge', 'edge'], ['Public $ on pick', 'pub'], ['$ traded', 'kvol'], ['Pinnacle', 'sharp'], ['Verdict', 'v'], ['Bet', 'v'], ['Result', 'v'], ['Book take', 'take'], ['Book gave', 'gave']];
+  const R = new Set(['Model', 'Robinhood', 'Edge', 'Public $ on pick', '$ traded', 'Pinnacle', 'Book take', 'Book gave']);
   $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''} ${R.has(l) ? 'r' : ''}">${l}</th>`).join('') + '</tr>';
-  const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0, units: 0, staked: 0, take: 0 };
+  const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0, units: 0, staked: 0, take: 0, gave: 0 };
   for (const x of list) { const r = x.r, e = store[key(r)] || {};
-    if (x.v === 'SLEEPER' || x.v === 'VALUE') n.s++; if (x.v === 'FADE') n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; }
+    if (x.v === 'SLEEPER' || x.v === 'VALUE') n.s++; if (x.v === 'FADE') n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; if (r.bookGave) n.gave += r.bookGave; }
     const when = new Date(r.time).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     const pickTeam = r.pick === 'home' ? r.home : r.away, other = r.pick === 'home' ? r.away : r.home;
     const sharp = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome);
@@ -86,18 +86,17 @@ function render(){
       <td class="num"><span class="bar"><i style="width:${x.pub == null ? 0 : x.pub * 100}%"></i></span> ${pct(x.pub)}</td>
       <td class="num">$${r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol}</td>
       <td class="num">${pct(sharp)}</td>
-      <td class="num ${skew == null ? '' : skew > 0 ? 'neg' : 'pos'}">${skew == null ? '—' : (skew > 0 ? '+' : '') + skew.toFixed(1)}</td>
-      <td class="num tm">${fmt(r.pickFliff)}</td>
       <td><span class="v ${x.v}">${x.v}</span></td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" ${e.on ? 'checked' : ''}> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${r.pickHit == null ? '<span class="res n">—</span>' : r.pickHit ? '<span class="res y">✓ ' + pickTeam + '</span>' : '<span class="res n">✗ ' + other + '</span>'}${r.score ? ' <span class="tm">' + r.score + '</span>' : ''}</td>
-      <td class="num" title="${r.bookTake != null ? 'losing side held ' + Math.round(r.loserShare * 100) + '% of $' + r.kvol.toLocaleString() : 'fills in when the game is final'}">${r.bookTake != null ? '$' + (r.bookTake >= 1000 ? Math.round(r.bookTake / 1000) + 'k' : r.bookTake) : '—'}</td>`;
+      <td class="num" title="${r.bookTake != null ? 'losing side held ' + Math.round(r.loserShare * 100) + '% of $' + r.kvol.toLocaleString() : 'fills in when the game is final'}">${r.bookTake != null ? '$' + (r.bookTake >= 1000 ? Math.round(r.bookTake / 1000) + 'k' : r.bookTake) : '—'}</td>
+      <td class="num" title="${r.bookGave != null ? 'winning side held ' + Math.round((1 - r.loserShare) * 100) + '% of $' + r.kvol.toLocaleString() : 'fills in when the game is final'}">${r.bookGave != null ? '$' + (r.bookGave >= 1000 ? Math.round(r.bookGave / 1000) + 'k' : r.bookGave) : '—'}</td>`;
     const det = document.createElement('tr'); det.className = 'det'; det.hidden = true;
     const bk = r.books ? Object.entries(r.books).map(([k, v]) => `<span class="f">${k} ${fmt(v.away)}/${fmt(v.home)}</span>`).join('') : '';
-    det.innerHTML = `<td colspan="14">${(r.notes || []).filter(Boolean).join(' &nbsp;|&nbsp; ')}<br>Kalshi: ${r.home} ${pct(r.kalshi)} ($${(r.kvolHome || 0).toLocaleString()}) · ${r.away} ${pct(r.kalshiAway)} ($${(r.kvolAway || 0).toLocaleString()})<br>${bk}</td>`;
+    det.innerHTML = `<td colspan="13">${(r.notes || []).filter(Boolean).join(' &nbsp;|&nbsp; ')}<br>Kalshi: ${r.home} ${pct(r.kalshi)} ($${(r.kvolHome || 0).toLocaleString()}) · ${r.away} ${pct(r.kalshiAway)} ($${(r.kvolAway || 0).toLocaleString()})<br>${bk}</td>`;
     tr.addEventListener('click', ev => { if (ev.target.tagName !== 'INPUT') det.hidden = !det.hidden; });
     tb.appendChild(tr); tb.appendChild(det); }
-  $('#kpi').innerHTML = `<div>games<b>${list.length}</b></div>` + (n.g ? `<div>graded<b>${n.g}</b></div><div>model picks<b>${n.hit}-${n.g - n.hit}</b></div><div>expected<b>${n.exp.toFixed(1)}</b></div><div>units, 1u each pick<b class="${n.units >= 0 ? 'pos' : 'neg'}">${n.units >= 0 ? '+' : ''}${n.units.toFixed(2)}</b></div><div>ROI<b class="${n.units >= 0 ? 'pos' : 'neg'}">${n.staked ? (n.units / n.staked * 100).toFixed(1) : '0.0'}%</b></div><div>book take<b>$${n.take >= 1000 ? Math.round(n.take / 1000) + 'k' : n.take}</b></div>` : '');
+  $('#kpi').innerHTML = `<div>games<b>${list.length}</b></div>` + (n.g ? `<div>graded<b>${n.g}</b></div><div>model picks<b>${n.hit}-${n.g - n.hit}</b></div><div>expected<b>${n.exp.toFixed(1)}</b></div><div>units, 1u each pick<b class="${n.units >= 0 ? 'pos' : 'neg'}">${n.units >= 0 ? '+' : ''}${n.units.toFixed(2)}</b></div><div>ROI<b class="${n.units >= 0 ? 'pos' : 'neg'}">${n.staked ? (n.units / n.staked * 100).toFixed(1) : '0.0'}%</b></div><div>book take<b class="neg">$${n.take >= 1000 ? Math.round(n.take / 1000) + 'k' : n.take}</b></div><div>book gave<b class="pos">$${n.gave >= 1000 ? Math.round(n.gave / 1000) + 'k' : n.gave}</b></div>` : '');
   tb.querySelectorAll('input').forEach(i => i.addEventListener('change', () => { const k = i.dataset.k; store[k] = store[k] || {}; if (i.type === 'checkbox') store[k].on = i.checked; else store[k][i.dataset.f] = i.value.trim(); save(); render(); }));
   $('#tbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = -1; } render(); }));
 }
@@ -132,8 +131,8 @@ def page():
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> only SLEEPER / VALUE / FADE</label><label><input type="checkbox" id="hidedone"> hide finished</label></div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend"><b>Pick</b> = the side the model likes against Robinhood's price. <b>Model</b> = win chance for that side. <b>Robinhood</b> = what a $1 contract on that side costs right now (the ask), with the equivalent American odds; Robinhood's contracts are Kalshi's. <b>Edge</b> = model minus that price, in points; your fee is about a penny a contract, so +2 is real.
-<b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ traded</b> = total on the game. <b>Fliff</b> = the sportsbook price for reference.
-<b>Book take</b> = once a game is final, the losing side's share of the Kalshi/Robinhood money on it (what the winners took from the losers); the tile sums it for the slate. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Pinnacle</b> = the sharpest book's de-vigged chance. <b>Skew</b> = retail books vs Pinnacle for the pick side: positive = retail shading toward it = public money.<br>
+<b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ traded</b> = total on the game.
+<b>Book take</b> = once a game is final, the losing side's share of the Kalshi/Robinhood money on it (what the winners took from the losers); the tile sums it for the slate. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Book gave</b> = the winning side's share, the money the public got paid on. <b>Pinnacle</b> = the sharpest book's de-vigged chance.<br>
 <b>SLEEPER</b> = edge ≥ 2 and under 60% of the money on it. <b>VALUE</b> = edge ≥ 2, crowded. <b>FADE</b> = 65%+ of the money on the other side and the model disagrees. <b>TRAP</b> = model says the price is 3+ points too short.
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
