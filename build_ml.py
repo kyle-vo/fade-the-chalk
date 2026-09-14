@@ -19,9 +19,11 @@ for lockf in sorted(glob.glob(os.path.join(BT, 'ml_*.json'))):
         # Robinhood = Kalshi. Price you pay = the ask; a contract pays $1. ask 0.40 -> +150.
         ah = r.get('kalshiAsk') or (r['kalshi'] + 0.01 if r.get('kalshi') is not None else None); aa = r.get('kalshiAwayAsk') or (r['kalshiAway'] + 0.01 if r.get('kalshiAway') is not None else None)
         r['rhHome'] = american(ah) if ah and 0 < ah < 1 else None; r['rhAway'] = american(aa) if aa and 0 < aa < 1 else None
-        eh = r['model'] - ah if ah else None; ea = (1 - r['model']) - aa if aa else None
-        if eh is None and ea is None: r['pick'] = 'home' if r['model'] >= .5 else 'away'; r['edge'] = None
-        else: r['pick'] = 'home' if (eh if eh is not None else -9) >= (ea if ea is not None else -9) else 'away'; r['edge'] = round(max(eh if eh is not None else -9, ea if ea is not None else -9) * 100, 1)
+        # pick = the model's favorite, always (weekend 1: the model's >50% side was the only 'favorite' that made money).
+        # earlier versions picked whichever side had the bigger edge vs the ask, which with a Pinnacle-anchored model degenerates into 'always the cheap underdog'.
+        r['pick'] = 'home' if r['model'] >= .5 else 'away'
+        ask = ah if r['pick'] == 'home' else aa
+        r['edge'] = round(((r['model'] if r['pick'] == 'home' else 1 - r['model']) - ask) * 100, 1) if ask else None
         r['pickOdds'] = r.get('rhHome') if r['pick'] == 'home' else r.get('rhAway'); r['oppOdds'] = r.get('rhAway') if r['pick'] == 'home' else r.get('rhHome')
         r['pickFliff'] = r.get('fliffHome') if r['pick'] == 'home' else r.get('fliffAway')
         r['pickProb'] = r['model'] if r['pick'] == 'home' else 1 - r['model']
@@ -56,12 +58,12 @@ const key = r => r.date + '|' + (r.gamePk || r.eventId);
 function verdict(r){
   const pub = r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);   // share of Kalshi money on the pick side
   const kal = r.kalshi == null ? null : (r.pick === 'home' ? r.kalshi : r.kalshiAway ?? 1 - r.kalshi);
-  const isFav = r.pickProb >= 0.5;
+  const isFav = true;                                               // the pick is always the model's favorite now
   let v = 'PASS';
   if (r.pickOdds != null) {
-    if (!isFav) v = 'SKIP (model dog)';
-    else if (pub != null && pub < 0.5) v = 'STRONG BET';           // favorite, and the public hasn't caught on
-    else v = 'BET';                                                 // favorite, public already on it - still the better side, just less edge
+    if (r.edge != null && r.edge < -3) v = 'PASS (priced in)';      // Robinhood already charges more than the model's number: no value
+    else if (pub != null && pub < 0.5) v = 'STRONG BET';            // model's favorite, and the public's money is on the other team
+    else v = 'BET';                                                 // model's favorite, public already on it
   }
   return { pub, kal, v, isFav };
 }
@@ -77,7 +79,7 @@ function render(){
   $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''} ${R.has(l) ? 'r' : ''}">${l}</th>`).join('') + '</tr>';
   const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0, units: 0, staked: 0, take: 0, gave: 0 };
   for (const x of list) { const r = x.r, e = store[key(r)] || {};
-    if (x.v === 'BET' || x.v === 'STRONG BET') n.s++; if (x.v === 'SKIP (model dog)') n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; if (r.bookGave) n.gave += r.bookGave; }
+    if (x.v === 'BET' || x.v === 'STRONG BET') n.s++; if (x.v.startsWith('PASS')) n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; if (r.bookGave) n.gave += r.bookGave; }
     const when = new Date(r.time).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     const pickTeam = r.pick === 'home' ? r.home : r.away, other = r.pick === 'home' ? r.away : r.home;
     const sharp = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome);
@@ -115,12 +117,13 @@ const bm = brier(G.map(r => [r.model, r.homeWin])), bk = brier(G.filter(r => r.k
 const pay = (o, y) => y ? (o > 0 ? o / 100 : 100 / -o) : -1;
 const isModelFav = r => r.pickProb >= 0.5, isMarketFav = r => r.pickOdds != null && r.pickOdds < 0, pubOnPick = r => r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
 const strat = {
-  'Model favorite only (pick over 50%)': G.filter(r => r.pickOdds != null && isModelFav(r)),
+  'Model favorite, every game': G.filter(r => r.pickOdds != null),
   'STRONG BET only (model fav, public on other side)': G.filter(r => r.pickOdds != null && isModelFav(r) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
-  'Model underdog picks (what SKIP avoids)': G.filter(r => r.pickOdds != null && !isModelFav(r)),
-  'FADE the SKIPs: bet the other team at its Robinhood price': G.filter(r => r.oppOdds != null && !isModelFav(r)).map(r => ({ ...r, pickOdds: r.oppOdds, pickHit: 1 - r.pickHit })),
-  'BET + STRONG on model side, FADE on SKIP (combined)': G.filter(r => r.pickOdds != null).map(r => isModelFav(r) ? r : (r.oppOdds != null ? { ...r, pickOdds: r.oppOdds, pickHit: 1 - r.pickHit } : r)),
-  'Market favorite (Robinhood under 50¢ on the other side)': G.filter(r => r.pickOdds != null && isMarketFav(r)),
+  'BET + STRONG BET only (skip PASS: favorite priced in)': G.filter(r => r.pickOdds != null && !(r.edge != null && r.edge < -3)),
+  'Public side (bet the team with more Kalshi $)': G.filter(r => r.pubHome != null && r.oppOdds != null).map(r => pubOnPick(r) >= 0.5 ? r : { ...r, pickOdds: r.oppOdds, pickHit: 1 - r.pickHit }),
+  'Fade the public side': G.filter(r => r.pubHome != null && r.oppOdds != null).map(r => pubOnPick(r) < 0.5 ? r : { ...r, pickOdds: r.oppOdds, pickHit: 1 - r.pickHit }),
+  'Model favorite that is ALSO the Robinhood favorite': G.filter(r => r.pickOdds != null && isMarketFav(r)),
+  'Model favorite priced as the underdog (+ odds)': G.filter(r => r.pickOdds != null && !isMarketFav(r)),
   'Model pick, edge ≥ 2 at Robinhood': G.filter(r => r.edge != null && r.edge >= 2),
   'Model pick, every game with a Robinhood price': G.filter(r => r.pickOdds != null),
   'Fade the public (65%+ of Kalshi $ on the other side)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? 1 - r.pubHome : r.pubHome) >= .65)),
@@ -140,13 +143,13 @@ def page():
 <div class="tabs"><div class="tab on" data-t="mlb">MLB {today or ''}</div><div class="tab" data-t="nfl">NFL {week.replace('_', ' ') if week else ''}</div></div>
 <div class="panel">
 <div class="kpi" id="kpi"></div>
-<div class="ctl"><label><input type="checkbox" id="onlyplays"> only BET / STRONG BET</label><label><input type="checkbox" id="hidedone"> hide finished</label></div>
+<div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label><input type="checkbox" id="hidedone"> hide finished</label></div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend"><b>Pick</b> = the side the model likes against Robinhood's price. <b>Model</b> = win chance for that side. <b>Robinhood</b> = what a $1 contract on that side costs right now (the ask), with the equivalent American odds; Robinhood's contracts are Kalshi's. <b>Edge</b> = model minus that price, in points; your fee is about a penny a contract, so +2 is real.
 <b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ traded</b> = total on the game.
 <b>Book take</b> = once a game is final, the losing side's share of the Kalshi/Robinhood money on it (what the winners took from the losers); the tile sums it for the slate. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Book gave</b> = the winning side's share, the money the public got paid on. <b>Pinnacle</b> = the sharpest book's de-vigged chance.<br>
 There are three different "favorites" on every game and they do not agree: the side the <b>model</b> has over 50%, the side <b>Robinhood</b> prices over 50¢, and the side the <b>public's money</b> is on. Only the first one predicts anything. Weekend 1, 28 graded games at Robinhood prices: model's side over 50% went 9-5 (+1.3u); the market's priced favorite went 7-5 but <i>lost</i> 1.0u (short prices); the public's side went 8-8 and lost 2.0u.<br>
-<b>STRONG BET</b> = the model has the pick over 50% and the public's money is on the other team (5-7 but +2.0u: these are model favorites you get at underdog prices). <b>BET</b> = model over 50% and the public already agrees (8-8, -2.0u: right side, but you pay the crowd's price). <b>SKIP (model dog)</b> = the model has its own pick under 50%; those went 4-10 (-1.3u). Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
+The <b>Pick</b> is always the model's favorite, its side over 50%. <b>STRONG BET</b> = the public's money is on the other team, so you're buying the model's favorite at a discount (this was the profitable combination). <b>BET</b> = the public already agrees; right side, crowd's price. <b>PASS (priced in)</b> = Robinhood charges 3+ points more than the model's number; no value on either side. Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>
