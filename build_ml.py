@@ -33,11 +33,11 @@ today = mlb_days[0] if mlb_days else None; week = nfl_weeks[0] if nfl_weeks else
 graded = [r for rows in boards.values() for r in rows if r['homeWin'] is not None]
 
 def head(title, sub):
-    nav = '<nav><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="track.html">Track</a><span class="lbl">ML days</span>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:14]) + '</nav>'
+    nav = '<nav><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="track.html">Track</a><a href="archive.html">Archive</a><span class="lbl">MLB days</span>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:7]) + '<span class="lbl">NFL weeks</span>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">wk {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</nav>'
     return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav}'
 
 JS = r"""
-const $ = s => document.querySelector(s); let tab = 'mlb'; let day = TODAY; let sortKey = 'edge', sortDir = -1;
+const $ = s => document.querySelector(s); let tab = 'mlb'; let day = TODAY; let week = WEEK; let sortKey = 'edge', sortDir = -1;
 let store = {}; try { store = JSON.parse(localStorage.getItem('ftc_ml_bets') || '{}'); } catch (e) {}
 function save(){ try { localStorage.setItem('ftc_ml_bets', JSON.stringify(store)); } catch (e) {} }
 const implied = o => { o = +o; if (!o || isNaN(o)) return null; return o < 0 ? (-o) / (-o + 100) : 100 / (o + 100); };
@@ -54,7 +54,8 @@ function verdict(r){
   return { pub, kal, v };
 }
 function render(){
-  const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[WEEK] || [])).map(r => ({ r, ...verdict(r) }));
+  const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).map(r => ({ r, ...verdict(r) }));
+  document.querySelector('.tab[data-t=mlb]').textContent = 'MLB ' + day; document.querySelector('.tab[data-t=nfl]').textContent = 'NFL ' + (week || '').replace('_', ' ');
   const only = $('#onlyplays').checked, hide = $('#hidedone').checked;
   let list = rows.filter(x => (!only || ['SLEEPER', 'VALUE', 'FADE'].includes(x.v)) && (!hide || x.r.homeWin == null || tab === 'mlb'));
   const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: x.r.kvol || 0, pub: x.pub ?? -1, time: x.r.time, skew: x.r.skewHome ?? -99, v: x.v })[sortKey];
@@ -94,6 +95,7 @@ function render(){
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; render(); }));
 document.querySelectorAll('nav a.dayl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); day = a.dataset.day; tab = 'mlb'; document.querySelectorAll('nav a.dayl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
+document.querySelectorAll('nav a.weekl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); week = a.dataset.week; tab = 'nfl'; document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); document.querySelector('.tab[data-t=nfl]').classList.add('on'); document.querySelectorAll('nav a.weekl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
 ['#onlyplays', '#hidedone'].forEach(s => $(s).addEventListener('input', render));
 // ---- scorecard over every graded game ----
 const G = GRADED; const brier = (ps) => ps.length ? ps.reduce((s, [p, y]) => s + (p - y) ** 2, 0) / ps.length : null;
@@ -131,4 +133,39 @@ MLB model: regressed run-differential strength, starting-pitcher runs-allowed ad
 <script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'pickHit', 'pick', 'pubHome')} for r in graded])};{JS}</script>"""
 
 open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='\n').write(page())
+
+# ---------------- archive.html: every day / week, every board, one-line scorecards ----------------
+def _hr_summary(tag, sport):
+    lock = os.path.join(BT, ('pred_' if sport == 'MLB' else 'nfl_') + tag + '.json'); rp = os.path.join(BT, ('res_' if sport == 'MLB' else 'nflres_') + tag + '.json')
+    if not os.path.exists(lock): return None
+    rows = J(lock); res = J(rp) if os.path.exists(rp) else {}; gg = set(res.get('_games', []))
+    g = []
+    for r in rows:
+        if sport == 'MLB':
+            if r.get('gamePk') not in gg: continue
+            x = res.get(str(r['id']))
+            if x and x['pa'] > 0: g.append((r['prob'], 1 if x['hr'] > 0 else 0))
+        else:
+            if r.get('eventId') not in gg: continue
+            x = res.get(str(r['id'])); g.append((r['prob'], 1 if x and x['td'] > 0 else 0))
+    if not g: return {'n': len(rows), 'graded': 0}
+    top = sorted(g, key=lambda t: -t[0])[:5]
+    return {'n': len(rows), 'graded': len(g), 'exp': sum(p for p, _ in g), 'act': sum(y for _, y in g), 'top5': sum(y for _, y in top)}
+def _ml_summary(tag):
+    rows = boards.get(tag, []); g = [r for r in rows if r.get('pickHit') is not None]
+    return {'n': len(rows), 'graded': len(g), 'w': sum(r['pickHit'] for r in g), 'exp': sum(r['pickProb'] for r in g)}
+def _row(label, href, hr, ml, what):
+    hrc = '—' if not hr else (f"{hr['graded']} graded · model {hr['exp']:.1f} / actual {hr['act']} · top-5 {hr['top5']}/5" if hr['graded'] else f"{hr['n']} locked, waiting on results")
+    mlc = '—' if not ml else (f"{ml['w']}-{ml['graded'] - ml['w']} picks (expected {ml['exp']:.1f})" if ml['graded'] else f"{ml['n']} locked")
+    return f'<tr><td><a href="{href}">{label}</a></td><td class="tm">{what}</td><td class="tm">{hrc}</td><td class="tm">{mlc}</td></tr>'
+mlb_tags = sorted({os.path.basename(f)[5:15] for f in glob.glob(os.path.join(BT, 'pred_*.json'))} | {t for t in boards if '_wk' not in t}, reverse=True)
+nfl_tags = sorted({os.path.basename(f)[4:-5] for f in glob.glob(os.path.join(BT, 'nfl_*.json'))} | {t for t in boards if '_wk' in t}, reverse=True)
+arch = head('Fade The Chalk', 'archive · every locked day and week, both boards, kept forever').replace('href="ml.html" class="on"', 'href="ml.html"').replace('href="archive.html"', 'href="archive.html" class="on"')
+arch += '<div class="panel top"><h2>NFL weeks <small>touchdowns page · moneylines tab</small></h2><div class="wrap"><table><thead><tr><th>Week</th><th></th><th>Anytime TD</th><th>Moneyline</th></tr></thead><tbody>'
+for t in nfl_tags: arch += _row(t.replace('_', ' '), f'nfl/{t}.html', _hr_summary(t, 'NFL'), _ml_summary(t), 'TD board → nfl page · ML → Moneyline, pick the week')
+arch += '</tbody></table></div><h2>MLB days <small>home runs page · moneylines tab</small></h2><div class="wrap"><table><thead><tr><th>Day</th><th></th><th>Home runs</th><th>Moneyline</th></tr></thead><tbody>'
+for t in mlb_tags: arch += _row(t, f'days/{t}.html', _hr_summary(t, 'MLB'), _ml_summary(t), 'HR board → day page · ML → Moneyline, pick the day')
+arch += '</tbody></table></div><p class="note">Every day and week lives as files in the repo (backtest/), so nothing here expires. Picks are locked before first pitch / kickoff and graded from box scores afterward; results never change a lock.</p></div>'
+open(os.path.join(SITE, 'archive.html'), 'w', encoding='utf-8', newline='\n').write(arch)
+print(f"archive.html: {len(nfl_tags)} NFL weeks, {len(mlb_tags)} MLB days")
 print(f"ml.html: {len(mlb_days)} MLB days, {len(nfl_weeks)} NFL weeks, {len(graded)} graded games")
