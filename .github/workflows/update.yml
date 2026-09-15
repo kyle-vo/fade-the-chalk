@@ -1,0 +1,43 @@
+name: Update MLB Data & Board
+
+on:
+  schedule:
+    # Run every hour at :00 (0 * * * * = every hour)
+    - cron: '0 * * * *'
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch new MLB data
+        run: python fetch_data.py
+
+      - name: Run model predictions
+        run: python model.py
+
+      - name: Build HTML board
+        run: python build_html.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update: Hourly MLB data refresh" && git push)
