@@ -9,7 +9,12 @@ Outputs output/board.json consumed by build_html.py.
 import json, math, os, re, datetime, collections
 
 HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, 'data'); OUT = os.path.join(HERE, 'output'); os.makedirs(OUT, exist_ok=True)
-L = lambda n: json.load(open(os.path.join(DATA, n), encoding='utf-8'))
+def L(n, default=None):
+    try:
+        return json.load(open(os.path.join(DATA, n), encoding='utf-8'))
+    except FileNotFoundError:
+        if default is not None: return default
+        raise
 def f(x, d=0.0):
     try: return float(x)
     except (TypeError, ValueError): return d
@@ -48,7 +53,7 @@ def weather_factor(w, venue):
 
 def mlb():
     games = L('mlb_schedule.json'); hit = L('mlb_hitting.json'); pit = L('mlb_pitching.json'); people = {p['id']: p for p in L('mlb_people.json')}
-    hs = L('mlb_hitter_splits.json'); ps = L('mlb_pitcher_splits.json'); tp = L('mlb_team_pitching.json'); odds = L('mlb_odds.json')
+    hs = L('mlb_hitter_splits.json'); ps = L('mlb_pitcher_splits.json'); tp = L('mlb_team_pitching.json'); odds = L('mlb_odds.json', {})
     H = {h['player']['id']: h['stat'] for h in hit}; P = {p['player']['id']: p['stat'] for p in pit}
     lg_hr = sum(h['stat']['homeRuns'] for h in hit); lg_pa = sum(h['stat']['plateAppearances'] for h in hit); LG = lg_hr / lg_pa   # league HR/PA
     lg_hr_rank = {h['player']['id']: i + 1 for i, h in enumerate(sorted(hit, key=lambda h: -h['stat']['homeRuns']))}
