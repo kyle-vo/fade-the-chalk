@@ -136,6 +136,12 @@ def fetch_nfl():
 
 if __name__ == '__main__':
     which = sys.argv[1] if len(sys.argv) > 1 else 'all'
-    if which in ('all', 'mlb'): fetch_mlb()
-    if which in ('all', 'nfl'): fetch_nfl()
+    try:
+        if which in ('all', 'mlb'): fetch_mlb()
+    except Exception as e:
+        print(f"MLB fetch failed: {e}")
+    try:
+        if which in ('all', 'nfl'): fetch_nfl()
+    except Exception as e:
+        print(f"NFL fetch failed: {e}")
     print("done")
