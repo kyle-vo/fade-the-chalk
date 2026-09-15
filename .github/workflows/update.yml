@@ -29,6 +29,10 @@ jobs:
       - name: Fetch new MLB data
         run: python fetch_data.py
 
+      - name: Fetch Kalshi market data
+        continue-on-error: true
+        run: python kalshi.py
+
       - name: Run model predictions
         run: python model.py
 
