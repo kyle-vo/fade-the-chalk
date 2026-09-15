@@ -39,6 +39,14 @@ jobs:
       - name: Build HTML board
         run: python build_html.py
 
+      - name: Run moneyline model
+        continue-on-error: true
+        run: python ml.py
+
+      - name: Build moneyline HTML
+        continue-on-error: true
+        run: python build_ml.py
+
       - name: Commit and push changes
         run: |
           git config user.name "GitHub Actions"
