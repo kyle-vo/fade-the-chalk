@@ -206,6 +206,9 @@ def crowd_refresh():
         rows = J(lockf); changed = False
         for r in rows:
             if r['state'] not in PRE: continue
+            try:
+                if datetime.datetime.fromisoformat(r['time'].replace('Z', '+00:00')) <= datetime.datetime.now(datetime.timezone.utc): continue   # game started: never overwrite with in-game prices
+            except Exception: continue
             kev = next((v for v in kal[r['sport']].values() if canon(r['home']) in v['sides'] and canon(r['away']) in v['sides'] and (r['sport'] == 'NFL' or v['date'] == r['date'])), None)
             if not kev: continue
             kh, ka = kev['sides'].get(canon(r['home'])), kev['sides'].get(canon(r['away']))
