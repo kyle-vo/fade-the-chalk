@@ -15,6 +15,7 @@ python -X utf8 ml.py
 python -X utf8 lock.py
 python -X utf8 grade.py
 python -X utf8 build_site.py
+python -X utf8 taker.py
 python -X utf8 build_ml.py
 if (-not $NoPush) {
     git add -A
