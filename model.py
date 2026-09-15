@@ -53,7 +53,7 @@ def weather_factor(w, venue):
 
 def mlb():
     games = L('mlb_schedule.json'); hit = L('mlb_hitting.json'); pit = L('mlb_pitching.json'); people = {p['id']: p for p in L('mlb_people.json')}
-    hs = L('mlb_hitter_splits.json'); ps = L('mlb_pitcher_splits.json'); tp = L('mlb_team_pitching.json'); odds = L('mlb_odds.json', {})
+    hs = L('mlb_hitter_splits.json', {}); ps = L('mlb_pitcher_splits.json', {}); tp = L('mlb_team_pitching.json', {}); odds = L('mlb_odds.json', {})
     H = {h['player']['id']: h['stat'] for h in hit}; P = {p['player']['id']: p['stat'] for p in pit}
     lg_hr = sum(h['stat']['homeRuns'] for h in hit); lg_pa = sum(h['stat']['plateAppearances'] for h in hit); LG = lg_hr / lg_pa   # league HR/PA
     lg_hr_rank = {h['player']['id']: i + 1 for i, h in enumerate(sorted(hit, key=lambda h: -h['stat']['homeRuns']))}
@@ -148,7 +148,7 @@ def parse_spread(details, home, away):
     return n if fav == home else -n   # home spread (negative = home favored)
 
 def nfl():
-    sb = L('nfl_scoreboard.json'); st = L('nfl_stats_prev.json')['scoring']; ro = L('nfl_rosters.json'); ts = L('nfl_team_stats_prev.json')
+    sb = L('nfl_scoreboard.json', {'events': []}); st = L('nfl_stats_prev.json', {'scoring': {'athletes': [], 'categories': None}})['scoring']; ro = L('nfl_rosters.json', []); ts = L('nfl_team_stats_prev.json', {})
     names = st['categories'] if st.get('categories') else None
     # 2025 player TDs
     prev = {}
