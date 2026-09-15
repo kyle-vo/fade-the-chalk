@@ -41,6 +41,8 @@ jobs:
 
       - name: Run moneyline model
         continue-on-error: true
+        env:
+          ODDS_API_KEYS: ${{ secrets.ODDS_API_KEYS }}
         run: python ml.py
 
       - name: Build moneyline HTML
