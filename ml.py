@@ -238,4 +238,7 @@ if __name__ == '__main__':
     snapf = os.path.join(BT, f'mlsnap_{today}.json'); snaps = J(snapf) if os.path.exists(snapf) else []
     snaps.append({'at': datetime.datetime.now().isoformat(timespec='minutes'), 'rows': [{k2: r.get(k2) for k2 in ('sport', 'gamePk', 'eventId', 'home', 'away', 'kalshi', 'kalshiAway', 'kvolHome', 'kvolAway', 'fliffHome', 'fliffAway', 'sharpHome', 'skewHome', 'state', 'time')} for r in m + n]})
     json.dump(snaps, open(snapf, 'w', encoding='utf-8'))
-    grade()
+    try:
+        grade()
+    except Exception as e:
+        print(f"  grading failed (ESPN unreachable): {e}")
