@@ -225,7 +225,12 @@ if __name__ == '__main__':
     import sys
     if '--crowd-only' in sys.argv:
         crowd_refresh(); grade(); raise SystemExit
-    m = mlb_rows(); n = nfl_rows()
+    m = mlb_rows()
+    try:
+        n = nfl_rows()
+    except FileNotFoundError:
+        print("  NFL data missing, skipping NFL rows")
+        n = []
     print(f"  ML rows: MLB {len(m)} ({sum(1 for r in m if r['kalshi'] is not None)} on Kalshi, {sum(1 for r in m if r['fliffHome'])} on Fliff) | NFL {len(n)} ({sum(1 for r in n if r['kalshi'] is not None)} on Kalshi)")
     if m: k, fr = lock(os.path.join(BT, f'ml_{today}.json'), m, 'gamePk'); print(f"  ML lock {today}: kept {k}, refreshed {fr}")
     if n: k, fr = lock(os.path.join(BT, f"ml_{n[0]['date']}.json"), n, 'eventId'); print(f"  ML lock {n[0]['date']}: kept {k}, refreshed {fr}")
