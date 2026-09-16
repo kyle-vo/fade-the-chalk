@@ -57,4 +57,4 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add -A
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update: Hourly MLB data refresh" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update: Hourly MLB data refresh" && git fetch origin main && git merge origin/main --no-edit && git push)
