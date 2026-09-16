@@ -72,14 +72,14 @@ function verdict(r){
   return { pub, kal, v, isFav, tpub };
 }
 function render(){
-  const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).map(r => ({ r, ...verdict(r) }));
+  const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).map(r => { const sh = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome); return { r, ...verdict(r), diff: sh == null ? null : (r.pickProb - sh) * 100 }; });
   document.querySelector('.tab[data-t=mlb]').textContent = 'MLB ' + day; document.querySelector('.tab[data-t=nfl]').textContent = 'NFL ' + (week || '').replace('_', ' ');
   const only = $('#onlyplays').checked, hide = $('#hidedone').checked;
   let list = rows.filter(x => (!only || x.v === 'BET' || x.v === 'STRONG BET') && (!hide || x.r.homeWin == null || tab === 'mlb'));
-  const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: x.r.kvol || 0, pub: x.pub ?? -1, time: x.r.time, sharp: x.r.sharpHome ?? -99, v: x.v, take: x.r.bookTake ?? -1, gave: x.r.bookGave ?? -1, tpub: x.tpub ?? -1, tvol: (x.r['takerHome$'] || 0) + (x.r['takerAway$'] || 0) })[sortKey];
+  const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: x.r.kvol || 0, pub: x.pub ?? -1, time: x.r.time, sharp: x.r.sharpHome ?? -99, diff: x.diff ?? -99, v: x.v, take: x.r.bookTake ?? -1, gave: x.r.bookGave ?? -1, tpub: x.tpub ?? -1, tvol: (x.r['takerHome$'] || 0) + (x.r['takerAway$'] || 0) })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
-  const cols = [['Game', 'time'], ['Pick', 'model'], ['Model', 'model'], ['Robinhood', 'edge'], ['Edge', 'edge'], ['Public $ on pick', 'pub'], ['$ traded', 'kvol'], ['Tape $ on pick', 'tpub'], ['Tape $', 'tvol'], ['Pinnacle', 'sharp'], ['Verdict', 'v'], ['Bet', 'v'], ['Result', 'v'], ['Book take', 'take'], ['Book gave', 'gave']];
-  const R = new Set(['Model', 'Robinhood', 'Edge', 'Public $ on pick', '$ traded', 'Tape $ on pick', 'Tape $', 'Pinnacle', 'Book take', 'Book gave']);
+  const cols = [['Game', 'time'], ['Pick', 'model'], ['Model', 'model'], ['Pinnacle', 'sharp'], ['Diff', 'diff'], ['Robinhood', 'edge'], ['Edge', 'edge'], ['Public $ on pick', 'pub'], ['$ traded', 'kvol'], ['Verdict', 'v'], ['Bet', 'v'], ['Result', 'v'], ['Book take', 'take'], ['Book gave', 'gave']];   // tape columns stay in the data (takerHome$/takerAway$) and in the scorecard, just not on the board
+  const R = new Set(['Model', 'Pinnacle', 'Diff', 'Robinhood', 'Edge', 'Public $ on pick', '$ traded', 'Book take', 'Book gave']);
   $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''} ${R.has(l) ? 'r' : ''}">${l}</th>`).join('') + '</tr>';
   const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0, units: 0, staked: 0, take: 0, gave: 0 };
   for (const x of list) { const r = x.r, e = store[key(r)] || {};
@@ -92,13 +92,12 @@ function render(){
     tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when}${r.homeSP ? ' · ' + r.awaySP + ' / ' + r.homeSP : ''}${r.homeRec ? ' · ' + r.awayRec + ' / ' + r.homeRec : ''}</span></td>
       <td><span class="nm">${pickTeam}</span></td>
       <td class="num">${pct(r.pickProb)}</td>
+      <td class="num" title="${r.sharpSrc === 'sharp avg' ? 'Pinnacle not posted yet: average of Bovada/BetOnline' : 'Pinnacle de-vigged'}">${pct(sharp)}${r.sharpSrc === 'sharp avg' ? '~' : ''}</td>
+      <td class="num ${x.diff == null ? '' : x.diff >= 4 ? 'pos' : x.diff <= -4 ? 'neg' : ''}" title="model minus Pinnacle, in points; the 4+ bucket is the one that has been cashing">${x.diff == null ? '—' : (x.diff >= 0 ? '+' : '') + x.diff.toFixed(1)}</td>
       <td class="num">${r.pickOdds == null ? '—' : Math.round(implied(r.pickOdds) * 100) + '¢'} <span class="tm">${fmt(r.pickOdds)}</span></td>
       <td class="num ${r.edge == null ? '' : r.edge >= 0 ? 'pos' : 'neg'}">${r.edge == null ? '—' : (r.edge >= 0 ? '+' : '') + r.edge.toFixed(1)}</td>
       <td class="num"><span class="bar"><i style="width:${x.pub == null ? 0 : x.pub * 100}%"></i></span> ${pct(x.pub)}</td>
       <td class="num">$${r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol}</td>
-      <td class="num" title="${x.tpub == null ? 'no trade tape yet' : 'pre-game trade tape: $' + Math.round((r.pick === 'home' ? r['takerHome$'] : r['takerAway$'])).toLocaleString() + ' of taker money on ' + pickTeam + ' vs $' + Math.round((r.pick === 'home' ? r['takerAway$'] : r['takerHome$'])).toLocaleString() + ' on ' + other + ' (' + (r.takerTrades || 0).toLocaleString() + ' trades)'}"><span class="bar"><i style="width:${x.tpub == null ? 0 : x.tpub * 100}%"></i></span> ${pct(x.tpub)}</td>
-      <td class="num">${r['takerHome$'] == null ? '—' : '$' + (() => { const t = r['takerHome$'] + r['takerAway$']; return t >= 1e6 ? (t / 1e6).toFixed(1) + 'M' : t >= 1000 ? Math.round(t / 1000) + 'k' : t; })()}</td>
-      <td class="num" title="${r.sharpSrc === 'sharp avg' ? 'Pinnacle not posted yet: average of Bovada/BetOnline' : 'Pinnacle de-vigged'}">${pct(sharp)}${r.sharpSrc === 'sharp avg' ? '~' : ''}</td>
       <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" ${e.on ? 'checked' : ''}> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${r.pickHit == null ? '<span class="res n">—</span>' : r.pickHit ? '<span class="res y">✓ ' + pickTeam + '</span>' : '<span class="res n">✗ ' + other + '</span>'}${r.score ? ' <span class="tm">' + r.score + '</span>' : ''}</td>
@@ -106,7 +105,7 @@ function render(){
       <td class="num" title="${r.bookGave != null ? 'winning side held ' + Math.round((1 - r.loserShare) * 100) + '% of $' + r.kvol.toLocaleString() : 'fills in when the game is final'}">${r.bookGave != null ? '$' + (r.bookGave >= 1000 ? Math.round(r.bookGave / 1000) + 'k' : r.bookGave) : '—'}</td>`;
     const det = document.createElement('tr'); det.className = 'det'; det.hidden = true;
     const bk = r.books ? Object.entries(r.books).map(([k, v]) => `<span class="f">${k} ${fmt(v.away)}/${fmt(v.home)}</span>`).join('') : '';
-    det.innerHTML = `<td colspan="15">${(r.notes || []).filter(Boolean).join(' &nbsp;|&nbsp; ')}<br>Kalshi: ${r.home} ${pct(r.kalshi)} ($${(r.kvolHome || 0).toLocaleString()}) · ${r.away} ${pct(r.kalshiAway)} ($${(r.kvolAway || 0).toLocaleString()})<br>${bk}</td>`;
+    det.innerHTML = `<td colspan="14">${(r.notes || []).filter(Boolean).join(' &nbsp;|&nbsp; ')}<br>Kalshi: ${r.home} ${pct(r.kalshi)} ($${(r.kvolHome || 0).toLocaleString()}) · ${r.away} ${pct(r.kalshiAway)} ($${(r.kvolAway || 0).toLocaleString()})<br>${bk}</td>`;
     tr.addEventListener('click', ev => { if (ev.target.tagName !== 'INPUT') det.hidden = !det.hidden; });
     tb.appendChild(tr); tb.appendChild(det); }
   $('#kpi').innerHTML = `<div>games<b>${list.length}</b></div>` + (n.g ? `<div>graded<b>${n.g}</b></div><div>model picks<b>${n.hit}-${n.g - n.hit}</b></div><div>expected<b>${n.exp.toFixed(1)}</b></div><div>units, 1u each pick<b class="${n.units >= 0 ? 'pos' : 'neg'}">${n.units >= 0 ? '+' : ''}${n.units.toFixed(2)}</b></div><div>ROI<b class="${n.units >= 0 ? 'pos' : 'neg'}">${n.staked ? (n.units / n.staked * 100).toFixed(1) : '0.0'}%</b></div><div>book take<b class="neg">$${n.take >= 1000 ? Math.round(n.take / 1000) + 'k' : n.take}</b></div><div>book gave<b class="pos">$${n.gave >= 1000 ? Math.round(n.gave / 1000) + 'k' : n.gave}</b></div>` : '');
