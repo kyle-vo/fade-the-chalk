@@ -171,11 +171,31 @@ def nfl_rows():
 
 # ---------------- lock + grade ----------------
 PRE = ('Scheduled', 'Pre-Game', 'Warmup', 'STATUS_SCHEDULED')
+VOL_FIELDS = ('kvol', 'kvolHome', 'kvolAway', 'takerHome$', 'takerAway$', 'takerTrades')
+CARRY_FIELDS = ('takerPubHome', 'takerAt', 'crowdAt', 'kalshiAsk', 'kalshiAwayAsk', 'sharpHome', 'skewHome', 'fliffHome', 'fliffAway', 'books')
+def merge_row(old, new):
+    """Refresh a pre-game row without ever losing data: volumes never go down, fields the new pull lacks are carried
+    forward from the old row, and prices come from whichever pull saw more money (the later one)."""
+    if not old: return new
+    out = dict(new)
+    for k in VOL_FIELDS:
+        if (old.get(k) or 0) > (new.get(k) or 0): out[k] = old[k]
+    for k in CARRY_FIELDS:
+        if out.get(k) in (None, {}, 0) and old.get(k) not in (None, {}): out[k] = old[k]
+    if (old.get('kvol') or 0) > (new.get('kvol') or 0):
+        for k in ('kalshi', 'kalshiAway', 'kalshiAsk', 'kalshiAwayAsk'):
+            if old.get(k) is not None: out[k] = old[k]
+    th, ta = out.get('takerHome$') or 0, out.get('takerAway$') or 0
+    if th + ta: out['takerPubHome'] = round(th / (th + ta), 3)
+    kh, ka = out.get('kvolHome') or 0, out.get('kvolAway') or 0
+    if kh + ka: out['pubHome'] = round(kh / (kh + ka), 3)
+    return out
 def lock(path, new, key):
     old = J(path) if os.path.exists(path) else []
     started = {r[key] for r in new if r['state'] not in PRE}
     keep = [r for r in old if r[key] in started]; frozen = {r[key] for r in keep}
-    out = keep + [r for r in new if r[key] not in frozen and r['state'] in PRE] + [dict(r, lateLock=True) for r in new if r[key] in started and r[key] not in frozen]
+    prev = {r[key]: r for r in old}
+    out = keep + [merge_row(prev.get(r[key], {}), r) for r in new if r[key] not in frozen and r['state'] in PRE] + [dict(r, lateLock=True) for r in new if r[key] in started and r[key] not in frozen]
     json.dump(out, open(path, 'w', encoding='utf-8')); return len(keep), len(out) - len(keep)
 
 def grade():
@@ -213,8 +233,9 @@ def crowd_refresh():
             if not kev: continue
             kh, ka = kev['sides'].get(canon(r['home'])), kev['sides'].get(canon(r['away']))
             vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
-            r.update({'kalshi': kh['yes'] if kh else None, 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kalshiAwayAsk': ka['ask'] if ka else None,
+            fresh = dict(r); fresh.update({'kalshi': kh['yes'] if kh else None, 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kalshiAwayAsk': ka['ask'] if ka else None,
                       'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0, 'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'crowdAt': datetime.datetime.now().isoformat(timespec='minutes')})
+            r.update(merge_row(r, fresh))
             changed = True; touched += 1; snap_rows.append({k2: r.get(k2) for k2 in ('sport', 'gamePk', 'eventId', 'home', 'away', 'kalshi', 'kalshiAway', 'kvolHome', 'kvolAway', 'state', 'time')})
         if changed: json.dump(rows, open(lockf, 'w', encoding='utf-8'))
     snapf = os.path.join(BT, f'mlsnap_{today}.json'); snaps = J(snapf) if os.path.exists(snapf) else []
@@ -225,7 +246,12 @@ if __name__ == '__main__':
     import sys
     if '--crowd-only' in sys.argv:
         crowd_refresh(); grade(); raise SystemExit
-    m = mlb_rows(); n = nfl_rows()
+    m = mlb_rows()
+    try:
+        n = nfl_rows()
+    except FileNotFoundError:
+        print("  NFL data missing, skipping NFL rows")
+        n = []
     print(f"  ML rows: MLB {len(m)} ({sum(1 for r in m if r['kalshi'] is not None)} on Kalshi, {sum(1 for r in m if r['fliffHome'])} on Fliff) | NFL {len(n)} ({sum(1 for r in n if r['kalshi'] is not None)} on Kalshi)")
     if m: k, fr = lock(os.path.join(BT, f'ml_{today}.json'), m, 'gamePk'); print(f"  ML lock {today}: kept {k}, refreshed {fr}")
     if n: k, fr = lock(os.path.join(BT, f"ml_{n[0]['date']}.json"), n, 'eventId'); print(f"  ML lock {n[0]['date']}: kept {k}, refreshed {fr}")
@@ -233,4 +259,7 @@ if __name__ == '__main__':
     snapf = os.path.join(BT, f'mlsnap_{today}.json'); snaps = J(snapf) if os.path.exists(snapf) else []
     snaps.append({'at': datetime.datetime.now().isoformat(timespec='minutes'), 'rows': [{k2: r.get(k2) for k2 in ('sport', 'gamePk', 'eventId', 'home', 'away', 'kalshi', 'kalshiAway', 'kvolHome', 'kvolAway', 'fliffHome', 'fliffAway', 'sharpHome', 'skewHome', 'state', 'time')} for r in m + n]})
     json.dump(snaps, open(snapf, 'w', encoding='utf-8'))
-    grade()
+    try:
+        grade()
+    except Exception as e:
+        print(f"  grading failed (ESPN unreachable): {e}")

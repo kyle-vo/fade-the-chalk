@@ -1,0 +1,79 @@
+name: Update MLB Data & Board
+
+on:
+  schedule:
+    # Run every hour at :00 (0 * * * * = every hour)
+    - cron: '0 * * * *'
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+env:
+  TZ: America/Los_Angeles          # 'today' must be the Pacific calendar day, not UTC (UTC flips to tomorrow at 5pm PT)
+  ODDS_CACHE_MIN: "50"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch new MLB data
+        run: python fetch_data.py
+
+      - name: Fetch Kalshi market data
+        continue-on-error: true
+        run: python kalshi.py
+
+      - name: Run model predictions
+        run: python model.py
+
+      - name: Sportsbook prop odds (The Odds API, cached 50 min)
+        continue-on-error: true
+        env:
+          ODDS_API_KEYS: ${{ secrets.ODDS_API_KEYS }}
+        run: python odds.py
+
+      - name: Run moneyline model
+        continue-on-error: true
+        env:
+          ODDS_API_KEYS: ${{ secrets.ODDS_API_KEYS }}
+        run: python ml.py
+
+      - name: Lock today's prop picks pre-game
+        continue-on-error: true
+        run: python lock.py
+
+      - name: Grade finished games
+        continue-on-error: true
+        run: python grade.py
+
+      - name: Kalshi trade tape (directional crowd money)
+        continue-on-error: true
+        run: python taker.py
+
+      - name: Build moneyline HTML
+        continue-on-error: true
+        run: python build_ml.py
+
+      - name: Build main site
+        run: python build_site.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update: Hourly MLB data refresh" && git fetch origin main && git merge origin/main --no-edit && git push)
