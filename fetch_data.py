@@ -86,6 +86,8 @@ def fetch_nfl():
     print("[NFL]")
     wk = os.environ.get('NFL_WEEK')          # NFL_WEEK=2 pulls a specific week; default = ESPN's current week
     sb = get(f"{ESPN}/football/nfl/scoreboard", **({'week': int(wk), 'seasontype': 2, 'dates': datetime.date.today().year} if wk else {}))
+    if not wk and sb.get('events') and all(e['status']['type'].get('completed') for e in sb['events']):   # ESPN's 'current' week lags until midweek: once every game is final, move on
+        sb = get(f"{ESPN}/football/nfl/scoreboard", week=sb['week']['number'] + 1, seasontype=2, dates=datetime.date.today().year)
     save('nfl_scoreboard.json', sb); print(f"  NFL week {sb['week']['number']}: {len(sb['events'])} games")
     season_prev = sb['season']['year'] - 1
     stats = {}
