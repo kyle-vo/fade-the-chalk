@@ -15,7 +15,7 @@ nav a{color:var(--mute);text-decoration:none;padding:5px 10px;border:1px solid v
 .ctl input[type=text],.ctl input[type=number],.ctl select{background:#0e1115;border:1px solid var(--line);color:var(--ink);padding:6px 8px;border-radius:6px;font:inherit}
 .ctl label{color:var(--mute)}
 textarea{width:100%;background:#0e1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px;font:12px var(--mono);min-height:64px}
-details.paste{margin-bottom:12px;font-size:13px;color:var(--mute)}details.paste summary{cursor:pointer;color:var(--ink);font-weight:600}
+details.top5{margin-bottom:14px}.top5 h2{margin:0 0 8px;font-size:15px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.card{background:#0e1115;border:1px solid var(--line);border-radius:8px;padding:10px 12px;position:relative}.card .rk{position:absolute;top:8px;right:10px;color:var(--mute);font:600 11px var(--mono)}.card .nm{font-weight:700;font-size:14px}.card .tm{display:block;margin-top:2px}.card .st{display:flex;gap:10px;margin-top:8px;font:12px var(--mono);font-variant-numeric:tabular-nums}.card .st b{display:block;font-size:14px;color:var(--ink)}.card .st span{color:var(--mute)}.card .why{margin-top:8px;font-size:12px;color:var(--mute)}.card.hit{border-color:#2fd47a}.card.miss{border-color:#3a2a2e}.paste{margin-bottom:12px;font-size:13px;color:var(--mute)}details.paste summary{cursor:pointer;color:var(--ink);font-weight:600}
 button{background:#1b2129;border:1px solid #2f3944;color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}button:hover{border-color:var(--acc)}
 .wrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:13px;min-width:1000px}
@@ -47,11 +47,7 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 </style><header><h1><a href="../index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">NFL anytime TD · 2026 wk1 · results graded</div></header><nav><a href="../index.html" class="">Today</a><a href="../ml.html" class="">Moneyline</a><a href="../track.html" class="">Track</a><a href="../archive.html" class="">Archive</a><span class="lbl">MLB days</span><a href="../days/2026-09-15.html" class="">09-15</a><a href="../days/2026-09-14.html" class="">09-14</a><a href="../days/2026-09-13.html" class="">09-13</a><a href="../days/2026-09-12.html" class="">09-12</a><a href="../days/2026-09-11.html" class="">09-11</a><a href="../days/2026-09-10.html" class="">09-10</a><a href="../days/2026-09-09.html" class="">09-09</a><span class="lbl">NFL</span><a href="../nfl/2026_wk2.html" class="">wk 2</a><a href="../nfl/2026_wk1.html" class="on">wk 1</a></nav>
 <div class="panel top">
 <div class="kpi" id="kpi"></div>
-<details class="paste"><summary>Paste the book's odds / public bet % (optional)</summary>
-<p>One player per line: <code>Kyle Schwarber +165</code> or <code>Schwarber +165 62%</code> (third token = public bet %). Names are fuzzy-matched. Saved in this browser only.</p>
-<textarea id="paste" placeholder="Aaron Judge +210 58%&#10;Jahmyr Gibbs -115 71%"></textarea>
-<div style="margin-top:6px;display:flex;gap:8px"><button id="apply">Apply</button><button id="clear">Clear this page's entries</button></div>
-</details>
+<div class="top5"><h2 id="top5h">Top 5 to take</h2><div class="cards" id="top5"></div><div class="note" id="top5n"></div></div>
 <div class="ctl">
 <label>search <input type="text" id="q" placeholder="player / team / game"></label>
 <label>min model % <input type="number" id="minp" value="0" min="0" max="100" style="width:56px"></label>
@@ -103,7 +99,7 @@ function resultCell(r){
   const line = r.sport === 'MLB' && r.actualPA ? ` <span class="tm">${r.actual} HR / ${r.actualPA} PA</span>` : r.sport === 'NFL' && r.hit != null ? ` <span class="tm">${r.actual} TD</span>` : '';
   return r.hit ? `<span class="res y">✓ ${r.sport === 'MLB' ? 'HR' : 'TD'}${r.actual > 1 ? ' x' + r.actual : ''}</span>${line}` : `<span class="res n">✗</span>${line}`;
 }
-function render(){
+function render(){ top5();
   const rows = (PAGE.rows[tab] || []).map(r => ({ r, ...verdict(r) }));
   const q = norm($('#q').value), minp = +$('#minp').value / 100, maxh = +$('#maxh').value, hide = $('#hidedone').checked, only = $('#onlyplays').checked, onlybets = $('#onlybets').checked;
   const onlyhits = $('#onlyhits').checked;
@@ -143,20 +139,31 @@ function render(){
   tb.querySelectorAll('input').forEach(i => i.addEventListener('change', () => { const k = i.dataset.k; store[k] = store[k] || {}; store[k][i.dataset.f] = i.type === 'checkbox' ? i.checked : i.value.trim(); if (i.type === 'checkbox' && i.checked) { store[k].sport = tab; } save(); render(); }));
   $('#tbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = -1; } render(); }));
 }
-function applyPaste(){
-  const all = [...(PAGE.rows.mlb || []), ...(PAGE.rows.nfl || [])];
-  for (const line of $('#paste').value.split('\n')) {
-    const m = line.match(/^(.+?)\s+([-+]\d{3,4})(?:\s+(\d{1,3})%?)?\s*$/); if (!m) continue;
-    const nm = norm(m[1]); let best = null, bs = 0;
-    for (const r of all) { const rn = norm(r.name); let s = 0; if (rn === nm) s = 3; else if (rn.includes(nm) || nm.includes(rn)) s = 2; else if (rn.split(' ').pop() === nm.split(' ').pop()) s = 1; if (s > bs) { bs = s; best = r; } }
-    if (best) { const k = key(best); store[k] = store[k] || {}; store[k].odds = m[2]; if (m[3]) store[k].pub = m[3]; }
-  }
-  save(); render();
+// ---- top 5 to take: model % first, then what the graded history says (see track page) ----
+// 4 slates / 835 graded HR rows: slots 1-2 homered 21% vs 14% expected, slots 5-6 8% vs 12%; hitters priced shorter at retail than at
+// Pinnacle (skew > 1) hit 9.6% vs 15%; heavy Kalshi money OVER-delivered (22% vs 15%), so the crowd is never faded here. NFL: RBs beat their number.
+function top5(){
+  const rows = tab === 'mlb' ? (PAGE.rows.mlb || []) : (PAGE.rows.nfl || []);
+  const pre = r => r.hit == null && !r.dnp && /Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled') && (tab === 'nfl' || r.slot);
+  const upcoming = rows.filter(pre); const live = upcoming.length > 0;                 // games still to be played -> 'to take'; whole slate done -> 'how they did'
+  const cand = live ? upcoming : rows.filter(r => !r.dnp && (tab === 'nfl' || r.slot));
+  const score = r => { let m = 1, why = [];
+    if (tab === 'mlb') { if (r.slot <= 2) { m *= 1.15; why.push('top of the order (slots 1-2 hit 21% vs 14%)'); } else if (r.slot <= 3) { m *= 1.05; why.push('slot 3'); } else if (r.slot >= 5 && r.slot <= 6) { m *= 0.75; why.push('slots 5-6 have run cold (8% vs 12%)'); } }
+    else if ((r.pos || '').startsWith('RB')) { m *= 1.1; why.push('RB (beat their number wk 1)'); }
+    if (r.skew != null && r.skew > 1) { m *= 0.8; why.push('retail shorter than Pinnacle: public trap'); }
+    if (r.kvol != null && r.kvol >= 3500) why.push('heavy Kalshi money, crowd has been right on these');
+    if (r.book && implied(r.book) != null && r.prob - implied(r.book) >= .03) why.push('+' + Math.round((r.prob - implied(r.book)) * 100) + ' pts vs the price');
+    return { s: r.prob * m, why }; };
+  const ranked = cand.map(r => ({ r, ...score(r) })).sort((a, b) => b.s - a.s).slice(0, 5);
+  $('#top5h').textContent = tab === 'mlb' ? (live ? 'Top 5 homers to take' : 'Top 5 homers, how they did') : (live ? 'Top 5 touchdowns to take' : 'Top 5 touchdowns, how they did');
+  $('#top5').innerHTML = ranked.length ? ranked.map((x, i) => { const r = x.r; const done = r.hit != null;
+    return `<div class="card ${done ? (r.hit ? 'hit' : 'miss') : ''}"><span class="rk">#${i + 1}</span><span class="nm">${r.name}</span><span class="tm">${r.team}${tab === 'mlb' && r.slot ? ' · bats ' + r.slot : r.pos ? ' · ' + r.pos : ''} · ${r.game}${r.pitcher ? ' · vs ' + r.pitcher : ''}</span>
+      <div class="st"><div><span>model</span><b>${(r.prob * 100).toFixed(1)}%</b></div><div><span>Robinhood</span><b>${r.kalshi != null ? Math.round(r.kalshi * 100) + '¢' : r.book ? fmtOdds(r.book) : '—'}</b></div><div><span>crowd $</span><b>${r.kvol != null ? '$' + (r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol) : '—'}</b></div>${done ? `<div><span>result</span><b class="${r.hit ? 'pos' : 'neg'}">${r.hit ? '✓ ' + (tab === 'mlb' ? 'HR' : 'TD') : '✗'}</b></div>` : ''}</div>
+      <div class="why">${x.why.length ? x.why.join(' · ') : 'model % alone'}</div></div>`; }).join('') : '<div class="empty">Nothing left to take: every game on this slate has started.</div>';
+  $('#top5n').textContent = ranked.length ? (tab === 'mlb' ? 'Ranked by model %, nudged up for lineup slots 1-3, down for slots 5-6 and for hitters the public has pushed shorter than Pinnacle. Heavy crowd money is a plus, not a fade.' : 'Ranked by model %, nudged up for running backs and down for players the public has pushed shorter than Pinnacle.') + (live ? ' Started games drop off.' : '') : '';
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; render(); }));
 ['#q', '#minp', '#maxh', '#hidedone', '#onlyplays', '#onlybets', '#onlyhits'].forEach(s => $(s).addEventListener('input', render));
 $('#sort').addEventListener('change', () => { sortKey = $('#sort').value; sortDir = sortKey === 'time' ? 1 : -1; render(); });
-$('#apply').addEventListener('click', applyPaste);
-$('#clear').addEventListener('click', () => { for (const k of Object.keys(store)) if (k.startsWith(PAGE.datePrefix)) delete store[k]; save(); render(); });
 render();
 </script>
