@@ -61,9 +61,10 @@ def devig(h, a):
     ph, pa = implied(h), implied(a); s = ph + pa; return ph / s, pa / s
 def side_prices(books, side):
     fl = books.get('fliff', {}).get(side); pin = books.get('pinnacle')
-    sharp = devig(pin['home'], pin['away'])[0 if side == 'home' else 1] if pin else None
     ret = [devig(b['home'], b['away'])[0 if side == 'home' else 1] for k, b in books.items() if k in RETAIL]
     shp = [devig(b['home'], b['away'])[0 if side == 'home' else 1] for k, b in books.items() if k in SHARP]
+    # Pinnacle when posted; until then the other sharp books (bovada/betonline) stand in so the column is never blank
+    sharp = devig(pin['home'], pin['away'])[0 if side == 'home' else 1] if pin else (sum(shp) / len(shp) if shp else None)
     skew = round((sum(ret) / len(ret) - sum(shp) / len(shp)) * 100, 1) if ret and shp else None
     return fl, sharp, skew
 
@@ -110,7 +111,7 @@ def mlb_rows():
             'home': hab, 'away': aab, 'homeName': h['team']['name'], 'awayName': a['team']['name'], 'homeSP': hp['fullName'] if hp else 'TBD', 'awaySP': ap['fullName'] if ap else 'TBD',
             'homeRec': f"{rec.get(h['team']['id'], {}).get('w', 0)}-{rec.get(h['team']['id'], {}).get('l', 0)}", 'awayRec': f"{rec.get(a['team']['id'], {}).get('w', 0)}-{rec.get(a['team']['id'], {}).get('l', 0)}",
             'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
-            'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'skewHome': skew_h,
+            'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'sharpSrc': 'pinnacle' if 'pinnacle' in bk['books'] else ('sharp avg' if sharp_h else None), 'skewHome': skew_h,
             'books': bk['books'], 'notes': [f"strength home {sh:.3f} away {sa:.3f} (regressed pythag), log5 {p_log5:.3f}, +.04 home", f"SP adj: home {sp_adj(hp['id']) * 100:+.1f} pts, away {sp_adj(ap['id']) * 100:+.1f} pts" if hp and ap else "SP TBD on at least one side"]})
     return rows
 
@@ -165,14 +166,14 @@ def nfl_rows():
         rows.append({'sport': 'NFL', 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAwayAsk': ka['ask'] if ka else None, 'eventId': e['id'], 'date': wk, 'time': e['date'], 'state': c['status']['type']['name'], 'venue': '',
             'home': hab, 'away': aab, 'homeName': home['team']['displayName'], 'awayName': away['team']['displayName'], 'homeSP': '', 'awaySP': '', 'homeRec': '', 'awayRec': '',
             'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
-            'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'skewHome': skew_h,
+            'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'sharpSrc': 'pinnacle' if 'pinnacle' in bk['books'] else ('sharp avg' if sharp_h else None), 'skewHome': skew_h,
             'books': bk['books'], 'notes': [f"ratings (2026 results + 2025 prior): {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> rating spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '', f"ratings alone said {p_rating * 100:.0f}% home; weight {W_RATING:.0%} ratings / {1 - W_RATING:.0%} {'Pinnacle' if sharp_h is not None else 'Vegas spread'} ({games_played:.1f} games of 2026 data per team)" if anchor is not None else 'no market anchor yet - ratings only']})
     return rows
 
 # ---------------- lock + grade ----------------
 PRE = ('Scheduled', 'Pre-Game', 'Warmup', 'STATUS_SCHEDULED')
 VOL_FIELDS = ('kvol', 'kvolHome', 'kvolAway', 'takerHome$', 'takerAway$', 'takerTrades')
-CARRY_FIELDS = ('takerPubHome', 'takerAt', 'crowdAt', 'kalshiAsk', 'kalshiAwayAsk', 'sharpHome', 'skewHome', 'fliffHome', 'fliffAway', 'books')
+CARRY_FIELDS = ('takerPubHome', 'takerAt', 'crowdAt', 'kalshiAsk', 'kalshiAwayAsk', 'sharpHome', 'sharpSrc', 'skewHome', 'fliffHome', 'fliffAway', 'books')
 def merge_row(old, new):
     """Refresh a pre-game row without ever losing data: volumes never go down, fields the new pull lacks are carried
     forward from the old row, and prices come from whichever pull saw more money (the later one)."""
@@ -192,10 +193,14 @@ def merge_row(old, new):
     return out
 def lock(path, new, key):
     old = J(path) if os.path.exists(path) else []
-    started = {r[key] for r in new if r['state'] not in PRE}
+    now = datetime.datetime.now(datetime.timezone.utc)
+    def has_started(r):                                                              # by clock as well as by feed state: a stale schedule file must never let in-game prices into the lock
+        try: return r['state'] not in PRE or datetime.datetime.fromisoformat(r['time'].replace('Z', '+00:00')) <= now
+        except Exception: return r['state'] not in PRE
+    started = {r[key] for r in new if has_started(r)}
     keep = [r for r in old if r[key] in started]; frozen = {r[key] for r in keep}
     prev = {r[key]: r for r in old}
-    out = keep + [merge_row(prev.get(r[key], {}), r) for r in new if r[key] not in frozen and r['state'] in PRE] + [dict(r, lateLock=True) for r in new if r[key] in started and r[key] not in frozen]
+    out = keep + [merge_row(prev.get(r[key], {}), r) for r in new if r[key] not in frozen and not has_started(r)] + [dict(r, lateLock=True) for r in new if r[key] in started and r[key] not in frozen]
     json.dump(out, open(path, 'w', encoding='utf-8')); return len(keep), len(out) - len(keep)
 
 def grade():
