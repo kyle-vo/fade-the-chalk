@@ -45,11 +45,13 @@ ML_KEEP = ('sport', 'date', 'gamePk', 'eventId', 'home', 'away', 'time', 'homeSP
 json.dump([{k: r.get(k) for k in ML_KEEP} for rows in boards.values() for r in rows], open(os.path.join(BT, 'mlboard.json'), 'w', encoding='utf-8'))
 
 def head(title, sub):
-    nav = '<nav><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="track.html">Track</a><a href="archive.html">Archive</a><span class="lbl">MLB days</span>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:7]) + '<span class="lbl">NFL weeks</span>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">wk {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</nav>'
+    nav = ('<nav><div class="row site"><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="track.html">Track</a><a href="archive.html">Archive</a></div>'
+           '<div class="row mlb"><span class="lbl">MLB</span><a href="index.html#mlb">Home runs today</a><a href="#mlb" class="sportl on" data-t="mlb">Moneyline</a>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:8]) + '</div>'
+           '<div class="row nfl"><span class="lbl">NFL</span><a href="index.html#nfl">Touchdowns this week</a><a href="#nfl" class="sportl" data-t="nfl">Moneyline</a>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">week {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</div></nav>')
     return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav}'
 
 JS = r"""
-const $ = s => document.querySelector(s); let tab = 'mlb'; let day = TODAY; let week = WEEK; let sortKey = 'edge', sortDir = -1;
+const $ = s => document.querySelector(s); let tab = location.hash === '#nfl' ? 'nfl' : 'mlb'; let day = TODAY; let week = WEEK; let sortKey = 'edge', sortDir = -1;
 let store = {}; try { store = JSON.parse(localStorage.getItem('ftc_ml_bets') || '{}'); } catch (e) {}
 function save(){ try { localStorage.setItem('ftc_ml_bets', JSON.stringify(store)); } catch (e) {} }
 const implied = o => { o = +o; if (!o || isNaN(o)) return null; return o < 0 ? (-o) / (-o + 100) : 100 / (o + 100); };
@@ -112,9 +114,12 @@ function render(){
   tb.querySelectorAll('input').forEach(i => i.addEventListener('change', () => { const k = i.dataset.k; store[k] = store[k] || {}; if (i.type === 'checkbox') store[k].on = i.checked; else store[k][i.dataset.f] = i.value.trim(); save(); render(); }));
   $('#tbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = -1; } render(); }));
 }
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; render(); }));
-document.querySelectorAll('nav a.dayl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); day = a.dataset.day; tab = 'mlb'; document.querySelectorAll('nav a.dayl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
-document.querySelectorAll('nav a.weekl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); week = a.dataset.week; tab = 'nfl'; document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); document.querySelector('.tab[data-t=nfl]').classList.add('on'); document.querySelectorAll('nav a.weekl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
+function setTab(t){ tab = t; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === t)); document.querySelectorAll('nav a.sportl').forEach(x => x.classList.toggle('on', x.dataset.t === t)); history.replaceState(null, '', '#' + t); render(); }
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.t)));
+document.querySelectorAll('nav a.sportl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); setTab(a.dataset.t); }));
+setTab(tab);
+document.querySelectorAll('nav a.dayl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); day = a.dataset.day; setTab('mlb'); document.querySelectorAll('nav a.dayl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
+document.querySelectorAll('nav a.weekl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); week = a.dataset.week; setTab('nfl'); document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); document.querySelector('.tab[data-t=nfl]').classList.add('on'); document.querySelectorAll('nav a.weekl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
 ['#onlyplays', '#hidedone'].forEach(s => $(s).addEventListener('input', render));
 // ---- scorecard over every graded game ----
 const G = GRADED; const brier = (ps) => ps.length ? ps.reduce((s, [p, y]) => s + (p - y) ** 2, 0) / ps.length : null;

@@ -148,14 +148,14 @@ _mlb = os.path.join(BT, 'mlboard.json'); MLH = json.load(open(_mlb, encoding='ut
 
 # ---------- templates ----------
 FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">'
-CSS = r"""<style>
+CSS = r"""<style>nav{display:flex;flex-direction:column;gap:6px;padding:12px 26px 0;font-size:13px}nav .row{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}nav a{color:var(--mute);text-decoration:none;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}nav a.on{color:var(--ink);border-color:var(--acc)}nav .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;padding:5px 10px;border-radius:6px;min-width:52px;text-align:center}nav .row.mlb .lbl{color:#7fb8ff;background:#14202e}nav .row.mlb a.on{border-color:#7fb8ff}nav .row.nfl .lbl{color:#7fe0a5;background:#122a1e}nav .row.nfl a.on{border-color:#7fe0a5}nav .row.site a{border-color:#2f3944}nav .row.site a.on{border-color:var(--acc)}
 :root{--bg:#0b0d10;--panel:#14181e;--line:#232a33;--ink:#e6e9ee;--mute:#8a94a3;--acc:#ffb020;--good:#2fd47a;--bad:#ff4d5e;--warn:#ffb020;--blue:#4aa3ff;--font:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;--disp:"Barlow Condensed","Arial Narrow",Impact,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--ink);font-family:var(--font);margin:0;padding:0 0 60px;font-size:14px}
 header{padding:18px 26px 12px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
 h1{margin:0;font-family:var(--disp);font-size:34px;font-weight:800;letter-spacing:1.5px;line-height:1}h1 span{color:var(--acc)}h1 a{color:inherit;text-decoration:none}
 .sub{color:var(--mute);font-size:13px}
-nav{display:flex;flex-wrap:wrap;gap:4px 6px;padding:12px 26px 0;font-size:13px;align-items:center}
-nav a{color:var(--mute);text-decoration:none;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}nav a:hover{color:var(--ink);border-color:#3a4552}nav a.on{color:var(--ink);border-color:var(--acc)}nav .lbl{color:var(--mute);margin-left:6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+
+nav a:hover{color:var(--ink);border-color:#3a4552}
 .tabs{display:flex;gap:6px;padding:14px 26px 0}
 .tab{font-family:var(--disp);font-size:17px;letter-spacing:.6px;text-transform:uppercase;padding:8px 16px;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:var(--panel);color:var(--mute);cursor:pointer;font-weight:600}
 .tab.on{color:var(--ink);background:#1b2129;border-color:#2f3944}
@@ -196,12 +196,14 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 @media(max-width:700px){header,nav,.tabs,.panel{padding-left:10px;padding-right:10px}.panel{margin-left:6px;margin-right:6px}}
 </style>"""
 
-def nav(active, root):
-    items = [('index.html', 'Today'), ('ml.html', 'Moneyline'), ('track.html', 'Track'), ('archive.html', 'Archive')]
-    html = ''.join(f'<a href="{root}{h}" class="{"on" if active == h else ""}">{t}</a>' for h, t in items)
-    html += '<span class="lbl">MLB days</span>' + ''.join(f'<a href="{root}days/{d}.html" class="{"on" if active == "days/" + d else ""}">{d[5:]}</a>' for d in sorted(days, reverse=True)[:7])
-    if weeks: html += '<span class="lbl">NFL</span>' + ''.join(f'<a href="{root}nfl/{w}.html" class="{"on" if active == "nfl/" + w else ""}">wk {w.split("wk")[1]}</a>' for w in sorted(weeks, reverse=True)[:8])
-    return f'<nav>{html}</nav>'
+def nav(active, root, sport=None):
+    """three rows: site pages / MLB (today's HR board, moneyline, day pages) / NFL (today's TD board, moneyline, week pages)"""
+    on = lambda h: ' class="on"' if active == h else ''
+    site = f'<div class="row site"><a href="{root}index.html"{on("index.html")}>Today</a><a href="{root}ml.html"{on("ml.html")}>Moneyline</a><a href="{root}track.html"{on("track.html")}>Track</a><a href="{root}archive.html"{on("archive.html")}>Archive</a></div>'
+    on_mlb = ' class="on"' if active == "index.html" and sport == "mlb" else ''; on_nfl = ' class="on"' if active == "index.html" and sport == "nfl" else ''
+    mlb = f'<div class="row mlb"><span class="lbl">MLB</span><a href="{root}index.html#mlb"{on_mlb}>Home runs today</a><a href="{root}ml.html#mlb">Moneyline</a>' + ''.join(f'<a href="{root}days/{d}.html"{on("days/" + d)}>{d[5:]}</a>' for d in sorted(days, reverse=True)[:8]) + '</div>'
+    nfl = f'<div class="row nfl"><span class="lbl">NFL</span><a href="{root}index.html#nfl"{on_nfl}>Touchdowns this week</a><a href="{root}ml.html#nfl">Moneyline</a>' + ''.join(f'<a href="{root}nfl/{w}.html"{on("nfl/" + w)}>week {w.split("wk")[1]}</a>' for w in sorted(weeks, reverse=True)[:8]) + '</div>'
+    return f'<nav>{site}{mlb}{nfl}</nav>'
 
 def head(title, sub, active, root):
     return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}{CSS}<header><h1><a href="{root}index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav(active, root)}'
@@ -209,6 +211,9 @@ def head(title, sub, active, root):
 BOARD_JS = r"""
 const $ = s => document.querySelector(s);
 let tab = PAGE.tab, sortKey = PAGE.graded ? 'prob' : 'nasty', sortDir = -1;
+if (location.hash === '#nfl' && (PAGE.rows.nfl || []).length) tab = 'nfl'; else if (location.hash === '#mlb' && (PAGE.rows.mlb || []).length) tab = 'mlb';
+document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === tab));
+function markNav(){ document.querySelectorAll('nav .row.mlb a, nav .row.nfl a').forEach(a => { if (/index\.html#(mlb|nfl)$/.test(a.getAttribute('href'))) a.classList.toggle('on', a.getAttribute('href').endsWith('#' + tab) && PAGE.tab !== 'single'); }); }
 let store = {};
 try { store = JSON.parse(localStorage.getItem('ftc_bets') || '{}'); } catch (e) { store = {}; }
 function save(){ try { localStorage.setItem('ftc_bets', JSON.stringify(store)); } catch (e) {} }
@@ -303,7 +308,8 @@ function top5(){
       <div class="why">${x.why.length ? x.why.join(' · ') : 'model % alone'}</div></div>`; }).join('') : '<div class="empty">Nothing left to take: every game on this slate has started.</div>';
   $('#top5n').textContent = ranked.length ? (tab === 'mlb' ? 'Ranked by model %, nudged up for lineup slots 1-3, down for slots 5-6 and for hitters the public has pushed shorter than Pinnacle. Heavy crowd money is a plus, not a fade.' : 'Ranked by model %, nudged up for running backs and down for players the public has pushed shorter than Pinnacle.') + (live ? ' Started games drop off.' : '') : '';
 }
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; render(); }));
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; history.replaceState(null, '', '#' + tab); markNav(); render(); }));
+markNav();
 ['#q', '#minp', '#maxh', '#hidedone', '#onlyplays', '#onlybets', '#onlyhits'].forEach(s => $(s).addEventListener('input', render));
 $('#sort').addEventListener('change', () => { sortKey = $('#sort').value; sortDir = sortKey === 'time' ? 1 : -1; render(); });
 render();
