@@ -144,6 +144,7 @@ for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL'); attach_kalshi_
 attach_odds(board['nfl'], today, 'NFL'); attach_kalshi_nfl(board['nfl']); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB')
 slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove', 'sportsbook')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
+_mlb = os.path.join(BT, 'ml_board.json'); MLH = json.load(open(_mlb, encoding='utf-8')) if os.path.exists(_mlb) else []   # written by build_ml.py
 
 # ---------- templates ----------
 FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">'
@@ -330,24 +331,39 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 </div>
 <script>const PAGE = {jd(page)};{BOARD_JS}</script>"""
 
+TRACK_CSS = '<style>button.rm{background:#1c2430;border:1px solid #2b3440;color:#8a94a3;border-radius:6px;padding:2px 8px;cursor:pointer;font:inherit}button.rm:hover{color:#ff4d5e;border-color:#ff4d5e}</style>'
 TRACK_JS = r"""
 const H = HISTORY; let store = {};
 try { store = JSON.parse(localStorage.getItem('ftc_bets') || '{}'); } catch (e) {}
 const byKey = {}; for (const r of H) byKey[r.date + '|' + r.sport + ':' + r.id] = r;
 const pay = (odds, stake, hit) => hit ? stake * (odds > 0 ? odds / 100 : 100 / -odds) : -stake;
 const fmt = o => o > 0 ? '+' + o : '' + o;
-// ---- your paper bets ----
-const bets = [];
-for (const [k, e] of Object.entries(store)) { if (!e.on) continue; const r = byKey[k]; if (!r) continue;
-  const odds = +e.odds || r.book || r.fair, stake = +e.stake || 1; const settled = r.hit != null && !r.dnp;
-  bets.push({ r, odds, stake, atFair: !e.odds && !r.book, settled, pnl: settled ? pay(odds, stake, r.hit) : 0, void: !!r.dnp }); }
-bets.sort((a, b) => a.r.date < b.r.date ? -1 : a.r.date > b.r.date ? 1 : 0);
-const settled = bets.filter(b => b.settled); const units = settled.reduce((s, b) => s + b.pnl, 0); const staked = settled.reduce((s, b) => s + b.stake, 0);
-document.querySelector('#mykpi').innerHTML = `<div>paper bets<b>${bets.length}</b></div><div>settled<b>${settled.length}</b></div><div>record<b>${settled.filter(b => b.r.hit).length}-${settled.filter(b => !b.r.hit).length}</b></div><div>units<b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)}</b></div><div>ROI<b class="${units >= 0 ? 'pos' : 'neg'}">${staked ? (units / staked * 100).toFixed(1) : '0.0'}%</b></div><div>pending<b>${bets.filter(b => !b.settled && !b.void).length}</b></div>`;
-const led = document.querySelector('#ledger');
-if (!bets.length) led.innerHTML = '<div class="empty">No paper bets yet. Open any day page, tick the Bet box next to a player, type the book odds if you have them, and it shows up here.</div>';
-else { let run = 0; led.innerHTML = '<div class="wrap"><table><thead><tr><th>Date</th><th>Player</th><th>Game</th><th>Model %</th><th>Heat</th><th>Odds</th><th>Stake</th><th>Result</th><th>P/L</th><th>Running</th></tr></thead><tbody>' +
-  bets.map(b => { if (b.settled) run += b.pnl; return `<tr><td class="tm">${b.r.date}</td><td><span class="nm">${b.r.name}</span> <span class="tm">${b.r.team}</span></td><td class="tm">${b.r.game}</td><td class="num">${(b.r.prob * 100).toFixed(1)}%</td><td class="num">${Math.round(b.r.heat)}</td><td class="num">${fmt(b.odds)}${b.atFair ? ' <span class="tm">fair</span>' : ''}</td><td class="num">${b.stake}u</td><td>${b.void ? '<span class="res d">void</span>' : !b.settled ? '<span class="res n">pending</span>' : b.r.hit ? '<span class="res y">✓ hit</span>' : '<span class="res n">✗ miss</span>'}</td><td class="num ${b.pnl >= 0 ? 'pos' : 'neg'}">${b.settled ? (b.pnl >= 0 ? '+' : '') + b.pnl.toFixed(2) : '—'}</td><td class="num ${run >= 0 ? 'pos' : 'neg'}">${b.settled ? (run >= 0 ? '+' : '') + run.toFixed(2) : ''}</td></tr>`; }).join('') + '</tbody></table></div>'; }
+// ---- your paper bets (props from the day pages + moneylines from ml.html) ----
+let mlStore = {}; try { mlStore = JSON.parse(localStorage.getItem('ftc_ml_bets') || '{}'); } catch (e) {}
+const mlByKey = {}; for (const r of MLH) mlByKey[r.date + '|' + (r.gamePk || r.eventId)] = r;
+const ledgerRows = () => {
+  const bets = [];
+  for (const [k, e] of Object.entries(store)) { if (!e.on) continue; const r = byKey[k]; if (!r) continue;
+    const odds = +e.odds || r.book || r.fair, stake = +e.stake || 1; const settled = r.hit != null && !r.dnp;
+    bets.push({ kind: 'prop', k, date: r.date, name: r.name, sub: r.team, game: r.game, prob: r.prob, heat: r.heat, odds, stake, atFair: !e.odds && !r.book, settled, hit: r.hit, pnl: settled ? pay(odds, stake, r.hit) : 0, void: !!r.dnp }); }
+  for (const [k, e] of Object.entries(mlStore)) { if (!e.on) continue; const r = mlByKey[k]; if (!r) continue;
+    const team = r.pick === 'home' ? r.home : r.away, odds = r.pickOdds, stake = +e.stake || 1; const settled = r.pickHit != null && odds != null;
+    bets.push({ kind: 'ml', k, date: r.date, name: team + ' ML', sub: r.sport, game: r.away + ' @ ' + r.home + (r.score ? ' · ' + r.score : ''), prob: r.pickProb, heat: r.pubHome == null ? null : Math.round((r.pick === 'home' ? r.pubHome : 1 - r.pubHome) * 100), odds: odds == null ? 0 : odds, stake, atFair: false, settled, hit: r.pickHit, pnl: settled ? pay(odds, stake, r.pickHit) : 0, void: false, noPrice: odds == null }); }
+  bets.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0); return bets; };
+let bets = [], settled = [];
+function renderLedger(){
+  bets = ledgerRows(); settled = bets.filter(b => b.settled); const units = settled.reduce((s, b) => s + b.pnl, 0); const staked = settled.reduce((s, b) => s + b.stake, 0);
+  document.querySelector('#mykpi').innerHTML = `<div>paper bets<b>${bets.length}</b></div><div>settled<b>${settled.length}</b></div><div>record<b>${settled.filter(b => b.hit).length}-${settled.filter(b => !b.hit).length}</b></div><div>units<b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)}</b></div><div>ROI<b class="${units >= 0 ? 'pos' : 'neg'}">${staked ? (units / staked * 100).toFixed(1) : '0.0'}%</b></div><div>pending<b>${bets.filter(b => !b.settled && !b.void).length}</b></div>`;
+  const led = document.querySelector('#ledger');
+  if (!bets.length) { led.innerHTML = '<div class="empty">No paper bets yet. Tick the Bet box next to a player on a day page, or next to a game on the Moneyline page, and it shows up here.</div>'; return; }
+  let run = 0;
+  led.innerHTML = '<div class="wrap"><table><thead><tr><th>Date</th><th>Bet</th><th>Game</th><th>Model %</th><th>Public</th><th>Odds</th><th>Stake</th><th>Result</th><th>P/L</th><th>Running</th><th></th></tr></thead><tbody>' +
+    bets.map(b => { if (b.settled) run += b.pnl; return `<tr><td class="tm">${b.date.replace('_', ' ')}</td><td><span class="nm">${b.name}</span> <span class="tm">${b.sub}</span></td><td class="tm">${b.game}</td><td class="num">${(b.prob * 100).toFixed(1)}%</td><td class="num">${b.heat == null ? '—' : Math.round(b.heat) + (b.kind === 'ml' ? '%' : '')}</td><td class="num">${b.noPrice ? '—' : fmt(b.odds)}${b.atFair ? ' <span class="tm">fair</span>' : ''}</td><td class="num">${b.stake}u</td><td>${b.void ? '<span class="res d">void</span>' : !b.settled ? '<span class="res n">pending</span>' : b.hit ? '<span class="res y">✓ ' + (b.kind === 'ml' ? 'won' : 'hit') + '</span>' : '<span class="res n">✗ ' + (b.kind === 'ml' ? 'lost' : 'miss') + '</span>'}</td><td class="num ${b.pnl >= 0 ? 'pos' : 'neg'}">${b.settled ? (b.pnl >= 0 ? '+' : '') + b.pnl.toFixed(2) : '—'}</td><td class="num ${run >= 0 ? 'pos' : 'neg'}">${b.settled ? (run >= 0 ? '+' : '') + run.toFixed(2) : ''}</td><td><button class="rm" data-kind="${b.kind}" data-k="${b.k}" title="remove this paper bet">✕</button></td></tr>`; }).join('') +
+    '</tbody></table></div><div class="note" style="margin-top:6px"><button class="rm" id="clearall">clear all paper bets</button> &nbsp; bets live in this browser only (localStorage), so tick and track on the same site, not one on the live site and one on a local file</div>';
+  led.querySelectorAll('button.rm[data-k]').forEach(btn => btn.addEventListener('click', () => { const st = btn.dataset.kind === 'ml' ? mlStore : store; if (st[btn.dataset.k]) st[btn.dataset.k].on = false; try { localStorage.setItem(btn.dataset.kind === 'ml' ? 'ftc_ml_bets' : 'ftc_bets', JSON.stringify(st)); } catch (e) {} renderLedger(); drawChart(); }));
+  const ca = led.querySelector('#clearall'); if (ca) ca.addEventListener('click', () => { if (!confirm('Remove every paper bet from this browser?')) return; for (const e of Object.values(store)) e.on = false; for (const e of Object.values(mlStore)) e.on = false; try { localStorage.setItem('ftc_bets', JSON.stringify(store)); localStorage.setItem('ftc_ml_bets', JSON.stringify(mlStore)); } catch (e) {} renderLedger(); drawChart(); });
+}
+renderLedger();
 // ---- model strategies at fair odds ----
 const G = H.filter(r => r.hit != null && !r.dnp && r.sport === 'MLB');
 const dates = [...new Set(G.map(r => r.date))].sort();
@@ -375,10 +391,11 @@ if (K.length) { const vs = K.map(r => r.kvol).sort((a, b) => a - b); const t1 = 
   const kb = [[0, t1, 'Light money'], [t1, t2, 'Medium'], [t2, 1e12, 'Heavy money']];
   document.querySelector('#kvol tbody').innerHTML = kb.map(([lo, hi, lab]) => { const b = K.filter(r => r.kvol >= lo && r.kvol < hi); if (!b.length) return ''; const p = b.reduce((s, r) => s + r.prob, 0), c = b.reduce((s, r) => s + r.kalshi, 0), a = b.reduce((s, r) => s + r.hit, 0); return `<tr><td>${lab}</td><td class="num">${b.length}</td><td class="num">${(p / b.length * 100).toFixed(1)}%</td><td class="num">${(c / b.length * 100).toFixed(1)}%</td><td class="num">${(a / b.length * 100).toFixed(1)}%</td><td class="num ${a / c >= 1 ? 'pos' : 'neg'}">${(a / c).toFixed(2)}</td></tr>`; }).join(''); }
 else document.querySelector('#kvol tbody').innerHTML = '<tr><td colspan="6" class="tm">No graded days with Kalshi data yet. Fills in from tomorrow.</td></tr>';
+function drawChart(){
 // ---- chart ----
 const svg = document.querySelector('#chart'); const W = 800, Hh = 220, pad = 34;
 const series = [['Top 5 by model %', '#ffb020'], ['Sleepers (20%+, heat < 35)', '#2fd47a'], ['Chalk (20%+, heat 60+)', '#ff4d5e']];
-let myCurve = [0]; { let run = 0; for (const d of dates) { for (const b of settled) if (b.r.date === d) run += b.pnl; myCurve.push(run); } }
+let myCurve = [0]; { let run = 0; for (const d of dates) { for (const b of settled) if (b.date === d) run += b.pnl; myCurve.push(run); } }
 const all = [...series.map(s => curves[s[0]]), myCurve].flat(); const mn = Math.min(0, ...all), mx = Math.max(1, ...all);
 const X = i => pad + i * (W - pad * 2) / Math.max(1, dates.length), Y = v => Hh - pad + (v - mn) * -(Hh - pad * 2) / (mx - mn || 1);
 let g = `<line x1="${pad}" x2="${W - pad}" y1="${Y(0)}" y2="${Y(0)}" stroke="#2b3440"/>`;
@@ -388,12 +405,14 @@ dates.forEach((d, i) => { if (i % Math.ceil(dates.length / 8) === 0) g += `<text
 g += `<text x="${pad}" y="${Y(mx) + 4}" fill="#8a94a3" font-size="10">${mx >= 0 ? '+' : ''}${mx.toFixed(0)}u</text><text x="${pad}" y="${Y(mn) - 2}" fill="#8a94a3" font-size="10">${mn.toFixed(0)}u</text>`;
 svg.innerHTML = g;
 document.querySelector('#chartlegend').innerHTML = series.map(([n, c]) => `<span style="color:${c}">■</span> ${n}`).join(' &nbsp; ') + (settled.length ? ' &nbsp; <span style="color:#e6e9ee">┅</span> your paper bets' : '');
+}
+drawChart();
 """
 
 def track_page():
     n_days = len([d for d, rows in days.items() if any(r['hit'] is not None for r in rows)])
     return f"""{head('Fade The Chalk', 'paper-bet ledger + how the model is doing at fair odds', 'track.html', '')}
-<div class="panel top">
+{TRACK_CSS}<div class="panel top">
 <h2>Your paper bets <small>ticked on the day pages, kept in this browser, scored when games go final</small></h2>
 <div class="kpi" id="mykpi"></div>
 <div id="ledger"></div>
@@ -408,7 +427,7 @@ def track_page():
 </div>
 <p class="note" style="margin-top:14px">Picks are locked before first pitch and graded from box scores afterward; results never change a lock. Days before {min(days) if days else ''} were reconstructed from posted lineups with season stats as of the build, which leaks a little. Model v2 (from 2026-09-12): base rate regressed less toward league, weak hitters dampened, level scaled 0.92 - fitted on those same days, so judge it on days after that.</p>
 </div>
-<script>const HISTORY = {jd(HISTORY)};{TRACK_JS}</script>"""
+<script>const HISTORY = {jd(HISTORY)}; const MLH = {jd(MLH)};{TRACK_JS}</script>"""
 
 W = lambda path, html: open(os.path.join(SITE, path), 'w', encoding='utf-8', newline='\n').write(html)
 gen = board['generated']

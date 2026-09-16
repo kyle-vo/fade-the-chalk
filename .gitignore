@@ -2,3 +2,4 @@ data/
 __pycache__/
 output/
 odds_key.txt
+.claude/

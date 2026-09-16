@@ -40,6 +40,9 @@ mlb_days = sorted([t for t in boards if not t.endswith(('wk1', 'wk2', 'wk3', 'wk
 nfl_weeks = sorted([t for t in boards if '_wk' in t], reverse=True)
 today = mlb_days[0] if mlb_days else None; week = nfl_weeks[0] if nfl_weeks else None
 graded = [r for rows in boards.values() for r in rows if r['homeWin'] is not None]
+# slim copy for track.html (build_site.py embeds it so moneyline paper bets can be scored there)
+ML_KEEP = ('sport', 'date', 'gamePk', 'eventId', 'home', 'away', 'time', 'homeSP', 'awaySP', 'pick', 'pickOdds', 'pickProb', 'pickHit', 'score', 'kalshiAsk', 'kalshiAwayAsk', 'pubHome', 'takerPubHome')
+json.dump([{k: r.get(k) for k in ML_KEEP} for rows in boards.values() for r in rows], open(os.path.join(BT, 'ml_board.json'), 'w', encoding='utf-8'))
 
 def head(title, sub):
     nav = '<nav><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="track.html">Track</a><a href="archive.html">Archive</a><span class="lbl">MLB days</span>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:7]) + '<span class="lbl">NFL weeks</span>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">wk {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</nav>'
