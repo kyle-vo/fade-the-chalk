@@ -144,7 +144,7 @@ for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL'); attach_kalshi_
 attach_odds(board['nfl'], today, 'NFL'); attach_kalshi_nfl(board['nfl']); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB')
 slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove', 'sportsbook')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
-_mlb = os.path.join(BT, 'ml_board.json'); MLH = json.load(open(_mlb, encoding='utf-8')) if os.path.exists(_mlb) else []   # written by build_ml.py
+_mlb = os.path.join(BT, 'mlboard.json'); MLH = json.load(open(_mlb, encoding='utf-8')) if os.path.exists(_mlb) else []   # written by build_ml.py
 
 # ---------- templates ----------
 FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">'
