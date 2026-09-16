@@ -284,8 +284,9 @@ function render(){ top5();
 // Pinnacle (skew > 1) hit 9.6% vs 15%; heavy Kalshi money OVER-delivered (22% vs 15%), so the crowd is never faded here. NFL: RBs beat their number.
 function top5(){
   const rows = tab === 'mlb' ? (PAGE.rows.mlb || []) : (PAGE.rows.nfl || []);
-  const pre = r => r.hit == null && !r.dnp && /Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled') && (tab === 'nfl' || r.slot);
-  const upcoming = rows.filter(pre); const live = upcoming.length > 0;                 // games still to be played -> 'to take'; whole slate done -> 'how they did'
+  const now = Date.now();                                                              // locked rows keep the state they had at lock time, so judge 'started' by the clock
+  const pre = r => r.hit == null && !r.dnp && (!r.time || new Date(r.time).getTime() > now) && /Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled') && (tab === 'nfl' || r.slot);
+  const upcoming = PAGE.graded ? [] : rows.filter(pre); const live = upcoming.length > 0;   // Today page mid-slate: only games still to come. Graded day page: the whole slate, with results
   const cand = live ? upcoming : rows.filter(r => !r.dnp && (tab === 'nfl' || r.slot));
   const score = r => { let m = 1, why = [];
     if (tab === 'mlb') { if (r.slot <= 2) { m *= 1.15; why.push('top of the order (slots 1-2 hit 21% vs 14%)'); } else if (r.slot <= 3) { m *= 1.05; why.push('slot 3'); } else if (r.slot >= 5 && r.slot <= 6) { m *= 0.75; why.push('slots 5-6 have run cold (8% vs 12%)'); } }
