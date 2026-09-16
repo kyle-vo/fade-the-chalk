@@ -37,7 +37,7 @@ def grade_nfl():
         rows = json.load(open(lock, encoding='utf-8'))
         evs = {r['eventId'] for r in rows}; done = set(res.get('_games', []))
         for ev in evs - done:
-            sm = get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary", event=ev)
+            sm = get("https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary", event=ev)
             if sm.get('header', {}).get('competitions', [{}])[0].get('status', {}).get('type', {}).get('completed') is not True: continue
             for team in sm.get('boxscore', {}).get('players', []):
                 for cat in team.get('statistics', []):

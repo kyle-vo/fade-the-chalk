@@ -118,7 +118,7 @@ def mlb_rows():
 # ---------------- NFL model ----------------
 def nfl_rows():
     sb = J(os.path.join(DATA, 'nfl_scoreboard.json')); prev = sb['season']['year'] - 1
-    stand = get(f"https://site.api.espn.com/apis/v2/sports/football/nfl/standings", season=prev)
+    stand = get(f"https://site.web.api.espn.com/apis/v2/sports/football/nfl/standings", season=prev)
     pf = {}
     for grp in stand.get('children', []):
         for e in grp.get('standings', {}).get('entries', []):
@@ -129,7 +129,7 @@ def nfl_rows():
     # 2026 results so far: every completed regular-season game this season
     cur = {ab: [0.0, 0] for ab in prior}
     for wk in range(1, sb['week']['number'] + 1):
-        try: wsb = get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", week=wk, seasontype=2, dates=sb['season']['year'])
+        try: wsb = get("https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", week=wk, seasontype=2, dates=sb['season']['year'])
         except Exception: continue
         for e in wsb.get('events', []):
             c = e['competitions'][0]
@@ -216,7 +216,7 @@ def grade():
                 if g and g['status']['detailedState'] in ('Final', 'Completed Early', 'Game Over'):
                     res[k] = {'homeWin': 1 if g['teams']['home'].get('isWinner') else 0, 'score': f"{g['teams']['away'].get('score')}-{g['teams']['home'].get('score')}"}
             else:
-                sm = get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary", event=r['eventId'])
+                sm = get("https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary", event=r['eventId'])
                 comp = sm.get('header', {}).get('competitions', [{}])[0]
                 if comp.get('status', {}).get('type', {}).get('completed'):
                     hm = next(x for x in comp['competitors'] if x['homeAway'] == 'home'); aw = next(x for x in comp['competitors'] if x['homeAway'] == 'away')
@@ -264,6 +264,8 @@ if __name__ == '__main__':
     snapf = os.path.join(BT, f'mlsnap_{today}.json'); snaps = J(snapf) if os.path.exists(snapf) else []
     snaps.append({'at': datetime.datetime.now().isoformat(timespec='minutes'), 'rows': [{k2: r.get(k2) for k2 in ('sport', 'gamePk', 'eventId', 'home', 'away', 'kalshi', 'kalshiAway', 'kvolHome', 'kvolAway', 'fliffHome', 'fliffAway', 'sharpHome', 'skewHome', 'state', 'time')} for r in m + n]})
     json.dump(snaps, open(snapf, 'w', encoding='utf-8'))
+    try: crowd_refresh()                                                         # tomorrow's (and any other unstarted) locked games keep filling in: Kalshi only, no Odds credits
+    except Exception as e: print(f"  crowd refresh failed: {e}")
     try:
         grade()
     except Exception as e:

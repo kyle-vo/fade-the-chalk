@@ -5,7 +5,7 @@ import requests
 S = requests.Session(); S.headers['User-Agent'] = 'Mozilla/5.0'
 HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, 'data'); os.makedirs(DATA, exist_ok=True)
 MLB = "https://statsapi.mlb.com/api/v1"
-ESPN = "https://site.api.espn.com/apis/site/v2/sports"
+ESPN = "https://site.web.api.espn.com/apis/site/v2/sports"
 ESPNW = "https://site.web.api.espn.com/apis/common/v3/sports"
 
 def get(url, **p):
