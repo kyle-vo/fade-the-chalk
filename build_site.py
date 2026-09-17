@@ -224,7 +224,7 @@ const key = r => r.date + '|' + r.sport + ':' + r.id;
 function verdict(r){
   const e = store[key(r)] || {}; const oddsIn = e.odds || r.book; const imp = implied(oddsIn); const edge = imp == null ? null : r.prob - imp;
   const heat = e.pub != null && e.pub !== '' ? +e.pub : r.heat;
-  const live = r.hit != null || r.dnp || !/Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled');
+  const live = r.hit != null || r.dnp || !/Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled') || (r.time && new Date(r.time).getTime() <= Date.now());   // locked rows keep their lock-time state, so the clock decides
   let v = 'PASS';
   if (edge != null) {
     if (edge >= .04 && heat < 45) v = 'SLEEPER'; else if (edge >= .03) v = 'VALUE';
@@ -248,7 +248,7 @@ function render(){ top5();
   const rows = (PAGE.rows[tab] || []).map(r => ({ r, ...verdict(r) }));
   const q = norm($('#q').value), minp = +$('#minp').value / 100, maxh = +$('#maxh').value, hide = $('#hidedone').checked, only = $('#onlyplays').checked, onlybets = $('#onlybets').checked;
   const onlyhits = $('#onlyhits').checked;
-  let list = rows.filter(x => (!hide || !x.live || x.r.hit != null) && (!onlyhits || x.r.hit === 1) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
+  let list = rows.filter(x => (!hide || !x.live) && (!onlyhits || x.r.hit === 1) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
       (!q || norm(x.r.name).includes(q) || norm(x.r.team).includes(q) || norm(x.r.game).includes(q) || norm(x.r.teamName || '').includes(q)));
   const get = x => ({ nasty: x.nasty, prob: x.r.prob, edge: x.edge == null ? -9 : x.edge, heat: x.heat, time: x.r.time, name: x.r.name, slot: x.r.slot, hr: x.r.hr, l15hr: x.r.l15hr, fair: x.r.fair, prevTD: x.r.prevTD, share: x.r.share, implied: x.r.implied, v: x.v, game: x.r.game, pitcher: x.r.pitcher, pos: x.r.pos, spread: x.r.spread, odds: +(store[key(x.r)]||{}).odds || 0, pub: +(store[key(x.r)]||{}).pub || 0, kvol: x.r.kvol || 0, skew: x.r.skew == null ? -99 : x.r.skew, bet: (store[key(x.r)]||{}).on ? 1 : 0, hit: x.r.hit == null ? -1 : x.r.hit })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
