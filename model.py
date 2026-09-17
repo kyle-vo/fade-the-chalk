@@ -209,7 +209,7 @@ def nfl():
                 if pos == 'QB': share = min(share, 0.08)                      # a QB rarely owns more than ~11% of his team's TDs (rushing only)
                 dc = depth.get(team, {}).get(r['id'])
                 if depth.get(team):                                   # chart exists for this team
-                    if dc: share *= DEPTH_MULT.get(dc['pos'], DEPTH_MULT['WR']).get(min(dc['rank'], 3), 0.1); r['depth'] = f"{dc['pos']}{dc['rank']}"
+                    if dc: share *= DEPTH_MULT.get(dc['pos'], DEPTH_MULT['WR']).get(min(dc['rank'], 3), 0.1); r['depth'] = dc.get('label') or f"{dc['pos']}{dc['rank']}"
                     else: share *= 0.08; r['depth'] = 'not on chart'
                 cands.append((r, p, share, inj))
             tot = sum(s for _, _, s, _ in cands) or 1

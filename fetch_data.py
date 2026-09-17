@@ -1,5 +1,5 @@
 """Pull every raw feed the model needs into data/*.json (public MLB StatsAPI + ESPN)."""
-import json, os, sys, datetime, concurrent.futures as cf
+import re, json, os, sys, datetime, concurrent.futures as cf
 import requests
 
 S = requests.Session(); S.headers['User-Agent'] = 'Mozilla/5.0'
@@ -126,7 +126,11 @@ def fetch_nfl():
                 if pos not in ('QB', 'RB', 'WR', 'TE', 'FB'): continue
                 for i, a in enumerate(v.get('athletes', [])):
                     cur = out.get(a['id'])
-                    if not cur or i + 1 < cur['rank']: out[a['id']] = {'pos': pos, 'rank': i + 1, 'slot': slot}
+                    if not cur or i + 1 < cur['rank']:
+                        # ESPN lists three receiver slots (wr1/wr2/wr3), each with its own backups. 'rank' = string (1 = starter) and drives the model;
+                        # 'label' is what the board shows: starters are WR1/WR2/WR3 by slot, second string WR4-6, and so on.
+                        m = re.match(r'[a-z]+(\d)$', slot); n = int(m.group(1)) if m else 1
+                        out[a['id']] = {'pos': pos, 'rank': i + 1, 'slot': slot, 'label': f"{pos}{3 * i + n}" if pos == 'WR' and m else f"{pos}{i + 1}"}
         return t['team']['abbreviation'], out
     with cf.ThreadPoolExecutor(8) as ex: depths = dict(ex.map(depth, teams))
     save('nfl_depth.json', depths); print(f"  depth charts: {sum(1 for v in depths.values() if v)} teams")
