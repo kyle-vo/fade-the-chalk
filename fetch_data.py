@@ -102,6 +102,22 @@ def fetch_nfl():
         stats[cat] = {'categories': r.get('categories'), 'athletes': out}
         print(f"  {cat}: {len(out)} athletes ({season_prev})")
     save('nfl_stats_prev.json', stats)
+    # current season usage (targets, carries, TDs). ESPN only lists 'qualified' players per sort, so pull the receiving and rushing leaderboards and union them.
+    season_cur = sb['season']['year']; cur = {}
+    for sort in ('receiving.receivingTargets:desc', 'rushing.rushingAttempts:desc', 'scoring.totalTouchdowns:desc'):
+        for page in range(1, 6):
+            try: r = get(f"{ESPNW}/football/nfl/statistics/byathlete", season=season_cur, seasontype=2, category='offense' if not sort.startswith('scoring') else 'scoring', limit=200, page=page, sort=sort)
+            except Exception as e: print(f"  2026 usage ({sort}) failed: {e}"); break
+            names = {c['name']: c.get('names', []) for c in r.get('categories', [])}
+            for a in r.get('athletes', []):
+                d = {c['name']: dict(zip(names.get(c['name'], []), c.get('values') or [])) for c in a.get('categories', [])}
+                g = lambda cat, k: float(d.get(cat, {}).get(k) or 0)
+                row = cur.setdefault(a['athlete']['id'], {'name': a['athlete']['displayName'], 'team': a['athlete'].get('teamShortName'), 'gp': 0, 'tgt': 0, 'rec': 0, 'att': 0, 'rushTD': 0, 'recTD': 0})
+                row['gp'] = max(row['gp'], g('general', 'gamesPlayed'))
+                for k, (cat, nm) in {'tgt': ('receiving', 'receivingTargets'), 'rec': ('receiving', 'receptions'), 'att': ('rushing', 'rushingAttempts')}.items(): row[k] = max(row[k], g(cat, nm))
+                row['rushTD'] = max(row['rushTD'], g('rushing', 'rushingTouchdowns'), g('scoring', 'rushingTouchdowns')); row['recTD'] = max(row['recTD'], g('receiving', 'receivingTouchdowns'), g('scoring', 'receivingTouchdowns'))
+            if len(r.get('athletes', [])) < 200: break
+    save('nfl_stats_cur.json', {'season': season_cur, 'players': cur}); print(f"  {season_cur} usage: {len(cur)} players with targets/carries/TDs")
     teams = get(f"{ESPN}/football/nfl/teams")['sports'][0]['leagues'][0]['teams']
     def roster(t):
         tid = t['team']['id']

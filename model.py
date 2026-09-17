@@ -169,6 +169,15 @@ def nfl():
     lg_team_td = sum(team_off.values()) / max(len(team_off), 1)
     depth = L('nfl_depth.json') if os.path.exists(os.path.join(DATA, 'nfl_depth.json')) else {}
     DEPTH_MULT = {'RB': {1: 1.35, 2: 0.45, 3: 0.2}, 'WR': {1: 0.95, 2: 0.6, 3: 0.3}, 'TE': {1: 1.25, 2: 0.5, 3: 0.2}, 'QB': {1: 1.2, 2: 0.0, 3: 0.0}, 'FB': {1: 0.6, 2: 0.3, 3: 0.15}}   # v2: re-weighted on Week 1 2026 results (starters under-modeled, backups over-modeled)
+    # ---- this season's usage -> a usage-based TD share per team ----
+    # expected TDs from opportunity: league rates ~0.044 TD per target, ~0.032 per carry; actual TDs get a quarter of the weight (red-zone role shows up there first).
+    cur = L('nfl_stats_cur.json', {'players': {}}).get('players', {})
+    def usage_score(c): return 0.75 * (0.044 * c['tgt'] + 0.032 * c['att']) + 0.25 * (c['rushTD'] + c['recTD'])
+    team_usage = collections.defaultdict(float); team_games = collections.defaultdict(float)
+    for c in cur.values():
+        if c.get('team'): team_usage[c['team']] += usage_score(c); team_games[c['team']] = max(team_games[c['team']], c.get('gp') or 0)
+    def w_cur(team):                                                  # weight on 2026: 25% after one game, +10 points a game, capped at 75%
+        gp = team_games.get(team, 0); return 0.0 if gp < 1 else min(0.75, 0.15 + 0.10 * gp)
     roster_by_team = collections.defaultdict(list)
     for r in ro: roster_by_team[r['team']].append(r)
     # implied totals from odds
@@ -211,6 +220,18 @@ def nfl():
                 if depth.get(team):                                   # chart exists for this team
                     if dc: share *= DEPTH_MULT.get(dc['pos'], DEPTH_MULT['WR']).get(min(dc['rank'], 3), 0.1); r['depth'] = dc.get('label') or f"{dc['pos']}{dc['rank']}"
                     else: share *= 0.08; r['depth'] = 'not on chart'
+                # blend in this season. The 2026 share already reflects role, so it is NOT depth-multiplied; injuries still apply.
+                c = cur.get(r['id']); w = w_cur(team); r['usage26'] = None
+                if w and team_usage.get(team):
+                    if c and c.get('team') == team:
+                        cs = 0.95 * usage_score(c) / team_usage[team]
+                        if inj == 'Questionable': cs *= 0.85
+                        if pos == 'QB': cs = min(cs, 0.08)
+                        r['share25'] = share; share = (1 - w) * share + w * cs
+                        r['usage26'] = {'gp': c['gp'], 'tgt': c['tgt'], 'att': c['att'], 'td': c['rushTD'] + c['recTD'], 'share': round(cs, 3), 'w': round(w, 2)}
+                    elif not (dc and dc['rank'] == 1):                 # no 2026 touches and not a listed starter: he isn't part of the offense yet
+                        r['share25'] = share; share = (1 - w) * share
+                        r['usage26'] = {'gp': 0, 'tgt': 0, 'att': 0, 'td': 0, 'share': 0.0, 'w': round(w, 2)}
                 cands.append((r, p, share, inj))
             tot = sum(s for _, _, s, _ in cands) or 1
             scale = 0.95 / tot if tot > 0.95 else 1.0   # a team's TD shares can't sum past ~95% (rest = defense/ST/randoms)
@@ -223,9 +244,9 @@ def nfl():
                 rows.append({'sport': 'NFL', 'eventId': g['eventId'], 'id': r['id'], 'name': r['name'], 'team': team, 'opp': opp, 'pos': r['pos'], 'game': g['name'], 'state': g['state'], 'time': g['date'],
                              'spread': g['spread'], 'total': g['total'], 'implied': round(g['implied'][team], 1), 'teamTD': round(team_td, 2),
                              'prevTD': (p['rush'] + p['rec']) if p else 0, 'prevGP': p['gp'] if p else 0, 'prevTeam': p['prevTeam'] if p else None, 'tdRank': rank,
-                             'share': round(share, 3), 'lam': round(lam, 3), 'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat), 'inj': inj or '', 'depth': r.get('depth', ''),
+                             'share': round(share, 3), 'lam': round(lam, 3), 'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat), 'inj': inj or '', 'depth': r.get('depth', ''), 'usage26': r.get('usage26'),
                              'notes': [f"team implied {g['implied'][team]:.1f} pts -> {team_td:.2f} off. TDs", f"2025: {int(p['rush'] + p['rec']) if p else 0} TD in {int(p['gp']) if p else 0} g" + (f" ({p['prevTeam']})" if p and p['prevTeam'] != team else ''),
-                                       f"TD share {share:.0%} -> {lam:.2f} exp. TDs", (f"INJURY: {inj}" if inj else 'healthy'), f"depth chart: {r.get('depth', '?')}", 'PRIMETIME' if g['prime'] else '']})
+                                       (f"2026: {int(r['usage26']['tgt'])} tgt, {int(r['usage26']['att'])} car, {int(r['usage26']['td'])} TD in {int(r['usage26']['gp'])} g -> usage share {r['usage26']['share']:.0%}, weighted {r['usage26']['w']:.0%} (2025-based share was {r.get('share25', 0):.0%})" if r.get('usage26') else '2026 usage: not blended (no team games yet, or starter with no line)'), f"TD share {share:.0%} -> {lam:.2f} exp. TDs", (f"INJURY: {inj}" if inj else 'healthy'), f"depth chart: {r.get('depth', '?')}", 'PRIMETIME' if g['prime'] else '']})
     return rows, games
 
 if __name__ == '__main__':
