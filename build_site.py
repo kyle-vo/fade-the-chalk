@@ -459,7 +459,8 @@ gen = board['generated']
 for r in board['mlb']: r.setdefault('date', today)
 for r in board['nfl']: r.setdefault('date', 'now')
 # today's page: use the locked rows for today if present (so results show once graded), else the live board
-today_rows = days.get(today, board['mlb'])
+_cal = datetime.date.today().isoformat()   # output/board.json is local and gitignored, so it can be a day behind the locks pulled from git: the calendar day's lock wins
+today_rows = days.get(_cal) or days.get(today, board['mlb'])
 cur_week = max(weeks) if weeks else None
 nfl_today = weeks[cur_week] if cur_week else board['nfl']   # locked + graded rows, same as the week page
 W('index.html', board_page('Fade The Chalk', f'MLB HR + NFL anytime TD · model prob vs. the price vs. the crowd · built {gen}', 'index.html', '', today_rows, nfl_today, False))
