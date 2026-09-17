@@ -163,7 +163,7 @@ nav a:hover{color:var(--ink);border-color:#3a4552}
 .panel.top{border-radius:10px;margin-top:14px}
 .ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px;font-size:13px}
 .ctl input[type=text],.ctl input[type=number],.ctl select{background:#0e1115;border:1px solid var(--line);color:var(--ink);padding:6px 8px;border-radius:6px;font:inherit}
-.ctl label{color:var(--mute)}
+.ctl label{color:var(--mute)}.ctl select{background:#0e1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:inherit;max-width:320px}
 textarea{width:100%;background:#0e1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px;font:12px var(--mono);min-height:64px}
 details.top5{margin-bottom:14px}.top5 h2{margin:0 0 8px;font-size:15px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.card{background:#0e1115;border:1px solid var(--line);border-radius:8px;padding:10px 12px;position:relative}.card .rk{position:absolute;top:8px;right:10px;color:var(--mute);font:600 11px var(--mono)}.card .nm{font-weight:700;font-size:14px}.card .tm{display:block;margin-top:2px}.card .st{display:flex;gap:10px;margin-top:8px;font:12px var(--mono);font-variant-numeric:tabular-nums}.card .st b{display:block;font-size:14px;color:var(--ink)}.card .st span{color:var(--mute)}.card .why{margin-top:8px;font-size:12px;color:var(--mute)}.card.hit{border-color:#2fd47a}.card.miss{border-color:#3a2a2e}.paste{margin-bottom:12px;font-size:13px;color:var(--mute)}details.paste summary{cursor:pointer;color:var(--ink);font-weight:600}
 button{background:#1b2129;border:1px solid #2f3944;color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}button:hover{border-color:var(--acc)}
@@ -248,7 +248,8 @@ function render(){ top5();
   const rows = (PAGE.rows[tab] || []).map(r => ({ r, ...verdict(r) }));
   const q = norm($('#q').value), minp = +$('#minp').value / 100, maxh = +$('#maxh').value, hide = $('#hidedone').checked, only = $('#onlyplays').checked, onlybets = $('#onlybets').checked;
   const onlyhits = $('#onlyhits').checked;
-  let list = rows.filter(x => (!hide || !x.live) && (!onlyhits || x.r.hit === 1) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
+  const gameSel = $('#game').value;
+  let list = rows.filter(x => (!gameSel || x.r.game === gameSel) && (!hide || !x.live) && (!onlyhits || x.r.hit === 1) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
       (!q || norm(x.r.name).includes(q) || norm(x.r.team).includes(q) || norm(x.r.game).includes(q) || norm(x.r.teamName || '').includes(q)));
   const get = x => ({ nasty: x.nasty, prob: x.r.prob, edge: x.edge == null ? -9 : x.edge, heat: x.heat, time: x.r.time, name: x.r.name, slot: x.r.slot, hr: x.r.hr, l15hr: x.r.l15hr, fair: x.r.fair, prevTD: x.r.prevTD, share: x.r.share, implied: x.r.implied, v: x.v, game: x.r.game, pitcher: x.r.pitcher, pos: x.r.pos, spread: x.r.spread, odds: +(store[key(x.r)]||{}).odds || 0, pub: +(store[key(x.r)]||{}).pub || 0, kvol: x.r.kvol || 0, skew: x.r.skew == null ? -99 : x.r.skew, bet: (store[key(x.r)]||{}).on ? 1 : 0, hit: x.r.hit == null ? -1 : x.r.hit })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
@@ -287,8 +288,17 @@ function render(){ top5();
 // ---- top 5 to take: model % first, then what the graded history says (see track page) ----
 // 4 slates / 835 graded HR rows: slots 1-2 homered 21% vs 14% expected, slots 5-6 8% vs 12%; hitters priced shorter at retail than at
 // Pinnacle (skew > 1) hit 9.6% vs 15%; heavy Kalshi money OVER-delivered (22% vs 15%), so the crowd is never faded here. NFL: RBs beat their number.
+let gamesFor = null;
+function fillGames(){
+  if (gamesFor === tab) return; gamesFor = tab;
+  const rows = tab === 'mlb' ? (PAGE.rows.mlb || []) : (PAGE.rows.nfl || []); const seen = new Map();
+  for (const r of rows) if (r.game && !seen.has(r.game)) seen.set(r.game, r.time || '');
+  const games = [...seen.entries()].sort((a, b) => a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0);
+  $('#game').innerHTML = '<option value="">all games (' + games.length + ')</option>' + games.map(([g, t]) => `<option value="${g.replace(/"/g, '&quot;')}">${g}${t ? ' · ' + new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''}</option>`).join('');
+}
 function top5(){
-  const rows = tab === 'mlb' ? (PAGE.rows.mlb || []) : (PAGE.rows.nfl || []);
+  fillGames();
+  const gsel = $('#game').value; const rows = (tab === 'mlb' ? (PAGE.rows.mlb || []) : (PAGE.rows.nfl || [])).filter(r => !gsel || r.game === gsel);
   const now = Date.now();                                                              // locked rows keep the state they had at lock time, so judge 'started' by the clock
   const pre = r => r.hit == null && !r.dnp && (!r.time || new Date(r.time).getTime() > now) && /Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled') && (tab === 'nfl' || r.slot);
   const upcoming = PAGE.graded ? [] : rows.filter(pre); const live = upcoming.length > 0;   // Today page mid-slate: only games still to come. Graded day page: the whole slate, with results
@@ -310,7 +320,7 @@ function top5(){
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; history.replaceState(null, '', '#' + tab); markNav(); render(); }));
 markNav();
-['#q', '#minp', '#maxh', '#hidedone', '#onlyplays', '#onlybets', '#onlyhits'].forEach(s => $(s).addEventListener('input', render));
+['#q', '#game', '#minp', '#maxh', '#hidedone', '#onlyplays', '#onlybets', '#onlyhits'].forEach(s => $(s).addEventListener('input', render));
 $('#sort').addEventListener('change', () => { sortKey = $('#sort').value; sortDir = sortKey === 'time' ? 1 : -1; render(); });
 render();
 """
@@ -327,6 +337,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <div class="top5"><h2 id="top5h">Top 5 to take</h2><div class="cards" id="top5"></div><div class="note" id="top5n"></div></div>
 <div class="ctl">
 <label>search <input type="text" id="q" placeholder="player / team / game"></label>
+<label>game <select id="game"><option value="">all games</option></select></label>
 <label>min model % <input type="number" id="minp" value="0" min="0" max="100" style="width:56px"></label>
 <label>max heat <input type="number" id="maxh" value="100" min="0" max="100" style="width:56px"></label>
 <label><input type="checkbox" id="hidedone" {'' if graded else 'checked'}> hide started games</label>
