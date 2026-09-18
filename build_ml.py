@@ -147,9 +147,17 @@ const G = GRADED; const brier = (ps) => ps.length ? ps.reduce((s, [p, y]) => s +
 const bm = brier(G.map(r => [r.model, r.homeWin])), bk = brier(G.filter(r => r.kalshi != null).map(r => [r.kalshi, r.homeWin])), bs = brier(G.filter(r => r.sharpHome != null).map(r => [r.sharpHome, r.homeWin]));
 const tapeOnPick = r => r.pick === 'home' ? r.takerPubHome : 1 - r.takerPubHome;
 const pay = (o, y) => y ? (o > 0 ? o / 100 : 100 / -o) : -1;
+const diffPin = r => r.sharpHome == null ? null : (r.pickProb - (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome)) * 100;
 const isModelFav = r => r.pickProb >= 0.5, isMarketFav = r => r.pickOdds != null && r.pickOdds < 0, pubOnPick = r => r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
 const strat = {
   'Model favorite, every game': G.filter(r => r.pickOdds != null),
+  'PLAYBOOK A: model pick is a plus-money underdog': G.filter(r => r.pickOdds != null && r.pickOdds > 0),
+  'PLAYBOOK B: favorite, public < 70% on it, model 4+ over Pinnacle': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4),
+  'PLAYBOOK A+B combined (what to actually bet)': G.filter(r => r.pickOdds != null && (r.pickOdds > 0 || (r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4))),
+  'FADE ZONE: favorite with public 70%+ on it (skip these)': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) >= 0.7),
+  'Model only 0-4 over Pinnacle (skip these)': G.filter(r => r.pickOdds != null && diffPin(r) != null && diffPin(r) >= 0 && diffPin(r) < 4),
+  'MLB only: PLAYBOOK A+B': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && (r.pickOdds > 0 || (r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4))),
+  'NFL only: PLAYBOOK A+B': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && (r.pickOdds > 0 || (r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4))),
   'STRONG BET only (model fav, public on other side)': G.filter(r => r.pickOdds != null && isModelFav(r) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
   'BET + STRONG BET only (skip PASS: favorite priced in)': G.filter(r => r.pickOdds != null && !(r.edge != null && r.edge < -3)),
   'TAPE VERDICT: STRONG (not priced in, taker $ on the other team)': G.filter(r => r.pickOdds != null && r.takerPubHome != null && !(r.edge != null && r.edge < -3) && tapeOnPick(r) < 0.5),
@@ -195,7 +203,7 @@ The <b>Pick</b> is always the model's favorite, its side over 50%. <b>STRONG BET
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>
-<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'oppOdds', 'pickHit', 'pick', 'pubHome', 'pickProb', 'takerPubHome')} for r in graded])};{JS}</script>"""
+<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('sport', 'model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'oppOdds', 'pickHit', 'pick', 'pubHome', 'pickProb', 'takerPubHome')} for r in graded])};{JS}</script>"""
 
 open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='\n').write(page())
 
