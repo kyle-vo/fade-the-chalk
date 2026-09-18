@@ -210,7 +210,7 @@ def head(title, sub, active, root):
 
 BOARD_JS = r"""
 const $ = s => document.querySelector(s);
-let tab = PAGE.tab, sortKey = PAGE.graded ? 'prob' : 'nasty', sortDir = -1;
+let tab = PAGE.tab, sortKey = 'prob', sortDir = -1;
 if (location.hash === '#nfl' && (PAGE.rows.nfl || []).length) tab = 'nfl'; else if (location.hash === '#mlb' && (PAGE.rows.mlb || []).length) tab = 'mlb';
 document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === tab));
 function markNav(){ document.querySelectorAll('nav .row.mlb a, nav .row.nfl a').forEach(a => { if (/index\.html#(mlb|nfl)$/.test(a.getAttribute('href'))) a.classList.toggle('on', a.getAttribute('href').endsWith('#' + tab) && PAGE.tab !== 'single'); }); }
@@ -340,11 +340,11 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <label>game <select id="game"><option value="">all games</option></select></label>
 <label>min model % <input type="number" id="minp" value="0" min="0" max="100" style="width:56px"></label>
 <label>max heat <input type="number" id="maxh" value="100" min="0" max="100" style="width:56px"></label>
-<label><input type="checkbox" id="hidedone" {'' if graded else 'checked'}> hide started games</label>
+<label><input type="checkbox" id="hidedone"> hide started games</label>
 <label><input type="checkbox" id="onlyplays"> only SLEEPER / VALUE / TRAP</label>
 <label><input type="checkbox" id="onlybets"> only my paper bets</label>
 <label><input type="checkbox" id="onlyhits"> ✓ only homered / scored</label>
-<label>sort <select id="sort"><option value="nasty" {'' if graded else 'selected'}>nasty score</option><option value="prob" {'selected' if graded else ''}>model %</option><option value="edge">edge</option><option value="heat">public heat</option><option value="hit">result</option><option value="time">game time</option></select></label>
+<label>sort <select id="sort"><option value="prob" selected>model %</option><option value="nasty">nasty score</option><option value="edge">edge</option><option value="heat">public heat</option><option value="hit">result</option><option value="time">game time</option></select></label>
 </div>
 <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div class="legend">
@@ -399,12 +399,15 @@ const strat = {
   'Chalk (20%+, heat 60+)': d => G.filter(r => r.date === d && r.prob >= .2 && r.heat >= 60),
   'Everyone 20%+': d => G.filter(r => r.date === d && r.prob >= .2),
 };
-const curves = {}; let rowsHtml = '';
+const curves = {}; const SROWS = [];
 for (const [name, fn] of Object.entries(strat)) { let bets = 0, hits = 0, pnl = 0, exp = 0; const curve = [0];
   for (const d of dates) { for (const r of fn(d)) { bets++; hits += r.hit; exp += r.prob; pnl += pay(r.fair, 1, r.hit); } curve.push(pnl); }
-  curves[name] = curve;
-  rowsHtml += `<tr><td class="nm">${name}</td><td class="num">${bets}</td><td class="num">${hits}-${bets - hits}</td><td class="num">${bets ? (hits / bets * 100).toFixed(1) : 0}%</td><td class="num">${bets ? (exp / bets * 100).toFixed(1) : 0}%</td><td class="num ${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(1)}u</td><td class="num ${pnl >= 0 ? 'pos' : 'neg'}">${bets ? (pnl / bets * 100).toFixed(1) : 0}%</td></tr>`; }
-document.querySelector('#strat tbody').innerHTML = rowsHtml;
+  curves[name] = curve; SROWS.push({ name, bets, hits, l: bets - hits, pct: bets ? hits / bets : -1, exp: bets ? exp / bets : -1, pnl, roi: bets ? pnl / bets : -99 }); }
+let sSort = null, sDir = -1;
+function stratRows(){ const rows = sSort ? [...SROWS].sort((a, b) => ((a[sSort] > b[sSort] ? 1 : a[sSort] < b[sSort] ? -1 : 0) * sDir)) : SROWS;
+  return rows.map(x => `<tr><td class="nm">${x.name}</td><td class="num">${x.bets}</td><td class="num">${x.hits}-${x.l}</td><td class="num">${x.bets ? (x.pct * 100).toFixed(1) : 0}%</td><td class="num">${x.bets ? (x.exp * 100).toFixed(1) : 0}%</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.pnl >= 0 ? '+' : ''}${x.pnl.toFixed(1)}u</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.bets ? (x.roi * 100).toFixed(1) : 0}%</td></tr>`).join(''); }
+document.querySelector('#strat tbody').innerHTML = stratRows();
+document.querySelectorAll('#strat thead th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.s; if (!k) return; if (sSort === k) sDir = -sDir; else { sSort = k; sDir = k === 'name' ? 1 : -1; } document.querySelector('#strat tbody').innerHTML = stratRows(); }));
 // ---- calibration + heat ----
 const bk = [[0, .08], [.08, .12], [.12, .16], [.16, .20], [.20, .25], [.25, 1]];
 document.querySelector('#calib tbody').innerHTML = bk.map(([lo, hi]) => { const b = G.filter(r => r.prob >= lo && r.prob < hi); if (!b.length) return ''; const p = b.reduce((s, r) => s + r.prob, 0) / b.length, a = b.reduce((s, r) => s + r.hit, 0) / b.length; return `<tr><td>${(lo * 100).toFixed(0)}–${hi === 1 ? '100' : (hi * 100).toFixed(0)}%</td><td class="num">${b.length}</td><td class="num">${(p * 100).toFixed(1)}%</td><td class="num">${(a * 100).toFixed(1)}%</td><td class="num ${a >= p ? 'pos' : 'neg'}">${((a - p) * 100 >= 0 ? '+' : '')}${((a - p) * 100).toFixed(1)}</td></tr>`; }).join('');
@@ -444,7 +447,7 @@ def track_page():
 <h2>Model strategies at fair odds <small>{n_days} graded MLB days · flat 1u · fair = the odds the model's own % implies, so a real book pays less than this</small></h2>
 <svg class="chart" id="chart" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
 <div class="note" id="chartlegend" style="margin:6px 0 12px"></div>
-<div class="wrap"><table id="strat"><thead><tr><th>Strategy</th><th>Bets</th><th>Record</th><th>Hit %</th><th>Model said</th><th>Units</th><th>ROI</th></tr></thead><tbody></tbody></table></div>
+<div class="wrap"><table id="strat"><thead><tr><th data-s="name">Strategy</th><th class="num" data-s="bets">Bets</th><th class="num" data-s="pct">Record</th><th class="num" data-s="pct">Hit %</th><th class="num" data-s="exp">Model said</th><th class="num" data-s="pnl">Units</th><th class="num" data-s="roi">ROI</th></tr></thead><tbody></tbody></table></div>
 <div class="grid2" style="margin-top:18px">
 <div class="mini"><h2>Calibration <small>does 25% mean 25%?</small></h2><div class="wrap"><table id="calib"><thead><tr><th>Model %</th><th>n</th><th>Predicted</th><th>Actual</th><th>Diff</th></tr></thead><tbody></tbody></table></div></div>
 <div class="mini"><h2>The rigged test, Kalshi money <small>hitters with the most public dollars on them: do they underperform?</small></h2><div class="wrap"><table id="kvol"><thead><tr><th>Kalshi volume</th><th>n</th><th>Model said</th><th>Crowd said</th><th>Actual</th><th>Actual ÷ crowd</th></tr></thead><tbody></tbody></table></div></div>

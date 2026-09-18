@@ -177,11 +177,15 @@ const strat = {
   'Fade the public (65%+ of Kalshi $ on the other side)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? 1 - r.pubHome : r.pubHome) >= .65)),
   'Ride the public (65%+ of Kalshi $ on the pick)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? r.pubHome : 1 - r.pubHome) >= .65)),
 };
-let sh = '';
-for (const [name, b] of Object.entries(strat)) { const w = b.filter(r => r.pickHit).length, pnl = b.reduce((s, r) => s + pay(r.pickOdds, r.pickHit), 0); sh += `<tr><td class="nm">${name}</td><td class="num">${b.length}</td><td class="num">${w}-${b.length - w}</td><td class="num ${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(1)}u</td></tr>`; }
+const SROWS = Object.entries(strat).map(([name, b]) => { const w = b.filter(r => r.pickHit).length, pnl = b.reduce((s, r) => s + pay(r.pickOdds, r.pickHit), 0); return { name, bets: b.length, w, l: b.length - w, pct: b.length ? w / b.length : -1, pnl, roi: b.length ? pnl / b.length : -99 }; });
+let sSort = null, sDir = -1;   // click a header to sort; click again to flip
+function scoreRows(){ const rows = sSort ? [...SROWS].sort((a, b) => ((a[sSort] > b[sSort] ? 1 : a[sSort] < b[sSort] ? -1 : 0) * sDir)) : SROWS;
+  return rows.map(x => `<tr><td class="nm">${x.name}</td><td class="num">${x.bets}</td><td class="num">${x.w}-${x.l}</td><td class="num">${x.bets ? (x.pct * 100).toFixed(0) + '%' : '—'}</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.pnl >= 0 ? '+' : ''}${x.pnl.toFixed(1)}u</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.bets ? (x.roi * 100).toFixed(0) + '%' : '—'}</td></tr>`).join(''); }
+const sh = scoreRows();
 $('#score').innerHTML = `<div class="kpi"><div>graded games<b>${G.length}</b></div><div>model Brier<b>${bm == null ? '—' : bm.toFixed(4)}</b></div><div>Kalshi Brier<b>${bk == null ? '—' : bk.toFixed(4)}</b></div><div>Pinnacle Brier<b>${bs == null ? '—' : bs.toFixed(4)}</b></div></div>
-  <div class="wrap"><table><thead><tr><th>Strategy (flat 1u at Robinhood)</th><th>Bets</th><th>Record</th><th>Units</th></tr></thead><tbody>${sh}</tbody></table></div>
-  <p class="note">Brier: lower is better, 0.25 is a coin flip. Who's closest to the truth, the model, the Kalshi crowd, or the sharpest book? Public $ = share of Kalshi/Robinhood dollars on that side before kickoff.</p>`;
+  <div class="wrap"><table id="stbl"><thead><tr><th data-s="name">Strategy (flat 1u at Robinhood)</th><th class="num" data-s="bets">Bets</th><th class="num" data-s="pct">Record</th><th class="num" data-s="pct">Win %</th><th class="num" data-s="pnl">Units</th><th class="num" data-s="roi">ROI</th></tr></thead><tbody>${sh}</tbody></table></div>
+  <p class="note">Click a column header to sort the strategies; click again to flip. Brier: lower is better, 0.25 is a coin flip. Who's closest to the truth, the model, the Kalshi crowd, or the sharpest book? Public $ = share of Kalshi/Robinhood dollars on that side before kickoff.</p>`;
+$('#stbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.s; if (sSort === k) sDir = -sDir; else { sSort = k; sDir = k === 'name' ? 1 : -1; } $('#stbl tbody').innerHTML = scoreRows(); }));
 render();
 """
 
