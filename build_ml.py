@@ -64,16 +64,22 @@ function verdict(r){
   const pub = r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);   // share of Kalshi money on the pick side
   const kal = r.kalshi == null ? null : (r.pick === 'home' ? r.kalshi : r.kalshiAway ?? 1 - r.kalshi);
   const isFav = true;                                               // the pick is always the model's favorite now
-  // Playbook verdict (from 2026-09-18; the earlier rule is kept on the scorecard as 'OLD VERDICT'). Through 09-17, 68 graded MLB/NFL games:
-  //   plus-money underdog picks 7-3 (+6.0u); favorites with the model 4+ over Pinnacle 16-6; picks within 4 pts of Pinnacle 3-9 (-5u); favorites with 70%+ of the public on them lose money.
-  const sh = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome); const diff = sh == null ? null : (r.pickProb - sh) * 100;
+  // Verdict, from 2026-09-18 (every earlier rule stays on the scorecard so the records keep comparing).
+  // MLB: edge = model % minus Robinhood's ask. Through 09-17 on 64 graded MLB games the profit is all in big edges:
+  //   edge 5+ 19-5 (+12.0u) | edge 2 to 5 4-4 (-1.3u) | edge 0 to 2 5-5 (-1.7u) | edge below 0 12-10 (-2.1u). Profitable 4 of 5 days, flat the other.
+  // NFL: the model is ~89% Pinnacle early in the season, so its edge vs Robinhood has never reached +2 (best this week +0.3) and the MLB rule could never fire.
+  //   NFL keeps the original rule: skip a favorite Robinhood overprices by 3+, otherwise STRONG when the public's money is on the other team. Untested: 15 games, every bucket won.
   let v = 'PASS';
   if (r.pickOdds != null) {
-    if (r.pickOdds > 0) v = 'STRONG BET';                                              // model's side is a plus-money underdog at Robinhood
-    else if (diff != null && diff >= 4 && (pub == null || pub < 0.7)) v = 'STRONG BET'; // favorite the model likes 4+ pts more than Pinnacle, public not piled on
-    else if (diff != null && diff >= 4) v = 'BET';                                     // same, but 70%+ of the public is already on it: right side, crowded price
-    else if (diff == null) v = 'PASS (no Pinnacle)';                                   // can't measure the disagreement yet
-    else v = 'PASS';                                                                    // within 4 pts of Pinnacle or below it: no edge worth paying for
+    if (r.sport === 'NFL') {
+      if (r.edge != null && r.edge < -3) v = 'PASS (priced in)';
+      else if (pub != null && pub < 0.5) v = 'STRONG BET';
+      else v = 'BET';
+    } else {
+      if (r.edge != null && r.edge >= 5) v = 'STRONG BET';
+      else if (r.edge != null && r.edge >= 2) v = 'BET';
+      else v = 'PASS';
+    }
   }
   const tpub = r.takerPubHome == null ? null : (r.pick === 'home' ? r.takerPubHome : 1 - r.takerPubHome);   // directional: taker dollars on the pick side, pre-game trade tape
   return { pub, kal, v, isFav, tpub };
@@ -156,6 +162,11 @@ const diffPin = r => r.sharpHome == null ? null : (r.pickProb - (r.pick === 'hom
 const isModelFav = r => r.pickProb >= 0.5, isMarketFav = r => r.pickOdds != null && r.pickOdds < 0, pubOnPick = r => r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
 const strat = {
   'Model favorite, every game': G.filter(r => r.pickOdds != null),
+  'CURRENT VERDICT (MLB): STRONG BET, edge 5+ at Robinhood': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 5),
+  'CURRENT VERDICT (MLB): BET, edge 2 to 5': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 2 && r.edge < 5),
+  'CURRENT VERDICT (MLB): PASS, edge under 2': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge < 2),
+  'CURRENT VERDICT (NFL): STRONG BET, public on the other team': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
+  'CURRENT VERDICT (NFL): BET, public agrees': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && !(pubOnPick(r) != null && pubOnPick(r) < 0.5)),
   'PLAYBOOK A: model pick is a plus-money underdog': G.filter(r => r.pickOdds != null && r.pickOdds > 0),
   'PLAYBOOK B: favorite, public < 70% on it, model 4+ over Pinnacle': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4),
   'PLAYBOOK A+B combined (what to actually bet)': G.filter(r => r.pickOdds != null && (r.pickOdds > 0 || (r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4))),
@@ -208,7 +219,7 @@ def page():
 <b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ traded</b> = total on the game. <b>Tape $ on pick</b> = directional money from Kalshi's pre-game trade tape: every trade credited to the team the aggressor bet on (YES on a team, or NO on its opponent); hover for the dollars. <b>Tape $</b> = total taker dollars before start. Unlike Public $ on pick, which counts both sides of each market's volume, this one says which team the money actually backed.
 <b>Book take</b> = once a game is final, the losing side's share of the Kalshi/Robinhood money on it (what the winners took from the losers); the tile sums it for the slate. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Book gave</b> = the winning side's share, the money the public got paid on. <b>Pinnacle</b> = the sharpest book's de-vigged chance (a ~ means Pinnacle hasn't posted yet, so it's the Bovada/BetOnline average until it does).<br>
 There are three different "favorites" on every game and they do not agree: the side the <b>model</b> has over 50%, the side <b>Robinhood</b> prices over 50¢, and the side the <b>public's money</b> is on. Only the first one predicts anything. Weekend 1, 28 graded games at Robinhood prices: model's side over 50% went 9-5 (+1.3u); the market's priced favorite went 7-5 but <i>lost</i> 1.0u (short prices); the public's side went 8-8 and lost 2.0u.<br>
-The <b>Pick</b> is always the model's favorite, its side over 50%. Verdicts follow the playbook that has paid so far: <b>STRONG BET</b> = the pick is a plus-money underdog at Robinhood, or a favorite the model has 4+ points over Pinnacle with under 70% of the public on it. <b>BET</b> = 4+ over Pinnacle but 70%+ of the public is already on it (right side, crowded price). <b>PASS</b> = within 4 points of Pinnacle or below it; those picks have lost money. The Diff column is the number the verdict keys off. Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
+The <b>Pick</b> is always the model's favorite, its side over 50%. <b>MLB verdicts</b> key off the Edge column, the model's win % minus Robinhood's price: <b>STRONG BET</b> = edge of 5 or more, <b>BET</b> = edge of 2 to 5, <b>PASS</b> = under 2. All of the MLB profit so far has come from the 5+ games; the 2 to 5 games have only broken even. <b>NFL verdicts</b> use a different rule because the NFL model leans on Pinnacle early in the season and its edge never gets that large: <b>PASS (priced in)</b> = Robinhood charges 3+ points over the model, otherwise <b>STRONG BET</b> when the public's money is on the other team and <b>BET</b> when it agrees. The NFL rule is still unproven. Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>
