@@ -80,6 +80,11 @@ const norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toL
 const implied = o => { o = +o; if (!o || isNaN(o)) return null; return o < 0 ? (-o) / (-o + 100) : 100 / (o + 100); };
 const fmtOdds = o => o > 0 ? '+' + o : '' + o;
 const key = r => r.date + '|' + r.sport + ':' + r.id;
+// A projected lineup assumes he plays. Part-timers (catchers, platoon bats, rested veterans) often don't: Hunter Goodman topped the list on days he sat.
+// playAdj = model % x how often he has really started in his team's last ~10 games. Only applies while the lineup is unposted; a posted lineup means he IS playing.
+// r.prob itself is never changed: it stays 'if he plays', which is how results are graded (a scratch is a void, not a miss).
+const restRisk = r => r.sport === 'MLB' && !r.lineupPosted && r.startRate != null && r.startRate < 0.9;      // worth calling out on the row
+const playAdj = r => (r.sport === 'MLB' && !r.lineupPosted && r.startRate != null) ? r.prob * r.startRate : r.prob;   // applied to every projected hitter: even everyday players sit ~7%
 function verdict(r){
   const e = store[key(r)] || {}; const oddsIn = e.odds || r.book; const imp = implied(oddsIn); const edge = imp == null ? null : r.prob - imp;
   const heat = e.pub != null && e.pub !== '' ? +e.pub : r.heat;
@@ -118,7 +123,7 @@ function render(){ top5();
   const gameSel = $('#game').value;
   let list = rows.filter(x => (!gameSel || x.r.game === gameSel) && (!hide || !x.live) && (!onlyhits || x.r.hit === 1) && x.r.prob >= minp && x.heat <= maxh && (!only || ['SLEEPER','VALUE','TRAP','FADE','BET','LEAN','AVOID'].includes(x.v)) && (!onlybets || (store[key(x.r)] || {}).on) &&
       (!q || norm(x.r.name).includes(q) || norm(x.r.team).includes(q) || norm(x.r.game).includes(q) || norm(x.r.teamName || '').includes(q)));
-  const get = x => ({ nasty: x.nasty, prob: x.r.prob, edge: x.edge == null ? -9 : x.edge, heat: x.heat, time: x.r.time, name: x.r.name, slot: x.r.slot, hr: x.r.hr, l15hr: x.r.l15hr, fair: x.r.fair, prevTD: x.r.prevTD, use26: x.r.usage26 ? (x.r.usage26.tgt + x.r.usage26.att) : -1, share: x.r.share, implied: x.r.implied, v: x.v, game: x.r.game, pitcher: x.r.pitcher, pos: x.r.pos, spread: x.r.spread, odds: +(store[key(x.r)]||{}).odds || 0, pub: +(store[key(x.r)]||{}).pub || 0, kvol: x.r.kvol || 0, skew: x.r.skew == null ? -99 : x.r.skew, bet: (store[key(x.r)]||{}).on ? 1 : 0, hit: x.r.hit == null ? -1 : x.r.hit })[sortKey];
+  const get = x => ({ nasty: x.nasty, prob: playAdj(x.r), edge: x.edge == null ? -9 : x.edge, heat: x.heat, time: x.r.time, name: x.r.name, slot: x.r.slot, hr: x.r.hr, l15hr: x.r.l15hr, fair: x.r.fair, prevTD: x.r.prevTD, use26: x.r.usage26 ? (x.r.usage26.tgt + x.r.usage26.att) : -1, share: x.r.share, implied: x.r.implied, v: x.v, game: x.r.game, pitcher: x.r.pitcher, pos: x.r.pos, spread: x.r.spread, odds: +(store[key(x.r)]||{}).odds || 0, pub: +(store[key(x.r)]||{}).pub || 0, kvol: x.r.kvol || 0, skew: x.r.skew == null ? -99 : x.r.skew, bet: (store[key(x.r)]||{}).on ? 1 : 0, hit: x.r.hit == null ? -1 : x.r.hit })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   const R = new Set(['slot', 'hr', 'l15hr', 'prob', 'fair', 'edge', 'nasty', 'implied', 'prevTD', 'use26', 'share']);
   $('#tbl thead').innerHTML = '<tr>' + COLS[tab].map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''} ${R.has(k) ? 'r' : ''}">${l}${k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('') + '</tr>';
@@ -130,7 +135,7 @@ function render(){ top5();
     const when = new Date(r.time).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     const tr = document.createElement('tr'); tr.className = 'row';
     const common = `<td>${r.hit === 1 ? '<span class="res y">✓</span> ' : ''}<span class="nm">${r.name}</span> <span class="tm">${r.team}${r.inj ? ' · ' + r.inj : ''}${r.lateLock ? ' · late lock' : ''}</span></td>`;
-    const tail = `<td class="num">${(r.prob * 100).toFixed(1)}%</td><td class="num">${fmtOdds(r.fair)}</td>
+    const tail = `<td class="num" title="${restRisk(r) ? 'Lineup not posted. He has started ' + r.starts + ' of ' + r.team + "'s last " + r.teamGames + ' games, so ' + (r.prob * 100).toFixed(1) + '% if he plays becomes ' + (playAdj(r) * 100).toFixed(1) + '% once the chance he sits is counted. Sorted by the lower number.' : ''}">${(r.prob * 100).toFixed(1)}%${restRisk(r) ? '<br><span class="tm" style="color:var(--warn)">' + (playAdj(r) * 100).toFixed(1) + '% · starts ' + r.starts + '/' + r.teamGames + '</span>' : ''}</td><td class="num">${fmtOdds(r.fair)}</td>
       <td><input class="odds" data-k="${key(r)}" data-f="odds" value="${e.odds || ''}" placeholder="${r.book ? fmtOdds(r.book) : '+000'}" title="${r.book ? (r.bookUsed === 'robinhood' ? 'Robinhood / Kalshi ask, as American odds' + (r.sportsbook ? '; Fliff ' + fmtOdds(r.sportsbook) : '') : r.bookUsed === 'fliff' ? 'Fliff price (no Robinhood market)' : r.bookUsed === 'underdog' ? 'Underdog price (not on Fliff)' : 'best sportsbook price') + (r.bestBook && r.bestBook > r.book ? ', best ' + fmtOdds(r.bestBook) + ' at ' + r.bestAt : '') + (r.move ? ', moved ' + (r.move > 0 ? '+' : '') + r.move + ' pts' : '') : 'type the book odds'}">${r.book && r.bookUsed === 'robinhood' ? '' : r.book && r.bookUsed === 'fliff' ? '<span class="tm">FL</span>' : r.book && r.bookUsed === 'underdog' ? '<span class="tm">UD</span>' : r.book && r.bookUsed === 'best' ? '<span class="tm">*</span>' : ''}${r.move ? `<span class="tm ${r.move > 0 ? 'neg' : 'pos'}">${r.move > 0 ? '▲' : '▼'}</span>` : ''}</td>
       <td class="num ${x.edge == null ? '' : x.edge >= 0 ? 'pos' : 'neg'}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + (x.edge * 100).toFixed(1)}</td>
       <td><span class="bar"><i style="width:${x.heat}%"></i></span> <span class="tm">${Math.round(x.heat)}</span></td>
@@ -179,15 +184,16 @@ function top5(){
     if (r.skew != null && r.skew > 1) { m *= 0.8; why.push('retail shorter than Pinnacle: public trap'); }
     if (r.kvol != null && r.kvol >= 3500) why.push('heavy Kalshi money, crowd has been right on these');
     if (r.book && implied(r.book) != null && r.prob - implied(r.book) >= .03) why.push('+' + Math.round((r.prob - implied(r.book)) * 100) + ' pts vs the price');
-    return { s: r.prob * m, why }; };
+    if (restRisk(r)) why.unshift('has started only ' + r.starts + ' of ' + r.team + "'s last " + r.teamGames + ': ' + (r.prob * 100).toFixed(1) + '% if he plays, ' + (playAdj(r) * 100).toFixed(1) + '% counting days off');
+    return { s: playAdj(r) * m, why }; };
   const ranked = cand.map(r => ({ r, ...score(r) })).sort((a, b) => b.s - a.s).slice(0, 5);
   $('#top5h').textContent = tab === 'mlb' ? (live ? 'Top 5 homers to take' : 'Top 5 homers, how they did') : (live ? 'Top 5 touchdowns to take' : 'Top 5 touchdowns, how they did');
   $('#top5').innerHTML = ranked.length ? ranked.map((x, i) => { const r = x.r; const done = r.hit != null;
     const vd = tab === 'mlb' ? verdict(r) : null;
     return `<div class="card ${done ? (r.hit ? 'hit' : 'miss') : ''}"><span class="rk">#${i + 1}</span><span class="nm">${r.name}</span>${vd && vd.v !== 'PASS' ? ` <span class="v ${vd.v}" title="${vd.why}">${vd.v}</span>` : ''}<span class="tm">${r.team}${tab === 'mlb' && r.slot ? ' · bats ' + r.slot : r.pos ? ' · ' + r.pos : ''} · ${r.game}${r.pitcher ? ' · vs ' + r.pitcher : ''}</span>
-      <div class="st"><div><span>model</span><b>${(r.prob * 100).toFixed(1)}%</b></div><div><span>Robinhood</span><b>${r.kalshi != null ? Math.round(r.kalshi * 100) + '¢' : r.book ? fmtOdds(r.book) : '—'}</b></div><div><span>crowd $</span><b>${r.kvol != null ? '$' + (r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol) : '—'}</b></div>${done ? `<div><span>result</span><b class="${r.hit ? 'pos' : 'neg'}">${r.hit ? '✓ ' + (tab === 'mlb' ? 'HR' : 'TD') : '✗'}</b></div>` : ''}</div>
+      <div class="st"><div><span>model</span><b>${(playAdj(r) * 100).toFixed(1)}%</b></div><div><span>Robinhood</span><b>${r.kalshi != null ? Math.round(r.kalshi * 100) + '¢' : r.book ? fmtOdds(r.book) : '—'}</b></div><div><span>crowd $</span><b>${r.kvol != null ? '$' + (r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol) : '—'}</b></div>${done ? `<div><span>result</span><b class="${r.hit ? 'pos' : 'neg'}">${r.hit ? '✓ ' + (tab === 'mlb' ? 'HR' : 'TD') : '✗'}</b></div>` : ''}</div>
       <div class="why">${x.why.length ? x.why.join(' · ') : 'model % alone'}</div></div>`; }).join('') : '<div class="empty">Nothing left to take: every game on this slate has started.</div>';
-  $('#top5n').textContent = ranked.length ? (tab === 'mlb' ? 'Ranked by model %, nudged down a little for lineup slots 5-6 and for hitters the public has pushed shorter than Pinnacle. Heavy crowd money is a plus, not a fade. The verdict tag on each card is the separate crowd-agreement read.' : 'Ranked by model %, nudged up for running backs and down for players the public has pushed shorter than Pinnacle.') + (live ? ' Started games drop off.' : '') : '';
+  $('#top5n').textContent = ranked.length ? (tab === 'mlb' ? 'Ranked by model %, cut for part-time players while lineups are unposted (model % x how often he has actually started lately), nudged down a little for lineup slots 5-6 and for hitters the public has pushed shorter than Pinnacle. Heavy crowd money is a plus, not a fade. The verdict tag on each card is the separate crowd-agreement read.' : 'Ranked by model %, nudged up for running backs and down for players the public has pushed shorter than Pinnacle.') + (live ? ' Started games drop off.' : '') : '';
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; history.replaceState(null, '', '#' + tab); markNav(); render(); }));
 markNav();

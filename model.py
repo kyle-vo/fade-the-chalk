@@ -140,6 +140,11 @@ def mlb():
                 p_bp = clamp(base * plat * bp_fac * pf * wf * run_env * form * CAL, 0, 0.25)
                 prob = 1 - (1 - p_sp) ** sp_pa * (1 - p_bp) ** (exp_pa - sp_pa)
                 if pa >= 200: prob = max(prob, 0.04)                       # floor: stacked penalties overshoot on real regulars (Guerrero at 2%)
+                _ro = recent_orders.get(str(team['id']), {}); _tg = _ro.get('_games') or 0; _st = len(_ro.get(str(pid), []))
+                # posted lineup = he is playing. Projected = how often he has really started lately, pulled slightly toward 70% (weight of 2 games).
+                # Backtest, 4,356 projected starters over 24 days: men who started 65-80% of the prior ten days started the next game 68% of the time, 80-90% -> 83%,
+                # every game -> 93%. Brier: 'always plays' 0.2133, raw rate 0.1495, this shrunk rate 0.1476.
+                start_rate = 1.0 if posted else (min(1.0, (_st + 0.7 * 2) / (_tg + 2)) if _tg >= 5 else None)
                 prob_raw = prob; prob = recal_hr(prob)                     # v3: last step, because the fit was measured against the final displayed number
                 # ---- public heat: how obvious is this name today (0-100) ----
                 rank = lg_hr_rank.get(pid, 400)
@@ -153,7 +158,7 @@ def mlb():
                              'teamName': team['name'], 'opp': oppteam['name'], 'game': gname, 'state': state, 'time': g['gameDate'], 'venue': venue,
                              'slot': slot + 1, 'lineupPosted': posted, 'bat': bat, 'pitcher': sp['fullName'] if sp else 'TBD', 'pHand': sp_hand,
                              'hr': hr, 'pa': pa, 'hrRank': rank, 'l15hr': l15hr, 'l15pa': l15pa,
-                             'probRaw': round(prob_raw, 4), 'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat),
+                             'startRate': None if start_rate is None else round(start_rate, 3), 'starts': _st, 'teamGames': _tg, 'probRaw': round(prob_raw, 4), 'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat),
                              'factors': {'base': round(base / LG, 2), 'platoon': round(plat, 2), 'pitcher': round(sp_fac, 2), 'bullpen': round(bp_fac, 2),
                                          'park': round(pf, 2), 'weather': round(wf, 2), 'runEnv': round(run_env, 2), 'form': round(form, 2), 'cal': round(CAL, 2), 'expPA': round(exp_pa, 1)},
                              'notes': [f"SP {sp['fullName'] if sp else 'TBD'} ({sp_hand}) HR/BF {sp_rate / LG:.2f}x lg" + (f", vs {bat_eff}HB {sp_plat:.2f}x" if pbf else ''),

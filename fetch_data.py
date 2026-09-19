@@ -31,7 +31,9 @@ def fetch_mlb():
             for g in day.get('games', []):
                 for side in ('home', 'away'):
                     tid = str(g['teams'][side]['team']['id'])
-                    for i, pl in enumerate(g.get('lineups', {}).get(f'{side}Players', [])[:9]): orders.setdefault(tid, {}).setdefault(str(pl['id']), []).append(i + 1)
+                    lu = g.get('lineups', {}).get(f'{side}Players', [])[:9]
+                    if lu: orders.setdefault(tid, {})['_games'] = orders.get(tid, {}).get('_games', 0) + 1     # team games with a real lineup: the denominator for 'how often does he start'
+                    for i, pl in enumerate(lu): orders.setdefault(tid, {}).setdefault(str(pl['id']), []).append(i + 1)
         save('mlb_recent_orders.json', orders); print(f"  recent batting orders: {len(orders)} teams, {d0}..{d1}")
     except Exception as e: print(f"  recent batting orders failed: {e}")
     yr = d[:4]
