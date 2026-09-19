@@ -25,6 +25,18 @@ def american(p):
     return round(-100 * p / (1 - p)) if p >= 0.5 else round(100 * (1 - p) / p)
 def clamp(x, lo, hi): return max(lo, min(hi, x))
 
+# ---- v3 home-run recalibration (2026-09-19) ----
+# On 1,523 graded hitters (09-12..09-18) the v2 probabilities were too spread out: hitters shown at 4% homered 7%, hitters shown at 30% homered 22%.
+# Robinhood's own price out-predicted the raw model on the 1,162 priced hitters (log loss 0.3753 vs 0.3861). Cause: the 09-12 update (weak-hitter dampener,
+# lighter regression) was tuned on eight days and over-corrected. Fix = squeeze the spread in log-odds space:  p' = sigmoid(a + b * logit(p)).
+# Tested leave-one-day-out (fit on six days, score the seventh, rotate): slope b came out 0.50-0.60 in ALL seven folds; out-of-sample log loss
+# 0.3768 -> 0.3741, Brier 0.10965 -> 0.10925, better on 4 of 7 held-out days. Monotonic, so it never reorders hitters by itself.
+# The raw number is kept on every row as probRaw, and track.html scores the two eras separately, so this has to keep earning its place.
+HR_RECAL = (-0.8, 0.55)
+def recal_hr(p):
+    a, b = HR_RECAL; p = clamp(p, 1e-4, 1 - 1e-4)
+    return 1 / (1 + math.exp(-(a + b * math.log(p / (1 - p)))))
+
 # ---------------------------------------------------------------- MLB ----
 # 3-yr HR park factors (100 = neutral) keyed by venue-name fragment. Unknown venues -> 100.
 PARK = {'Coors': 112, 'Great American': 130, 'Yankee': 120, 'Citizens Bank': 116, 'Dodger': 110, 'Truist': 106, 'Globe Life': 104,
@@ -128,6 +140,7 @@ def mlb():
                 p_bp = clamp(base * plat * bp_fac * pf * wf * run_env * form * CAL, 0, 0.25)
                 prob = 1 - (1 - p_sp) ** sp_pa * (1 - p_bp) ** (exp_pa - sp_pa)
                 if pa >= 200: prob = max(prob, 0.04)                       # floor: stacked penalties overshoot on real regulars (Guerrero at 2%)
+                prob_raw = prob; prob = recal_hr(prob)                     # v3: last step, because the fit was measured against the final displayed number
                 # ---- public heat: how obvious is this name today (0-100) ----
                 rank = lg_hr_rank.get(pid, 400)
                 heat = 0
@@ -140,12 +153,12 @@ def mlb():
                              'teamName': team['name'], 'opp': oppteam['name'], 'game': gname, 'state': state, 'time': g['gameDate'], 'venue': venue,
                              'slot': slot + 1, 'lineupPosted': posted, 'bat': bat, 'pitcher': sp['fullName'] if sp else 'TBD', 'pHand': sp_hand,
                              'hr': hr, 'pa': pa, 'hrRank': rank, 'l15hr': l15hr, 'l15pa': l15pa,
-                             'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat),
+                             'probRaw': round(prob_raw, 4), 'prob': round(prob, 4), 'fair': american(prob), 'heat': round(heat),
                              'factors': {'base': round(base / LG, 2), 'platoon': round(plat, 2), 'pitcher': round(sp_fac, 2), 'bullpen': round(bp_fac, 2),
                                          'park': round(pf, 2), 'weather': round(wf, 2), 'runEnv': round(run_env, 2), 'form': round(form, 2), 'cal': round(CAL, 2), 'expPA': round(exp_pa, 1)},
                              'notes': [f"SP {sp['fullName'] if sp else 'TBD'} ({sp_hand}) HR/BF {sp_rate / LG:.2f}x lg" + (f", vs {bat_eff}HB {sp_plat:.2f}x" if pbf else ''),
                                        f"{'S' if bat == 'S' else bat}HB vs {sp_hand}HP {plat:.2f}x own rate", f"park {pf:.2f} | {wnote}",
-                                       f"last 15 g: {l15hr} HR / {l15pa} PA", 'lineup posted' if posted else 'LINEUP NOT POSTED - slot projected from his last 10 days of batting orders']})
+                                       f"last 15 g: {l15hr} HR / {l15pa} PA", f"raw model {prob_raw:.1%} -> recalibrated {prob:.1%}", 'lineup posted' if posted else 'LINEUP NOT POSTED - slot projected from his last 10 days of batting orders']})
     return rows
 
 # ---------------------------------------------------------------- NFL ----
