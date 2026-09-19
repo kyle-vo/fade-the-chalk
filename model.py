@@ -55,6 +55,7 @@ def mlb():
     games = L('mlb_schedule.json'); hit = L('mlb_hitting.json'); pit = L('mlb_pitching.json'); people = {p['id']: p for p in L('mlb_people.json')}
     hs = L('mlb_hitter_splits.json', {}); ps = L('mlb_pitcher_splits.json', {}); tp = L('mlb_team_pitching.json', {}); odds = L('mlb_odds.json', {})
     H = {h['player']['id']: h['stat'] for h in hit}; P = {p['player']['id']: p['stat'] for p in pit}
+    recent_orders = L('mlb_recent_orders.json', {})                  # teamId -> playerId -> recent real batting slots (fetch_data.py)
     lg_hr = sum(h['stat']['homeRuns'] for h in hit); lg_pa = sum(h['stat']['plateAppearances'] for h in hit); LG = lg_hr / lg_pa   # league HR/PA
     lg_hr_rank = {h['player']['id']: i + 1 for i, h in enumerate(sorted(hit, key=lambda h: -h['stat']['homeRuns']))}
     def split(store, pid, code, key='homeRuns', den='plateAppearances'):
@@ -86,7 +87,18 @@ def mlb():
             lineup = g.get('lineups', {}).get(f'{side}Players', [])
             posted = bool(lineup)
             if not posted:
-                cand = sorted([h for h in hit if h['team']['id'] == team['id']], key=lambda h: -h['stat']['plateAppearances'])[:9]
+                # Project from the last 10 days of real lineups: the nine men who started most, ordered by where they usually hit.
+                # (Until 2026-09-18 this sorted by season plate appearances and called the rank a 'slot', which put Lindor 7th.)
+                ro = recent_orders.get(str(team['id']), {})
+                roster = [h for h in hit if h['team']['id'] == team['id']]
+                if ro:
+                    starts = lambda h: len(ro.get(str(h['player']['id']), []))
+                    avg = lambda h: sum(ro[str(h['player']['id'])]) / len(ro[str(h['player']['id'])])
+                    cand = sorted([h for h in roster if starts(h)], key=lambda h: (-starts(h), -h['stat']['plateAppearances']))[:9]
+                    cand = sorted(cand, key=lambda h: (avg(h), -h['stat']['plateAppearances']))
+                    if len(cand) < 9: cand += sorted([h for h in roster if h not in cand], key=lambda h: -h['stat']['plateAppearances'])[:9 - len(cand)]
+                else:
+                    cand = sorted(roster, key=lambda h: -h['stat']['plateAppearances'])[:9]
                 lineup = [{'id': h['player']['id'], 'fullName': h['player']['fullName']} for h in cand]
             for slot, pl in enumerate(lineup[:9]):
                 pid = pl['id']; st = H.get(pid); per = people.get(pid, {})
@@ -133,7 +145,7 @@ def mlb():
                                          'park': round(pf, 2), 'weather': round(wf, 2), 'runEnv': round(run_env, 2), 'form': round(form, 2), 'cal': round(CAL, 2), 'expPA': round(exp_pa, 1)},
                              'notes': [f"SP {sp['fullName'] if sp else 'TBD'} ({sp_hand}) HR/BF {sp_rate / LG:.2f}x lg" + (f", vs {bat_eff}HB {sp_plat:.2f}x" if pbf else ''),
                                        f"{'S' if bat == 'S' else bat}HB vs {sp_hand}HP {plat:.2f}x own rate", f"park {pf:.2f} | {wnote}",
-                                       f"last 15 g: {l15hr} HR / {l15pa} PA", 'lineup posted' if posted else 'LINEUP NOT POSTED - projected by PA']})
+                                       f"last 15 g: {l15hr} HR / {l15pa} PA", 'lineup posted' if posted else 'LINEUP NOT POSTED - slot projected from his last 10 days of batting orders']})
     return rows
 
 # ---------------------------------------------------------------- NFL ----

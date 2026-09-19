@@ -22,6 +22,18 @@ def fetch_mlb():
     sched = get(f"{MLB}/schedule", sportId=1, date=d, hydrate="probablePitcher,venue,weather,lineups,team")
     games = sched['dates'][0]['games'] if sched.get('dates') else []
     save('mlb_schedule.json', games)
+    # recent ACTUAL batting orders, so a not-yet-posted lineup can be projected from where each man really hits (not from his plate-appearance rank)
+    try:
+        d0 = (datetime.date.fromisoformat(d) - datetime.timedelta(days=10)).isoformat(); d1 = (datetime.date.fromisoformat(d) - datetime.timedelta(days=1)).isoformat()
+        past = get(f"{MLB}/schedule", sportId=1, startDate=d0, endDate=d1, hydrate="lineups")
+        orders = {}                                                       # teamId -> playerId -> [slot, slot, ...] newest last
+        for day in past.get('dates', []):
+            for g in day.get('games', []):
+                for side in ('home', 'away'):
+                    tid = str(g['teams'][side]['team']['id'])
+                    for i, pl in enumerate(g.get('lineups', {}).get(f'{side}Players', [])[:9]): orders.setdefault(tid, {}).setdefault(str(pl['id']), []).append(i + 1)
+        save('mlb_recent_orders.json', orders); print(f"  recent batting orders: {len(orders)} teams, {d0}..{d1}")
+    except Exception as e: print(f"  recent batting orders failed: {e}")
     yr = d[:4]
     hit = get(f"{MLB}/stats", stats="season", group="hitting", season=yr, sportId=1, limit=2000, playerPool="all")['stats'][0]['splits']
     pit = get(f"{MLB}/stats", stats="season", group="pitching", season=yr, sportId=1, limit=2000, playerPool="all")['stats'][0]['splits']
