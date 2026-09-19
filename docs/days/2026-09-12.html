@@ -153,7 +153,7 @@ function render(){ top5();
   $('#tbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = -1; } render(); }));
 }
 // ---- top 5 to take: model % first, then what the graded history says (see track page) ----
-// 4 slates / 835 graded HR rows: slots 1-2 homered 21% vs 14% expected, slots 5-6 8% vs 12%; hitters priced shorter at retail than at
+// Signals kept: hitters priced shorter at retail than at
 // Pinnacle (skew > 1) hit 9.6% vs 15%; heavy Kalshi money OVER-delivered (22% vs 15%), so the crowd is never faded here. NFL: RBs beat their number.
 let gamesFor = null;
 function fillGames(){
@@ -171,7 +171,10 @@ function top5(){
   const upcoming = PAGE.graded ? [] : rows.filter(pre); const live = upcoming.length > 0;   // Today page mid-slate: only games still to come. Graded day page: the whole slate, with results
   const cand = live ? upcoming : rows.filter(r => !r.dnp && (tab === 'nfl' || r.slot));
   const score = r => { let m = 1, why = [];
-    if (tab === 'mlb') { if (r.slot <= 2) { m *= 1.15; why.push('top of the order (slots 1-2 hit 21% vs 14%)'); } else if (r.slot <= 3) { m *= 1.05; why.push('slot 3'); } else if (r.slot >= 5 && r.slot <= 6) { m *= 0.75; why.push('slots 5-6 have run cold (8% vs 12%)'); } }
+    // Lineup slot, corrected 2026-09-18. The earlier 1.15x boost for slots 1-2 came from rows locked before lineups posted, where 'slot' was really
+    // plate-appearance rank. On 741 hitters with REAL posted lineups: slots 1-2 16.0% vs 14.5% model, 3-4 16.6% vs 14.1%, 7-9 10.5% vs 8.7% (no clean top-of-order edge);
+    // slots 5-6 9.7% vs 11.3%, and that one also held in the other half of the data. So: no boost up top, a mild penalty for 5-6. The model already gives leadoff men more plate appearances.
+    if (tab === 'mlb') { if (r.slot >= 5 && r.slot <= 6) { m *= 0.9; why.push('slots 5-6 have run a little cold (9.7% vs 11.3% expected)'); } if (r.slot && !r.lineupPosted) why.push('lineup not posted: slot is projected'); }
     else if ((r.pos || '').startsWith('RB')) { m *= 1.1; why.push('RB (beat their number wk 1)'); }
     if (r.skew != null && r.skew > 1) { m *= 0.8; why.push('retail shorter than Pinnacle: public trap'); }
     if (r.kvol != null && r.kvol >= 3500) why.push('heavy Kalshi money, crowd has been right on these');
@@ -184,7 +187,7 @@ function top5(){
     return `<div class="card ${done ? (r.hit ? 'hit' : 'miss') : ''}"><span class="rk">#${i + 1}</span><span class="nm">${r.name}</span>${vd && vd.v !== 'PASS' ? ` <span class="v ${vd.v}" title="${vd.why}">${vd.v}</span>` : ''}<span class="tm">${r.team}${tab === 'mlb' && r.slot ? ' · bats ' + r.slot : r.pos ? ' · ' + r.pos : ''} · ${r.game}${r.pitcher ? ' · vs ' + r.pitcher : ''}</span>
       <div class="st"><div><span>model</span><b>${(r.prob * 100).toFixed(1)}%</b></div><div><span>Robinhood</span><b>${r.kalshi != null ? Math.round(r.kalshi * 100) + '¢' : r.book ? fmtOdds(r.book) : '—'}</b></div><div><span>crowd $</span><b>${r.kvol != null ? '$' + (r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol) : '—'}</b></div>${done ? `<div><span>result</span><b class="${r.hit ? 'pos' : 'neg'}">${r.hit ? '✓ ' + (tab === 'mlb' ? 'HR' : 'TD') : '✗'}</b></div>` : ''}</div>
       <div class="why">${x.why.length ? x.why.join(' · ') : 'model % alone'}</div></div>`; }).join('') : '<div class="empty">Nothing left to take: every game on this slate has started.</div>';
-  $('#top5n').textContent = ranked.length ? (tab === 'mlb' ? 'Ranked by model %, nudged up for lineup slots 1-3, down for slots 5-6 and for hitters the public has pushed shorter than Pinnacle. Heavy crowd money is a plus, not a fade.' : 'Ranked by model %, nudged up for running backs and down for players the public has pushed shorter than Pinnacle.') + (live ? ' Started games drop off.' : '') : '';
+  $('#top5n').textContent = ranked.length ? (tab === 'mlb' ? 'Ranked by model %, nudged down a little for lineup slots 5-6 and for hitters the public has pushed shorter than Pinnacle. Heavy crowd money is a plus, not a fade. The verdict tag on each card is the separate crowd-agreement read.' : 'Ranked by model %, nudged up for running backs and down for players the public has pushed shorter than Pinnacle.') + (live ? ' Started games drop off.' : '') : '';
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); tab = t.dataset.t; history.replaceState(null, '', '#' + tab); markNav(); render(); }));
 markNav();
