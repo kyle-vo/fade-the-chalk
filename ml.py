@@ -42,8 +42,12 @@ def book_ml(sport_key):
     if not KEYS: return {}
     rr = os.path.join(DATA, 'odds_key_rr.txt')
     try: ki = int(open(rr).read().strip())
-    except Exception: ki = 0
-    r = S.get(f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds", params={'apiKey': KEYS[ki % len(KEYS)], 'markets': 'h2h', 'bookmakers': BOOKS, 'oddsFormat': 'american'}, timeout=40)
+    except Exception:                                                # no pointer file on a clean GitHub runner: pick the starting key by the clock, same as odds.py
+        _n = datetime.datetime.now(); ki = _n.timetuple().tm_yday * 24 + _n.hour
+    for attempt in range(len(KEYS)):                                 # a spent or rejected key must not kill the Pinnacle pull: try the next one
+        r = S.get(f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds", params={'apiKey': KEYS[(ki + attempt) % len(KEYS)], 'markets': 'h2h', 'bookmakers': BOOKS, 'oddsFormat': 'american'}, timeout=40)
+        if r.status_code in (401, 402, 429): print(f"  odds ml key #{(ki + attempt) % len(KEYS) + 1} {r.status_code}, trying the next key"); continue
+        break
     if r.status_code != 200: print("  odds ml", r.status_code, r.text[:100]); return {}
     print(f"  moneylines {sport_key}: {len(r.json())} games, {r.headers.get('x-requests-last')} credit")
     out = {}

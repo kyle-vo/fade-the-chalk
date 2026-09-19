@@ -11,7 +11,8 @@ KEYS = [k.strip() for k in _raw.split(',') if k.strip()]; KEY = KEYS[0] if KEYS 
 _ki = 0
 _rr = os.path.join(DATA, 'odds_key_rr.txt')
 try: _ki = (int(open(_rr).read().strip()) + 1) % max(1, len(KEYS))
-except Exception: _ki = 0
+except Exception:                                                  # no pointer file (every GitHub runner starts clean): spread runs across keys by the clock instead of always draining key #1
+    _n = datetime.datetime.now(); _ki = (_n.timetuple().tm_yday * 24 + _n.hour) % max(1, len(KEYS))
 if KEYS: KEY = KEYS[_ki]; open(_rr, 'w').write(str(_ki))
 def rget(url, params, **kw):
     """GET with key rotation: on 401/402/429 (bad, exhausted, throttled) move to the next key."""
@@ -35,6 +36,9 @@ def pull(sport_key, market, day_filter=None):
     out = {}; used = 0
     for ev in r.json():
         if day_filter and not day_filter(ev['commence_time']): continue
+        try:                                                           # a started game costs a credit and buys nothing: the site only ever uses pre-game prices
+            if datetime.datetime.fromisoformat(ev['commence_time'].replace('Z', '+00:00')) <= datetime.datetime.now(datetime.timezone.utc): continue
+        except Exception: pass
         p = {'apiKey': KEY, 'markets': market, 'oddsFormat': 'american'}
         if BOOKS: p['bookmakers'] = BOOKS
         else: p['regions'] = REGION
