@@ -59,6 +59,38 @@ def pull(sport_key, market, day_filter=None):
     print(f"  {sport_key}/{market}: {len(out)} players priced, {sum(1 for v in out.values() if v['use'] == 'fliff')} on Fliff, {sum(1 for v in out.values() if v['use'] == 'underdog')} Underdog-only (credits used this month: {used})")
     return out
 
+# NFL touchdown props cost ~15 credits a pull and barely move between pulls, while the number we actually bet at (Robinhood = Kalshi) is free and
+# refreshes every run. So the paid TD pull happens ONCE in each of three weekly windows (local/Pacific time). Windows are wide on purpose: GitHub fires
+# the "hourly" job every 3-6 hours, so each window must be long enough to catch at least one run before the games it serves.
+NFL_WINDOWS = (('Wednesday night', 2, 17, 19),      # Wed 5pm -> Thu noon   : opener, ahead of Thursday night
+               ('Saturday morning', 5, 6, 27),      # Sat 6am -> Sun 9am    : ahead of the Sunday slate
+               ('Sunday night', 6, 17, 23))         # Sun 5pm -> Mon 4pm    : ahead of Monday night
+def _last_nfl_pull():
+    """newest committed snapshot that actually holds NFL prices. backtest/ is in git, so this works on a clean GitHub runner too."""
+    newest = None
+    for back in range(9):
+        fp = os.path.join(BT, f"odds_{(datetime.date.today() - datetime.timedelta(days=back)).isoformat()}.json")
+        if not os.path.exists(fp): continue
+        try:
+            for sn in json.load(open(fp, encoding='utf-8')):
+                if sn.get('NFL'):
+                    at = datetime.datetime.fromisoformat(sn['at'])
+                    if newest is None or at > newest: newest = at
+        except Exception: pass
+    return newest
+def nfl_due(now=None):
+    """(pull?, reason). --force or ODDS_NFL=always overrides, for a manual rerun right before betting touchdowns."""
+    if '--force' in sys.argv or os.environ.get('ODDS_NFL', '').lower() == 'always': return True, 'forced'
+    now = now or datetime.datetime.now()
+    for name, wd, hour, length in NFL_WINDOWS:
+        start = datetime.datetime.combine(now.date() - datetime.timedelta(days=(now.weekday() - wd) % 7), datetime.time(hour))   # most recent occurrence of that weekday
+        if start > now: start -= datetime.timedelta(days=7)               # it is that weekday, but earlier than the window opens
+        if start <= now < start + datetime.timedelta(hours=length):
+            last = _last_nfl_pull()
+            if last is not None and last >= start: return False, f"already pulled for the {name} window ({last:%a %H:%M})"
+            return True, f"{name} window"
+    return False, 'outside the Wed-night / Sat-morning / Sun-night windows'
+
 if __name__ == '__main__':
     if not KEYS:
         print("no odds key - put your The Odds API key in odds_key.txt (free at https://the-odds-api.com). Skipping."); sys.exit(0)
@@ -68,11 +100,15 @@ if __name__ == '__main__':
         try:
             c = json.load(open(cache, encoding='utf-8')); age = (datetime.datetime.now() - datetime.datetime.fromisoformat(c.get('_at', '2000-01-01T00:00'))).total_seconds() / 60
             if c.get('_date') == date and age < ttl and (c.get('MLB') or c.get('NFL')):
-                print(f"odds cache is {age:.0f} min old (limit {ttl}) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull."); sys.exit(0)
+                if not nfl_due()[0]: print(f"odds cache is {age:.0f} min old (limit {ttl}) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull."); sys.exit(0)
+                cached_mlb = c.get('MLB')                                # touchdowns are due but home runs are fresh: pull only the NFL side
         except Exception: pass
     # MLB: only that calendar day's games (US Eastern-ish: commence within date .. date+1 05:00Z)
     lo = f"{date}T04:00:00Z"; hi = (datetime.date.fromisoformat(date) + datetime.timedelta(days=1)).isoformat() + "T09:00:00Z"
-    props = {'_at': datetime.datetime.now().isoformat(timespec='minutes'), '_date': date, 'MLB': pull(*MARKETS['MLB'], day_filter=lambda t: lo <= t <= hi), 'NFL': pull(*MARKETS['NFL'], day_filter=lambda t: t <= (datetime.date.fromisoformat(date) + datetime.timedelta(days=7)).isoformat())}
+    td_due, td_why = nfl_due(); print(f"  NFL touchdown props: {'PULLING' if td_due else 'skipped, 0 credits'} ({td_why})")
+    props = {'_at': datetime.datetime.now().isoformat(timespec='minutes'), '_date': date,
+             'MLB': globals().get('cached_mlb') or pull(*MARKETS['MLB'], day_filter=lambda t: lo <= t <= hi),
+             'NFL': pull(*MARKETS['NFL'], day_filter=lambda t: t <= (datetime.date.fromisoformat(date) + datetime.timedelta(days=7)).isoformat()) if td_due else {}}
     json.dump(props, open(os.path.join(DATA, 'props.json'), 'w', encoding='utf-8'))
     snap_path = os.path.join(BT, f'odds_{date}.json')
     snaps = json.load(open(snap_path, encoding='utf-8')) if os.path.exists(snap_path) else []

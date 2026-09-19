@@ -61,12 +61,28 @@ def _pregame(snaps, r):
     return [sn for sn in snaps if st is None or _snap_utc(sn['at']) <= st]   # nothing pre-game = no crowd number (never leak an in-game price)
 def attach_odds(rows, date, sport):
     """Book odds from the latest snapshot of that date (closing line), movement vs the first snapshot -> heat bump."""
-    sp = os.path.join(BT, f'odds_{date}.json')
-    if not os.path.exists(sp): return
-    snaps = J(sp)
+    if sport == 'NFL':
+        # Touchdown props are pulled only three times a week (odds.py NFL_WINDOWS), so read the whole week's snapshots, oldest first, instead of today's file.
+        snaps = []
+        for back in range(8, -1, -1):
+            fp = os.path.join(BT, f"odds_{(datetime.date.today() - datetime.timedelta(days=back)).isoformat()}.json")
+            if os.path.exists(fp): snaps += [sn for sn in J(fp) if sn.get('NFL')]
+        if not snaps: return
+    else:
+        sp = os.path.join(BT, f'odds_{date}.json')
+        if not os.path.exists(sp): return
+        snaps = J(sp)
+    def usable(r):
+        pre = _pregame(snaps, r)
+        if sport != 'NFL': return pre
+        # a snapshot prices a player's NEXT game, so only count ones taken after his previous game: within 3.5 days of a Thursday kickoff, 5.5 days otherwise
+        st = _start_utc(r)
+        if st is None: return pre
+        lim = (3.5 if st.weekday() in (3, 4) else 5.5) * 86400
+        return [sn for sn in pre if (st - _snap_utc(sn['at'])).total_seconds() <= lim]
     for r in rows:
-        nm = _norm(r['name']); first, last, lastbooks = {}, {}, {}
-        for sn in _pregame(snaps, r):                  # latest PRE-GAME sighting wins; first sighting = the opener
+        nm = _norm(r['name']); first, last, lastbooks = {}, {}, {}; use = usable(r)
+        for sn in use:                                 # latest PRE-GAME sighting wins; first sighting = the opener
             for k2, o in sn.get(sport, {}).items():
                 first.setdefault(k2, o); last[k2] = o; lastbooks[k2] = sn.get('books', {}).get(sport, {}).get(k2, lastbooks.get(k2, {}))
         o = last.get(nm)
@@ -81,7 +97,7 @@ def attach_odds(rows, date, sport):
             r['skew'] = sk
             r['heat'] = round(min(100, max(0, r['heat'] + (12 if sk >= 2.5 else 6 if sk >= 1.2 else -6 if sk <= -1.2 else 0))))
             r.setdefault('notes', []).append(f"book skew {sk:+.1f} pts (retail books vs offshore; + = public money on him)")
-        if nm in first and len(snaps) > 1:
+        if nm in first and len(use) > 1:
             mv = (_implied(o) - _implied(first[nm])) * 100   # + = price shortened = money came in
             r['move'] = round(mv, 1)
             r['heat'] = round(min(100, max(0, r['heat'] + (15 if mv >= 3 else 8 if mv >= 1.5 else -8 if mv <= -1.5 else 0))))
