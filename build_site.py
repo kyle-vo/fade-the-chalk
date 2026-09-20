@@ -115,6 +115,10 @@ def attach_kalshi(rows, date, sport):
         k = ms.get(_norm(r['name']))
         if not k: continue
         r['kalshi'] = k['yes']; r['kvol'] = k['vol']; r['koi'] = k['oi']
+        # Point-in-time 'big name' line: top third of everyone's Kalshi dollars as they stood at HIS last pre-game snapshot. Until 2026-09-19 the cutoff was
+        # recomputed at every build from end-of-day money, so a finished game's tier could change after the fact and the record looked better than anything you could bet.
+        _pv = sorted(m['vol'] for m in ms.values() if m.get('vol'))
+        r['bigCut'] = _pv[2 * len(_pv) // 3] if len(_pv) >= 9 else None
         ask = k.get('ask') or (k['yes'] + 0.01)
         if 0 < ask < 1:
             r['sportsbook'] = r.get('book'); r['book'] = round(-100 * ask / (1 - ask)) if ask >= .5 else round(100 * (1 - ask) / ask); r['bookUsed'] = 'robinhood'; r['onFliff'] = False
@@ -127,12 +131,11 @@ def attach_kalshi(rows, date, sport):
 def attach_team_money(rows, date):
     """Inputs for the home-run verdict. The moneyline lock is frozen at first pitch, so nothing in-game leaks in.
     teamPub = share of the Kalshi/Robinhood MONEYLINE dollars on this hitter's team; teamFav = his team is the priced favorite;
-    big = top third of that day's priced hitters by Kalshi home-run dollars (recomputed every build, so it works at 9am and at 4pm)."""
+    big = top third of all hitters' Kalshi home-run dollars as of HIS last pre-game snapshot (live for unstarted games, frozen once his game starts)."""
     mp = os.path.join(BT, f'ml_{date}.json')
     games = {str(g.get('gamePk')): g for g in J(mp)} if os.path.exists(mp) else {}
-    vols = sorted(r['kvol'] for r in rows if r.get('kvol') and r.get('kalshi'))
-    cut = vols[2 * len(vols) // 3] if len(vols) >= 9 else None
     for r in rows:
+        cut = r.get('bigCut')                                          # set in attach_kalshi from his own last pre-game snapshot, so it never moves once his game starts
         r['big'] = bool(cut and r.get('kvol') and r.get('kalshi') and r['kvol'] >= cut)
         g = games.get(str(r.get('gamePk')))
         if not g or r.get('team') not in (g.get('home'), g.get('away')): continue
