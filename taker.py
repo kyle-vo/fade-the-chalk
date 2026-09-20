@@ -13,8 +13,11 @@ API = "https://api.elections.kalshi.com/trade-api/v2"
 S = requests.Session(); S.headers['User-Agent'] = 'Mozilla/5.0'
 J = lambda p: json.load(open(p, encoding='utf-8'))
 MON = ('JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC')
-ALIAS = {'CHW': 'CWS', 'WAS': 'WSH', 'OAK': 'ATH', 'ARI': 'AZ', 'SFG': 'SF', 'SDP': 'SD', 'TBR': 'TB', 'KCR': 'KC', 'JAC': 'JAX', 'LVR': 'LV'}
-canon = lambda c: ALIAS.get(c, c)
+# Team codes differ by sport: 'ARI' is the Diamondbacks (we call them AZ) in MLB but the Cardinals in the NFL. One shared table turned NFL Arizona into 'AZ'
+# and the tape never matched SEA@ARI; WSH and JAX failed the same way because the event ticker was compared as raw text. Aliases are per sport now.
+ALIAS = {'MLB': {'CHW': 'CWS', 'WAS': 'WSH', 'OAK': 'ATH', 'ARI': 'AZ', 'SFG': 'SF', 'SDP': 'SD', 'TBR': 'TB', 'KCR': 'KC'},
+         'NFL': {'WAS': 'WSH', 'JAC': 'JAX', 'LVR': 'LV', 'LA': 'LAR'}}
+canon = lambda c, sport='MLB': ALIAS.get(sport, {}).get(c, c)
 def f(x):
     try: return float(x)
     except (TypeError, ValueError): return 0.0
@@ -42,14 +45,15 @@ def find_event(sport, home, away, start):
                 if cursor: p['cursor'] = cursor
                 dd = get('/markets', **p); evs += [m for m in dd.get('markets', []) if tag in m.get('event_ticker', '')]
                 cursor = dd.get('cursor')
-                if not cursor or status == 'open': break
+                if not cursor: break                                     # page through ALL open markets: KXNFLGAME lists future weeks too, so the first 200 can miss this week's games (was stopping after one page)
                 if all(tag not in m.get('event_ticker', '') for m in dd.get('markets', [])) and any(m.get('event_ticker', '') < f"{series}-{tag}" for m in dd.get('markets', [])): break
         _events[key] = evs
-    mk = {}
-    for m in _events[key]:
-        side = canon(m['ticker'].rsplit('-', 1)[-1])
-        if side in (canon(home), canon(away)) and canon(home) in m['event_ticker'] and canon(away) in m['event_ticker']: mk[side] = m['ticker']
-    return mk if canon(home) in mk and canon(away) in mk else None
+    byev = {}                                                          # event -> {canonical team code: market ticker}; match on the PAIR of sides, never on ticker text
+    for m in _events[key]: byev.setdefault(m['event_ticker'], {})[canon(m['ticker'].rsplit('-', 1)[-1], sport)] = m['ticker']
+    want = {canon(home, sport), canon(away, sport)}
+    for sides in byev.values():
+        if set(sides) == want: return sides
+    return None
 
 def tape(ticker, max_ts):
     """sum pre-game trades on one team market by taker direction."""
@@ -82,7 +86,7 @@ def run(include_future=False):
                 mk = find_event(r['sport'], r['home'], r['away'], start)
                 if not mk: continue
                 cut = min(start, now).timestamp()
-                hy, hn, n1 = tape(mk[canon(r['home'])], cut); ay, an, n2 = tape(mk[canon(r['away'])], cut)
+                hy, hn, n1 = tape(mk[canon(r['home'], r['sport'])], cut); ay, an, n2 = tape(mk[canon(r['away'], r['sport'])], cut)
                 home_d = hy + an; away_d = ay + hn                                        # YES on home + NO on away = money on home
                 c = {'home': r['home'], 'away': r['away'], 'homeD': round(home_d), 'awayD': round(away_d), 'trades': n1 + n2, 'final': started, 'at': now.isoformat(timespec='minutes'), 'tickers': mk}
                 json.dump(c, open(cf, 'w', encoding='utf-8'))
