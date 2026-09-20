@@ -61,7 +61,13 @@ const key = r => r.date + '|' + (r.gamePk || r.eventId);
 // The public backing a favorite was right 65% of the time; the public backing an underdog was right only 25%.
 // So: bet the pick only when it IS the favorite, skip every underdog pick, and the strongest bets are favorites the public hasn't piled onto yet.
 function verdict(r){
-  const pub = r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);   // share of Kalshi money on the pick side
+  // Public $ on pick. MLB: volume split between the two team contracts (unchanged). NFL, from 2026-09-20: the TRADE TAPE, because the volume split is wrong for
+  // lopsided prices. People back a big favorite by buying NO on the cheap underdog contract, and volume counted that as underdog money: week 2 had LAC at 11% by
+  // volume but 52% by tape, SF 55% vs 89%, BAL 55% vs 81%; off in 15 of 16 games, 16 points on average. Tape credits each trade to the team the taker actually backed.
+  const volPub = r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
+  const tapePub = r.takerPubHome == null ? null : (r.pick === 'home' ? r.takerPubHome : 1 - r.takerPubHome);
+  const pubSrc = (r.sport === 'NFL' && tapePub != null) ? 'tape' : 'volume';
+  const pub = pubSrc === 'tape' ? tapePub : volPub;
   const kal = r.kalshi == null ? null : (r.pick === 'home' ? r.kalshi : r.kalshiAway ?? 1 - r.kalshi);
   const isFav = true;                                               // the pick is always the model's favorite now
   // Verdict, from 2026-09-18 (every earlier rule stays on the scorecard so the records keep comparing).
@@ -82,7 +88,7 @@ function verdict(r){
     }
   }
   const tpub = r.takerPubHome == null ? null : (r.pick === 'home' ? r.takerPubHome : 1 - r.takerPubHome);   // directional: taker dollars on the pick side, pre-game trade tape
-  return { pub, kal, v, isFav, tpub };
+  return { pub, pubSrc, volPub, kal, v, isFav, tpub };
 }
 let view = 'table';
 // ESPN team logos (public CDN). ESPN's codes differ from ours for a few clubs.
@@ -128,7 +134,7 @@ function render(){
       <td class="num ${x.diff == null ? '' : x.diff >= 4 ? 'pos' : x.diff <= -4 ? 'neg' : ''}" title="model minus Pinnacle, in points; the 4+ bucket is the one that has been cashing">${x.diff == null ? '—' : (x.diff >= 0 ? '+' : '') + x.diff.toFixed(1)}</td>
       <td class="num">${r.pickOdds == null ? '—' : Math.round(implied(r.pickOdds) * 100) + '¢'} <span class="tm">${fmt(r.pickOdds)}</span></td>
       <td class="num ${r.edge == null ? '' : r.edge >= 0 ? 'pos' : 'neg'}">${r.edge == null ? '—' : (r.edge >= 0 ? '+' : '') + r.edge.toFixed(1)}</td>
-      <td class="num"><span class="bar"><i style="width:${x.pub == null ? 0 : x.pub * 100}%"></i></span> ${pct(x.pub)}</td>
+      <td class="num" title="${x.pubSrc === 'tape' ? 'From the trade tape: every pre-game trade credited to the team the bettor backed.' + (x.volPub != null ? ' The old volume split said ' + Math.round(x.volPub * 100) + '%.' : '') : (r.sport === 'NFL' ? 'No trade tape for this game yet, so this is the volume split, which understates money on big favorites.' : 'Volume split between the two team contracts.')}"><span class="bar"><i style="width:${x.pub == null ? 0 : x.pub * 100}%"></i></span> ${pct(x.pub)}${r.sport === 'NFL' && x.pubSrc !== 'tape' && x.pub != null ? '~' : ''}</td>
       <td class="num">$${r.kvol >= 1000 ? Math.round(r.kvol / 1000) + 'k' : r.kvol}</td>
       <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" ${e.on ? 'checked' : ''}> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
@@ -158,6 +164,7 @@ const G = GRADED; const brier = (ps) => ps.length ? ps.reduce((s, [p, y]) => s +
 const bm = brier(G.map(r => [r.model, r.homeWin])), bk = brier(G.filter(r => r.kalshi != null).map(r => [r.kalshi, r.homeWin])), bs = brier(G.filter(r => r.sharpHome != null).map(r => [r.sharpHome, r.homeWin]));
 const tapeOnPick = r => r.pick === 'home' ? r.takerPubHome : 1 - r.takerPubHome;
 const pay = (o, y) => y ? (o > 0 ? o / 100 : 100 / -o) : -1;
+const nflPub = r => r.takerPubHome != null ? tapeOnPick(r) : pubOnPick(r);   // same source the NFL verdict uses
 const diffPin = r => r.sharpHome == null ? null : (r.pickProb - (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome)) * 100;
 const isModelFav = r => r.pickProb >= 0.5, isMarketFav = r => r.pickOdds != null && r.pickOdds < 0, pubOnPick = r => r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
 const strat = {
@@ -165,8 +172,10 @@ const strat = {
   'CURRENT VERDICT (MLB): STRONG BET, edge 5+ at Robinhood': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 5),
   'CURRENT VERDICT (MLB): BET, edge 2 to 5': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 2 && r.edge < 5),
   'CURRENT VERDICT (MLB): PASS, edge under 2': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge < 2),
-  'CURRENT VERDICT (NFL): STRONG BET, public on the other team': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
-  'CURRENT VERDICT (NFL): BET, public agrees': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && !(pubOnPick(r) != null && pubOnPick(r) < 0.5)),
+  'CURRENT VERDICT (NFL): STRONG BET, tape $ on the other team': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && nflPub(r) != null && nflPub(r) < 0.5),
+  'CURRENT VERDICT (NFL): BET, tape $ agrees': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && !(nflPub(r) != null && nflPub(r) < 0.5)),
+  'OLD NFL VERDICT (volume split): STRONG BET': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
+  'OLD NFL VERDICT (volume split): BET': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && !(pubOnPick(r) != null && pubOnPick(r) < 0.5)),
   'PLAYBOOK A: model pick is a plus-money underdog': G.filter(r => r.pickOdds != null && r.pickOdds > 0),
   'PLAYBOOK B: favorite, public < 70% on it, model 4+ over Pinnacle': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4),
   'PLAYBOOK A+B combined (what to actually bet)': G.filter(r => r.pickOdds != null && (r.pickOdds > 0 || (r.pickOdds < 0 && pubOnPick(r) != null && pubOnPick(r) < 0.7 && diffPin(r) != null && diffPin(r) >= 4))),
@@ -219,7 +228,7 @@ def page():
 <b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ traded</b> = total on the game. <b>Tape $ on pick</b> = directional money from Kalshi's pre-game trade tape: every trade credited to the team the aggressor bet on (YES on a team, or NO on its opponent); hover for the dollars. <b>Tape $</b> = total taker dollars before start. Unlike Public $ on pick, which counts both sides of each market's volume, this one says which team the money actually backed.
 <b>Book take</b> = once a game is final, the losing side's share of the Kalshi/Robinhood money on it (what the winners took from the losers); the tile sums it for the slate. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Book gave</b> = the winning side's share, the money the public got paid on. <b>Pinnacle</b> = the sharpest book's de-vigged chance (a ~ means Pinnacle hasn't posted yet, so it's the Bovada/BetOnline average until it does).<br>
 There are three different "favorites" on every game and they do not agree: the side the <b>model</b> has over 50%, the side <b>Robinhood</b> prices over 50¢, and the side the <b>public's money</b> is on. Only the first one predicts anything. Weekend 1, 28 graded games at Robinhood prices: model's side over 50% went 9-5 (+1.3u); the market's priced favorite went 7-5 but <i>lost</i> 1.0u (short prices); the public's side went 8-8 and lost 2.0u.<br>
-The <b>Pick</b> is always the model's favorite, its side over 50%. <b>MLB verdicts</b> key off the Edge column, the model's win % minus Robinhood's price: <b>STRONG BET</b> = edge of 5 or more, <b>BET</b> = edge of 2 to 5, <b>PASS</b> = under 2. All of the MLB profit so far has come from the 5+ games; the 2 to 5 games have only broken even. <b>NFL verdicts</b> use a different rule because the NFL model leans on Pinnacle early in the season and its edge never gets that large: <b>PASS (priced in)</b> = Robinhood charges 3+ points over the model, otherwise <b>STRONG BET</b> when the public's money is on the other team and <b>BET</b> when it agrees. The NFL rule is still unproven. Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
+The <b>Pick</b> is always the model's favorite, its side over 50%. <b>MLB verdicts</b> key off the Edge column, the model's win % minus Robinhood's price: <b>STRONG BET</b> = edge of 5 or more, <b>BET</b> = edge of 2 to 5, <b>PASS</b> = under 2. All of the MLB profit so far has come from the 5+ games; the 2 to 5 games have only broken even. <b>NFL verdicts</b> use a different rule because the NFL model leans on Pinnacle early in the season and its edge never gets that large: <b>PASS (priced in)</b> = Robinhood charges 3+ points over the model, otherwise <b>STRONG BET</b> when the public's money is on the other team and <b>BET</b> when it agrees. For NFL, <b>Public $ on pick</b> comes from the trade tape (each pre-game trade credited to the team the bettor actually backed), because splitting volume between the two team contracts badly understates the money on big favorites; a ~ means no tape yet, so the volume split is shown. MLB still uses the volume split. The NFL rule is still unproven. Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>

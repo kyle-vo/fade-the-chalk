@@ -78,7 +78,8 @@ def run(include_future=False):
             try: start = datetime.datetime.fromisoformat(r['time'].replace('Z', '+00:00'))
             except Exception: continue
             started = start <= now
-            if not started and not include_future and (start - now).total_seconds() > 36 * 3600: continue
+            horizon = 7 * 24 if r['sport'] == 'NFL' else 36                 # NFL verdicts read the tape, so cover the whole week; MLB only needs the next day and a half
+            if not started and not include_future and (start - now).total_seconds() > horizon * 3600: continue
             gkey = f"{r['sport']}_{r.get('gamePk') or r.get('eventId')}"; cf = os.path.join(CACHE, gkey + '.json')
             if started and os.path.exists(cf):
                 c = J(cf)
