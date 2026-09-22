@@ -245,7 +245,7 @@ def nfl():
                 else:
                     share = prior * 0.25
                 if inj == 'Questionable': share *= 0.85
-                if pos == 'QB': share = min(share, 0.08)                      # a QB rarely owns more than ~11% of his team's TDs (rushing only)
+                if pos == 'QB': share = min(share, 0.11)                      # was 0.08. Weeks 1-2 2026: QBs scored 22% (11 of 51) vs 16% modeled; crowd had 17%. 0.11 lifts them to ~20%.                      # a QB rarely owns more than ~11% of his team's TDs (rushing only)
                 dc = depth.get(team, {}).get(r['id'])
                 if depth.get(team):                                   # chart exists for this team
                     if dc: share *= DEPTH_MULT.get(dc['pos'], DEPTH_MULT['WR']).get(min(dc['rank'], 3), 0.1); r['depth'] = dc.get('label') or f"{dc['pos']}{dc['rank']}"
@@ -256,7 +256,7 @@ def nfl():
                     if c and c.get('team') == team:
                         cs = 0.95 * usage_score(c) / team_usage[team]
                         if inj == 'Questionable': cs *= 0.85
-                        if pos == 'QB': cs = min(cs, 0.08)
+                        if pos == 'QB': cs = min(cs, 0.11)
                         r['share25'] = share; share = (1 - w) * share + w * cs
                         r['usage26'] = {'gp': c['gp'], 'tgt': c['tgt'], 'att': c['att'], 'td': c['rushTD'] + c['recTD'], 'share': round(cs, 3), 'w': round(w, 2)}
                     elif not (dc and dc['rank'] == 1):                 # no 2026 touches and not a listed starter: he isn't part of the offense yet
