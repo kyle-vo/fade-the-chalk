@@ -1,0 +1,34 @@
+﻿=== 2026-09-23 20:09 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL James Cook III         BUF  RB p=0.604 fair -152 heat 84 share 0.28
+  NFL Javonte Williams       DAL  RB p=0.561 fair -128 heat 73 share 0.292
+  NFL Chase Brown            CIN  RB p=0.558 fair -126 heat 60 share 0.309
+  NFL Bijan Robinson         ATL  RB p=0.551 fair -123 heat 51 share 0.376
+  NFL touchdown props: skipped, 0 credits (already pulled for the Wednesday night window (Wed 18:05))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #6 used this run
+snapshot 7 saved for 2026-09-23
+  Kalshi MLB 2026-09-23: 54 players, $699,383 traded
+  Kalshi NFL 2026-09-24: 21 players, $237,514 traded
+  Kalshi NFL 2026-09-27: 220 players, $124,717 traded
+  Kalshi NFL 2026-09-28: 15 players, $174 traded
+  ML 2026-09-23: 12/16 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 0/16 graded
+MLB 2026-09-23: kept 283 frozen, refreshed 0, late 0
+NFL 2026_wk3: kept 0 frozen, refreshed 292, late 0
+MLB 2026-09-23: 12/16 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 0/16 games graded
+site: index + 21 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LV@NO: $42,528 on NO / $122,119 on LV (7,550 trades)  (partial, game not started)
+  NFL LAR@DEN: $23,281 on DEN / $33,187 on LAR (3,067 trades)  (partial, game not started)
+  NFL PHI@CHI: $38,706 on CHI / $290,125 on PHI (6,593 trades)  (partial, game not started)
+taker tape attached to 206 locked games
+archive.html: 3 NFL weeks, 21 MLB days
+ml.html: 12 MLB days, 3 NFL weeks, 185 graded games
