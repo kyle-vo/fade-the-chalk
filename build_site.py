@@ -236,10 +236,10 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 def nav(active, root, sport=None):
     """three rows: site pages / MLB (today's HR board, moneyline, day pages) / NFL (today's TD board, moneyline, week pages)"""
     on = lambda h: ' class="on"' if active == h else ''
-    site = f'<div class="row site"><a href="{root}index.html"{on("index.html")}>Today</a><a href="{root}ml.html"{on("ml.html")}>Moneyline</a><a href="{root}track.html"{on("track.html")}>Track</a><a href="{root}archive.html"{on("archive.html")}>Archive</a></div>'
+    site = f'<div class="row site"><a href="{root}index.html"{on("index.html")}>Today</a><a href="{root}ml.html"{on("ml.html")}>Moneyline</a><a href="{root}lines.html"{on("lines.html")}>Spreads &amp; Totals</a><a href="{root}track.html"{on("track.html")}>Track</a><a href="{root}archive.html"{on("archive.html")}>Archive</a></div>'
     on_mlb = ' class="on"' if active == "index.html" and sport == "mlb" else ''; on_nfl = ' class="on"' if active == "index.html" and sport == "nfl" else ''
-    mlb = f'<div class="row mlb"><span class="lbl">MLB</span><a href="{root}index.html#mlb"{on_mlb}>Home runs today</a><a href="{root}ml.html#mlb">Moneyline</a>' + ''.join(f'<a href="{root}days/{d}.html"{on("days/" + d)}>{d[5:]}</a>' for d in sorted(days, reverse=True)[:8]) + '</div>'
-    nfl = f'<div class="row nfl"><span class="lbl">NFL</span><a href="{root}index.html#nfl"{on_nfl}>Touchdowns this week</a><a href="{root}ml.html#nfl">Moneyline</a>' + ''.join(f'<a href="{root}nfl/{w}.html"{on("nfl/" + w)}>week {w.split("wk")[1]}</a>' for w in sorted(weeks, reverse=True)[:8]) + '</div>'
+    mlb = f'<div class="row mlb"><span class="lbl">MLB</span><a href="{root}index.html#mlb"{on_mlb}>Home runs today</a><a href="{root}ml.html#mlb">Moneyline</a><a href="{root}lines.html#mlb">Spreads &amp; Totals</a>' + ''.join(f'<a href="{root}days/{d}.html"{on("days/" + d)}>{d[5:]}</a>' for d in sorted(days, reverse=True)[:8]) + '</div>'
+    nfl = f'<div class="row nfl"><span class="lbl">NFL</span><a href="{root}index.html#nfl"{on_nfl}>Touchdowns this week</a><a href="{root}ml.html#nfl">Moneyline</a><a href="{root}lines.html#nfl">Spreads &amp; Totals</a>' + ''.join(f'<a href="{root}nfl/{w}.html"{on("nfl/" + w)}>week {w.split("wk")[1]}</a>' for w in sorted(weeks, reverse=True)[:8]) + '</div>'
     return f'<nav>{site}{mlb}{nfl}</nav>'
 
 def head(title, sub, active, root):

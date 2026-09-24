@@ -7,7 +7,9 @@ python -X utf8 ml.py --crowd-only
 python -X utf8 grade.py
 python -X utf8 build_site.py
 python -X utf8 taker.py
+python -X utf8 lines.py
 python -X utf8 build_ml.py
+python -X utf8 build_lines.py
 git add -A
 git commit -q -m "crowd refresh $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
 if ($?) { git push -q }

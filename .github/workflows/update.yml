@@ -64,6 +64,16 @@ jobs:
         continue-on-error: true
         run: python taker.py
 
+      - name: Spreads and totals (Pinnacle fair vs Robinhood, crowd tape)
+        continue-on-error: true
+        env:
+          ODDS_API_KEYS: ${{ secrets.ODDS_API_KEYS }}
+        run: python lines.py
+
+      - name: Build spreads/totals HTML
+        continue-on-error: true
+        run: python build_lines.py
+
       - name: Build moneyline HTML
         continue-on-error: true
         run: python build_ml.py

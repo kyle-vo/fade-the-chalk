@@ -5,7 +5,7 @@ Set-Location $PSScriptRoot
 $log = Join-Path $PSScriptRoot "hourly.log"
 "=== $(Get-Date -Format 'yyyy-MM-dd HH:mm') ===" | Out-File $log -Append -Encoding utf8
 git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -Append -Encoding utf8
-foreach ($s in @("fetch_data.py all","model.py","odds.py","kalshi.py","ml.py","lock.py","grade.py","build_site.py","taker.py","build_ml.py")) {
+foreach ($s in @("fetch_data.py all","model.py","odds.py","kalshi.py","ml.py","lock.py","grade.py","build_site.py","taker.py","lines.py","build_ml.py","build_lines.py")) {
     $parts = $s.Split(' '); $out = & python -X utf8 @parts 2>&1
     $out | Select-Object -Last 4 | Out-File $log -Append -Encoding utf8
 }

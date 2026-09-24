@@ -50,9 +50,9 @@ ML_KEEP = ('sport', 'date', 'gamePk', 'eventId', 'home', 'away', 'time', 'homeSP
 json.dump([{k: r.get(k) for k in ML_KEEP} for rows in boards.values() for r in rows], open(os.path.join(BT, 'mlboard.json'), 'w', encoding='utf-8'))
 
 def head(title, sub):
-    nav = ('<nav><div class="row site"><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="track.html">Track</a><a href="archive.html">Archive</a></div>'
-           '<div class="row mlb"><span class="lbl">MLB</span><a href="index.html#mlb">Home runs today</a><a href="#mlb" class="sportl on" data-t="mlb">Moneyline</a>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:8]) + '</div>'
-           '<div class="row nfl"><span class="lbl">NFL</span><a href="index.html#nfl">Touchdowns this week</a><a href="#nfl" class="sportl" data-t="nfl">Moneyline</a>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">week {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</div></nav>')
+    nav = ('<nav><div class="row site"><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="lines.html">Spreads &amp; Totals</a><a href="track.html">Track</a><a href="archive.html">Archive</a></div>'
+           '<div class="row mlb"><span class="lbl">MLB</span><a href="index.html#mlb">Home runs today</a><a href="#mlb" class="sportl on" data-t="mlb">Moneyline</a><a href="lines.html#mlb">Spreads &amp; Totals</a>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:8]) + '</div>'
+           '<div class="row nfl"><span class="lbl">NFL</span><a href="index.html#nfl">Touchdowns this week</a><a href="#nfl" class="sportl" data-t="nfl">Moneyline</a><a href="lines.html#nfl">Spreads &amp; Totals</a>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">week {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</div></nav>')
     return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav}'
 
 JS = r"""
