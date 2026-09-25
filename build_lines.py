@@ -21,6 +21,7 @@ def head():
 
 JS = r"""
 const $ = s => document.querySelector(s); let tab = location.hash === '#nfl' ? 'nfl' : 'mlb'; let day = TODAY; let week = WEEK;
+let sortKey = 'edge', sortDir = -1;
 const pct = p => p == null ? '—' : Math.round(p * 100) + '%'; const cents = p => p == null ? '—' : Math.round(p * 100) + '¢';
 const money = v => v == null ? '—' : '$' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1000 ? Math.round(v / 1000) + 'k' : v);
 const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
@@ -40,7 +41,9 @@ function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).flatMap(sides);
   document.querySelector('.tab[data-t=mlb]').textContent = 'MLB ' + (day || ''); document.querySelector('.tab[data-t=nfl]').textContent = 'NFL ' + (week || '').replace('_', ' ');
   const hide = $('#onlyplays').checked, kind = $('#kind').value;
-  const list = rows.filter(x => (!hide || x.v === 'BET' || x.v === 'STRONG BET') && (kind === 'all' || x.kind === kind)).sort((a, b) => (b.edge ?? -99) - (a.edge ?? -99));
+  const get = x => ({ time: x.r.time, kind: x.kind, side: x.side, ask: x.ask ?? -1, fair: x.fair ?? -1, edge: x.edge ?? -99, crowd: x.crowd ?? -1, tape: x.tape || 0, vol: x.vol || 0, v: x.v, hit: x.hit ?? -1 })[sortKey];
+  const list = rows.filter(x => (!hide || x.v === 'BET' || x.v === 'STRONG BET') && (kind === 'all' || x.kind === kind)).sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
+  document.querySelectorAll('#tbl thead th').forEach(th => th.textContent = th.dataset.l + (th.dataset.k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''));
   const tb = $('#tbl tbody'); tb.innerHTML = '';
   let g = 0, w = 0, u = 0;
   for (const x of list) { const r = x.r; if (x.hit != null && x.ask) { g++; w += x.hit; u += x.hit ? (1 / x.ask - 1) : -1; }
@@ -50,7 +53,8 @@ function render(){
       <td class="num" title="share of the crowd's taker dollars on this side (trade tape)"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${money(x.tape)}</td><td class="num">${money(x.vol)}</td>
       <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td><td>${x.hit == null ? '<span class="res n">—</span>' : x.hit ? '<span class="res y">✓ covered</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>`;
     tb.appendChild(tr); }
-  $('#kpi').innerHTML = `<div>sides<b>${list.length}</b></div>` + (g ? `<div>graded<b>${g}</b></div><div>record<b>${w}-${g - w}</b></div><div>units, 1u each side<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '');
+  const games = new Set(list.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size;
+  $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>graded<b>${g}</b></div><div>record<b>${w}-${g - w}</b></div><div>units, 1u each side<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '');
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.t)));
 function setTab(t){ tab = t; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === t)); document.querySelectorAll('nav a.sportl').forEach(x => x.classList.toggle('on', x.dataset.t === t)); history.replaceState(null, '', '#' + t); render(); }
@@ -58,6 +62,7 @@ document.querySelectorAll('nav a.sportl').forEach(a => a.addEventListener('click
 document.querySelectorAll('nav a.dayl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); day = a.dataset.day; setTab('mlb'); }));
 document.querySelectorAll('nav a.weekl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); week = a.dataset.week; setTab('nfl'); }));
 ['#onlyplays', '#kind'].forEach(s => $(s).addEventListener('input', render));
+document.querySelectorAll('#tbl thead th').forEach(th => { th.dataset.l = th.textContent; th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'time' || k === 'side' || k === 'kind' ? 1 : -1; } render(); }); });
 setTab(tab);
 // ---- scorecard over every graded side ----
 const G = Object.values(BOARDS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
@@ -93,8 +98,8 @@ def page():
 <div class="panel">
 <div class="kpi" id="kpi"></div>
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label>show <select id="kind"><option value="all">spreads and totals</option><option value="spread">spreads only</option><option value="total">totals only</option></select></label></div>
-<div class="wrap"><table id="tbl"><thead><tr><th>Game</th><th>Market</th><th>Side</th><th class="num">Robinhood ask</th><th class="num">Pinnacle fair</th><th class="num">Edge</th><th class="num">Crowd $ on this side</th><th class="num">Tape $</th><th class="num">$ traded</th><th>Verdict</th><th>Result</th></tr></thead><tbody></tbody></table></div>
-<div class="legend"><b>No model here.</b> Each row is one side of a spread or total. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line (a ~ means Pinnacle's line was a whole number, Robinhood only lists half points, so the nearest strike is shown and the fair price is nudged for the half point).
+<div class="wrap"><table id="tbl"><thead><tr><th data-k="time">Game</th><th data-k="kind">Market</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd $ on this side</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th></tr></thead><tbody></tbody></table></div>
+<div class="legend"><b>No model here.</b> Each row is one side of a spread or total, so a 12-game slate is 48 rows (24 with spreads or totals only). Click any column header to sort; click again to flip. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line (a ~ means Pinnacle's line was a whole number, Robinhood only lists half points, so the nearest strike is shown and the fair price is nudged for the half point).
 <b>Edge</b> = fair minus ask, in points; <b>BET</b> at 2+, <b>STRONG BET</b> at 5+: you are simply being paid more than the sharpest book says the side is worth. <b>Crowd $ on this side</b> = share of the taker dollars on this exact market from the trade tape (each trade credited to the side the bettor backed); <b>Tape $</b> = both sides together; <b>$ traded</b> = the whole ladder of lines for this game.
 Rows lock at first pitch / kickoff (volumes only ever go up before that) and grade from the final score. The scorecard at the bottom is the point: does the side with more of the crowd's money cover less than its price says?</div>
 <h2 style="margin-top:18px">Scorecard</h2><div id="score"></div>
