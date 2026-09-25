@@ -128,6 +128,21 @@ def attach_kalshi(rows, date, sport):
             km = (k['yes'] - first[_norm(r['name'])]['yes']) * 100; r['kmove'] = round(km, 1); bump += 8 if km >= 3 else -5 if km <= -3 else 0
         r['heat'] = round(min(100, max(0, r['heat'] + bump)))
         r.setdefault('notes', []).append(f"Kalshi: crowd says {k['yes'] * 100:.0f}% (model {r['prob'] * 100:.0f}%), ${k['vol']:,} traded" + (f", moved {r['kmove']:+.1f} pts" if 'kmove' in r else ''))
+def attach_team_money_nfl(rows):
+    """Touchdown verdict inputs: teamPub = share of the crowd's MONEYLINE dollars on this player's team, from the trade tape (frozen at kickoff);
+    teamFav = his team is the model's favorite. Weeks 1-3, 264 priced players: on a team with 65%+ of the public's money 31% scored vs a 28% price (+22% ROI);
+    on the underdog 15% vs 21% (-29%); public under 50% on his team 18% vs 22% (-20%). Same shape as the home-run finding."""
+    games = {}
+    for f in glob.glob(os.path.join(BT, 'ml_2026_wk*.json')):
+        for g in J(f): games[str(g.get('eventId'))] = g
+    for r in rows:
+        g = games.get(str(r.get('eventId')))
+        if not g or r.get('team') not in (g.get('home'), g.get('away')): continue
+        home = r['team'] == g['home']; tp = g.get('takerPubHome')
+        if tp is None and g.get('pubHome') is not None: tp = g['pubHome']
+        if tp is not None: r['teamPub'] = round(tp if home else 1 - tp, 3)
+        r['teamFav'] = (g['model'] >= .5) == home
+
 def attach_team_money(rows, date):
     """Inputs for the home-run verdict. The moneyline lock is frozen at first pitch, so nothing in-game leaks in.
     teamPub = share of the Kalshi/Robinhood MONEYLINE dollars on this hitter's team; teamFav = his team is the priced favorite;
@@ -177,8 +192,8 @@ def attach_kalshi_nfl(rows):
         r['heat'] = round(min(100, max(0, r['heat'] + bump)))
         r.setdefault('notes', []).append(f"Kalshi/Robinhood: crowd says {k['yes'] * 100:.0f}% (model {r['prob'] * 100:.0f}%), ${k['vol']:,} traded" + (f", moved {r['kmove']:+.1f} pts" if 'kmove' in r else ''))
 for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB'); attach_kalshi(_rows, _d, 'MLB'); attach_team_money(_rows, _d)
-for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL'); attach_kalshi_nfl(_rows)
-attach_odds(board['nfl'], today, 'NFL'); attach_kalshi_nfl(board['nfl']); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB'); attach_team_money(board['mlb'], today)
+for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL'); attach_kalshi_nfl(_rows); attach_team_money_nfl(_rows)
+attach_odds(board['nfl'], today, 'NFL'); attach_kalshi_nfl(board['nfl']); attach_team_money_nfl(board['nfl']); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB'); attach_team_money(board['mlb'], today)
 slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove', 'sportsbook', 'big', 'teamPub', 'teamFav', 'probRaw')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 _mlb = os.path.join(BT, 'mlboard.json'); MLH = json.load(open(_mlb, encoding='utf-8')) if os.path.exists(_mlb) else []   # written by build_ml.py
@@ -276,6 +291,12 @@ function verdict(r){
     else if (r.big && ((tp != null && tp < .5) || r.teamFav === false)) v = 'AVOID';
     else if (!r.big && tp != null && tp >= .65) v = 'LEAN';
     why = bigTxt + ' · ' + pubTxt + (r.teamFav === false ? ' · his team is the priced underdog' : '');
+  } else if (r.sport === 'NFL') {
+    // Touchdowns, from 2026-09-24: the old heat/edge rule (SLEEPER/VALUE/TRAP) returned -19% on 69 priced players. What has held for 3 weeks is the team's crowd money:
+    // BET = his team has 65%+ of the public's moneyline dollars (31% scored vs 28% price); AVOID = on the underdog or public under 50% on his team (15-18% vs 21-22%).
+    const tp = r.teamPub;
+    if (tp != null && tp >= .65) v = 'BET'; else if (r.teamFav === false || (tp != null && tp < .5)) v = 'AVOID';
+    why = (tp == null ? 'no moneyline money data for his game yet' : 'public has ' + Math.round(tp * 100) + '% of the moneyline money on ' + r.team) + (r.teamFav === false ? ' · his team is the underdog' : '');
   } else if (edge != null) {
     if (edge >= .04 && heat < 45) v = 'SLEEPER'; else if (edge >= .03) v = 'VALUE';
     else if (e.pub !== undefined && e.pub !== '' && +e.pub >= 60 && edge < 0) v = 'FADE';
@@ -329,7 +350,7 @@ function render(){ top5();
     tr.addEventListener('click', ev => { if (ev.target.tagName !== 'INPUT') det.hidden = !det.hidden; });
     tb.appendChild(tr); tb.appendChild(det);
   }
-  let k = `<div>rows<b>${list.length}</b></div><div>${tab === 'mlb' ? 'bet' : 'sleepers'}<b>${n.s}</b></div><div>${tab === 'mlb' ? 'lean' : 'value'}<b>${n.v}</b></div><div>${tab === 'mlb' ? 'avoid' : 'traps / fades'}<b>${n.t}</b></div><div>with a price<b>${list.filter(x => x.edge != null).length}</b></div><div>paper bets<b>${n.bets}</b></div>`;
+  let k = `<div>rows<b>${list.length}</b></div><div>bet<b>${n.s}</b></div><div>lean<b>${n.v}</b></div><div>avoid<b>${n.t}</b></div><div>with a price<b>${list.filter(x => x.edge != null).length}</b></div><div>paper bets<b>${n.bets}</b></div>`;
   if (n.graded) k += `<div>graded<b>${n.graded}</b></div><div>model said<b>${n.exp.toFixed(1)}</b></div><div>actually hit<b>${n.act}</b></div>`;
   $('#kpi').innerHTML = k;
   tb.querySelectorAll('input').forEach(i => i.addEventListener('change', () => { const k = i.dataset.k; store[k] = store[k] || {}; store[k][i.dataset.f] = i.type === 'checkbox' ? i.checked : i.value.trim(); if (i.type === 'checkbox' && i.checked) { store[k].sport = tab; } save(); render(); }));
@@ -405,7 +426,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <div class="legend">
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Robinhood</b> = the Kalshi/Robinhood ask for his home run market, shown as American odds (a 22¢ contract = +355); hover for Fliff's price. FL = no Robinhood market, Fliff's price shown; UD = Underdog; * = best sportsbook price; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). For MLB the Public column shows <b>Kalshi</b>: the prediction-market crowd's own price for him and how many dollars they've put on it; crowd above the model, heavy volume, or a rising price all raise Heat. Typing a real public-bet % overrides all of it.<br>
-<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> follow the crowd when it agrees with itself in both markets. <b>BET</b> = a big-money name (top third of today's hitters by Robinhood/Kalshi dollars) whose team also has 65%+ of the public's moneyline money: those homered 20.9% of the time against a 15.7% price. <b>LEAN</b> = same team situation, smaller name (13.1% against 11.0%). <b>AVOID</b> = a big-money name on the priced underdog or on a team the public is betting against (12.7% against 14.8%). <b>PASS</b> = none of those, or no moneyline money on his game yet. Hover a verdict for the reason. Six days of data so far; the Track page scores each tier going forward. <b>Touchdown verdicts:</b> <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
+<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> follow the crowd when it agrees with itself in both markets. <b>BET</b> = a big-money name (top third of today's hitters by Robinhood/Kalshi dollars) whose team also has 65%+ of the public's moneyline money: those homered 20.9% of the time against a 15.7% price. <b>LEAN</b> = same team situation, smaller name (13.1% against 11.0%). <b>AVOID</b> = a big-money name on the priced underdog or on a team the public is betting against (12.7% against 14.8%). <b>PASS</b> = none of those, or no moneyline money on his game yet. Hover a verdict for the reason. Six days of data so far; the Track page scores each tier going forward. <b>Touchdown verdicts</b> use the same idea: <b>BET</b> = his team has 65%+ of the public's moneyline money (31% scored against a 28% price over weeks 1-3), <b>AVOID</b> = he plays for the underdog or the public is against his team (15-18% against 21-22%), <b>PASS</b> otherwise. The old heat-based labels are retired: <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Result</b> fills in as games go final and stays on the page with the crowd money, so hits can be checked against where the public was. <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
 </div>
@@ -455,6 +476,8 @@ const strat = {
   'Everyone 20%+': d => G.filter(r => r.date === d && r.prob >= .2),
   'HR VERDICT BET: big name, public 65%+ on his team': d => G.filter(r => r.date === d && r.big && r.teamPub != null && r.teamPub >= .65),
   'HR VERDICT LEAN: smaller name, public 65%+ on his team': d => G.filter(r => r.date === d && !r.big && r.teamPub != null && r.teamPub >= .65),
+  'TD VERDICT BET: public 65%+ on his team': d => H.filter(r => r.hit != null && !r.dnp && r.date === d && r.sport === 'NFL' && r.teamPub != null && r.teamPub >= .65),
+  'TD VERDICT AVOID: underdog or public against his team': d => H.filter(r => r.hit != null && !r.dnp && r.date === d && r.sport === 'NFL' && !(r.teamPub != null && r.teamPub >= .65) && (r.teamFav === false || (r.teamPub != null && r.teamPub < .5))),
   'HR VERDICT AVOID: big name, underdog or public against his team': d => G.filter(r => r.date === d && r.big && !(r.teamPub != null && r.teamPub >= .65) && ((r.teamPub != null && r.teamPub < .5) || r.teamFav === false)),
 };
 const curves = {}; const SROWS = [];
