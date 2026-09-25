@@ -1,43 +1,4 @@
-﻿archive.html: 3 NFL weeks, 22 MLB days
-ml.html: 13 MLB days, 3 NFL weeks, 194 graded games
-lines.html: 1 MLB days, 1 NFL weeks, 26 games
-done 18:05
-=== 2026-09-24 21:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Bijan Robinson         ATL  RB p=0.614 fair -159 heat 57 share 0.376
-  NFL James Cook III         BUF  RB p=0.604 fair -152 heat 84 share 0.28
-  NFL Javonte Williams       DAL  RB p=0.569 fair -132 heat 74 share 0.292
-  NFL Chase Brown            CIN  RB p=0.558 fair -126 heat 60 share 0.309
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #10 used this run
-snapshot 14 saved for 2026-09-24
-  Kalshi MLB 2026-09-24: 54 players, $769,919 traded
-  Kalshi MLB 2026-09-25: 15 players, $8,513 traded
-  Kalshi NFL 2026-09-27: 294 players, $289,125 traded
-  Kalshi NFL 2026-09-28: 16 players, $5,859 traded
-  ML 2026-09-24: 9/12 graded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 1/16 graded
-MLB 2026-09-24: kept 214 frozen, refreshed 0, late 0
-NFL 2026_wk3: kept 17 frozen, refreshed 275, late 0
-MLB 2026-09-24: 9/12 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 1/16 games graded
-site: index + 22 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $53,820 on NO / $168,472 on LV (10,511 trades)  (partial, game not started)
-  NFL LAR@DEN: $44,507 on DEN / $42,659 on LAR (4,136 trades)  (partial, game not started)
-  NFL PHI@CHI: $45,545 on CHI / $307,872 on PHI (7,819 trades)  (partial, game not started)
-taker tape attached to 218 locked games
-  pinnacle spreads+totals baseball_mlb: 17 games, 2 credits
-  lines 2026-09-24: 12 games (12 spreads, 12 totals)
-  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+﻿  lines 2026_wk3: 14 games (14 spreads, 14 totals)
 archive.html: 3 NFL weeks, 22 MLB days
 ml.html: 13 MLB days, 3 NFL weeks, 198 graded games
 lines.html: 1 MLB days, 1 NFL weeks, 26 games
@@ -235,4 +196,43 @@ taker tape attached to 235 locked games
   lines 2026_wk3: 14 games (14 spreads, 14 totals)
 archive.html: 3 NFL weeks, 23 MLB days
 ml.html: 14 MLB days, 3 NFL weeks, 201 graded games
+lines.html: 2 MLB days, 1 NFL weeks, 39 games
+done 12:06
+=== 2026-09-25 15:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Bijan Robinson         ATL  RB p=0.611 fair -157 heat 57 share 0.373
+  NFL James Cook III         BUF  RB p=0.601 fair -150 heat 84 share 0.278
+  NFL Javonte Williams       DAL  RB p=0.569 fair -132 heat 74 share 0.292
+  NFL De'Von Achane          MIA  RB p=0.562 fair -128 heat 62 share 0.41
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 248 players priced, 153 on Fliff, 0 Underdog-only (credits used this month: 84 used / 416 left on key #8)
+key #8 used this run
+snapshot 10 saved for 2026-09-25
+  Kalshi MLB 2026-09-25: 215 players, $947,305 traded
+  Kalshi NFL 2026-09-27: 303 players, $935,177 traded
+  Kalshi NFL 2026-09-28: 19 players, $18,848 traded
+  ML 2026-09-25: 1/17 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 1/16 graded
+MLB 2026-09-25: kept 54 frozen, refreshed 248, late 0
+NFL 2026_wk3: kept 17 frozen, refreshed 268, late 0
+MLB 2026-09-25: 1/17 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 1/16 games graded
+site: index + 23 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LV@NO: $69,611 on NO / $226,754 on LV (14,026 trades)  (partial, game not started)
+  NFL LAR@DEN: $54,180 on DEN / $52,423 on LAR (5,101 trades)  (partial, game not started)
+  NFL PHI@CHI: $52,111 on CHI / $318,175 on PHI (8,650 trades)  (partial, game not started)
+taker tape attached to 235 locked games
+  pinnacle spreads+totals baseball_mlb: 24 games, 2 credits
+  lines 2026-09-25: 13 games (13 spreads, 13 totals)
+  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+archive.html: 3 NFL weeks, 23 MLB days
+ml.html: 14 MLB days, 3 NFL weeks, 202 graded games
 lines.html: 2 MLB days, 1 NFL weeks, 39 games
