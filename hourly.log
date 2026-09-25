@@ -1,44 +1,4 @@
-﻿NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 0/16 games graded
-site: index + 22 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $43,747 on NO / $128,219 on LV (7,887 trades)  (partial, game not started)
-  NFL LAR@DEN: $24,220 on DEN / $34,763 on LAR (3,176 trades)  (partial, game not started)
-  NFL PHI@CHI: $39,302 on CHI / $293,009 on PHI (6,742 trades)  (partial, game not started)
-taker tape attached to 218 locked games
-archive.html: 3 NFL weeks, 22 MLB days
-ml.html: 13 MLB days, 3 NFL weeks, 188 graded games
-done 00:05
-=== 2026-09-24 03:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL James Cook III         BUF  RB p=0.604 fair -152 heat 84 share 0.28
-  NFL Javonte Williams       DAL  RB p=0.561 fair -128 heat 73 share 0.292
-  NFL Bijan Robinson         ATL  RB p=0.560 fair -127 heat 51 share 0.376
-  NFL Chase Brown            CIN  RB p=0.558 fair -126 heat 60 share 0.309
-  NFL touchdown props: skipped, 0 credits (already pulled for the Wednesday night window (Wed 18:05))
-  baseball_mlb/batter_home_runs: 220 players priced, 217 on Fliff, 0 Underdog-only (credits used this month: 88 used / 412 left on key #10)
-key #10 used this run
-snapshot 3 saved for 2026-09-24
-  Kalshi MLB 2026-09-24: 72 players, $11,079 traded
-  Kalshi NFL 2026-09-24: 21 players, $346,717 traded
-  Kalshi NFL 2026-09-27: 240 players, $142,173 traded
-  Kalshi NFL 2026-09-28: 15 players, $1,103 traded
-  ML 2026-09-24: 0/12 graded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 0/16 graded
-MLB 2026-09-24: kept 0 frozen, refreshed 216, late 0
-NFL 2026_wk3: kept 0 frozen, refreshed 292, late 0
-MLB 2026-09-24: 0/12 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 0/16 games graded
-site: index + 22 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $43,914 on NO / $128,532 on LV (7,921 trades)  (partial, game not started)
-  NFL LAR@DEN: $24,340 on DEN / $35,707 on LAR (3,186 trades)  (partial, game not started)
-  NFL PHI@CHI: $39,354 on CHI / $293,374 on PHI (6,763 trades)  (partial, game not started)
+﻿  NFL PHI@CHI: $39,354 on CHI / $293,374 on PHI (6,763 trades)  (partial, game not started)
 taker tape attached to 218 locked games
 archive.html: 3 NFL weeks, 22 MLB days
 ml.html: 13 MLB days, 3 NFL weeks, 188 graded games
@@ -237,3 +197,4 @@ taker tape attached to 218 locked games
 archive.html: 3 NFL weeks, 22 MLB days
 ml.html: 13 MLB days, 3 NFL weeks, 194 graded games
 lines.html: 1 MLB days, 1 NFL weeks, 26 games
+done 18:05
