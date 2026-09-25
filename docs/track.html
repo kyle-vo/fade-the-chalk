@@ -103,8 +103,8 @@ const strat = {
   'Everyone 20%+': d => G.filter(r => r.date === d && r.prob >= .2),
   'HR VERDICT BET: big name, public 65%+ on his team': d => G.filter(r => r.date === d && r.big && r.teamPub != null && r.teamPub >= .65),
   'HR VERDICT LEAN: smaller name, public 65%+ on his team': d => G.filter(r => r.date === d && !r.big && r.teamPub != null && r.teamPub >= .65),
-  'TD VERDICT BET: public 65%+ on his team': d => H.filter(r => r.hit != null && !r.dnp && r.date === d && r.sport === 'NFL' && r.teamPub != null && r.teamPub >= .65),
-  'TD VERDICT AVOID: underdog or public against his team': d => H.filter(r => r.hit != null && !r.dnp && r.date === d && r.sport === 'NFL' && !(r.teamPub != null && r.teamPub >= .65) && (r.teamFav === false || (r.teamPub != null && r.teamPub < .5))),
+  'TD VERDICT BET: public 65%+ on his team': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && r.teamPub != null && r.teamPub >= .65),
+  'TD VERDICT AVOID: underdog or public against his team': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && !(r.teamPub != null && r.teamPub >= .65) && (r.teamFav === false || (r.teamPub != null && r.teamPub < .5))),
   'HR VERDICT AVOID: big name, underdog or public against his team': d => G.filter(r => r.date === d && r.big && !(r.teamPub != null && r.teamPub >= .65) && ((r.teamPub != null && r.teamPub < .5) || r.teamFav === false)),
 };
 const curves = {}; const SROWS = [];
