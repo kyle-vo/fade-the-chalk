@@ -1,44 +1,4 @@
-﻿  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 23 MLB days
-ml.html: 14 MLB days, 3 NFL weeks, 201 graded games
-lines.html: 2 MLB days, 1 NFL weeks, 33 games
-done 03:06
-=== 2026-09-25 06:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Bijan Robinson         ATL  RB p=0.611 fair -157 heat 57 share 0.373
-  NFL James Cook III         BUF  RB p=0.604 fair -152 heat 84 share 0.28
-  NFL Javonte Williams       DAL  RB p=0.569 fair -132 heat 74 share 0.292
-  NFL Chase Brown            CIN  RB p=0.558 fair -126 heat 60 share 0.309
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 283 players priced, 279 on Fliff, 0 Underdog-only (credits used this month: 162 used / 338 left on key #4)
-key #4 used this run
-snapshot 4 saved for 2026-09-25
-  Kalshi MLB 2026-09-25: 77 players, $50,526 traded
-  Kalshi NFL 2026-09-27: 295 players, $399,971 traded
-  Kalshi NFL 2026-09-28: 16 players, $6,853 traded
-  ML 2026-09-25: 0/17 graded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 1/16 graded
-MLB 2026-09-25: kept 0 frozen, refreshed 305, late 0
-NFL 2026_wk3: kept 17 frozen, refreshed 275, late 0
-MLB 2026-09-25: 0/17 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 1/16 games graded
-site: index + 23 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $58,514 on NO / $188,722 on LV (11,853 trades)  (partial, game not started)
-  NFL LAR@DEN: $47,474 on DEN / $46,017 on LAR (4,486 trades)  (partial, game not started)
-  NFL PHI@CHI: $47,587 on CHI / $313,447 on PHI (8,117 trades)  (partial, game not started)
-taker tape attached to 235 locked games
-  pinnacle spreads+totals baseball_mlb: 17 games, 2 credits
-  lines 2026-09-25: 10 games (10 spreads, 10 totals)
-  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 23 MLB days
+﻿archive.html: 3 NFL weeks, 23 MLB days
 ml.html: 14 MLB days, 3 NFL weeks, 201 graded games
 lines.html: 2 MLB days, 1 NFL weeks, 36 games
 done 06:06
@@ -237,3 +197,4 @@ taker tape attached to 235 locked games
 archive.html: 3 NFL weeks, 23 MLB days
 ml.html: 14 MLB days, 3 NFL weeks, 214 graded games
 lines.html: 2 MLB days, 1 NFL weeks, 39 games
+done 21:06
