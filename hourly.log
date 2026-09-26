@@ -2,45 +2,6 @@
 archive.html: 3 NFL weeks, 23 MLB days
 ml.html: 14 MLB days, 3 NFL weeks, 201 graded games
 lines.html: 2 MLB days, 1 NFL weeks, 33 games
-done 00:05
-=== 2026-09-25 03:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Bijan Robinson         ATL  RB p=0.614 fair -159 heat 57 share 0.376
-  NFL James Cook III         BUF  RB p=0.604 fair -152 heat 84 share 0.28
-  NFL Javonte Williams       DAL  RB p=0.569 fair -132 heat 74 share 0.292
-  NFL Chase Brown            CIN  RB p=0.558 fair -126 heat 60 share 0.309
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 253 players priced, 247 on Fliff, 0 Underdog-only (credits used this month: 205 used / 295 left on key #3)
-key #3 used this run
-snapshot 2 saved for 2026-09-25
-  Kalshi MLB 2026-09-25: 66 players, $16,612 traded
-  Kalshi NFL 2026-09-27: 294 players, $373,813 traded
-  Kalshi NFL 2026-09-28: 16 players, $6,407 traded
-  ML 2026-09-25: 0/17 graded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 1/16 graded
-MLB 2026-09-25: kept 0 frozen, refreshed 305, late 0
-NFL 2026_wk3: kept 17 frozen, refreshed 275, late 0
-MLB 2026-09-25: 0/17 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 1/16 games graded
-site: index + 23 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $56,869 on NO / $185,056 on LV (11,488 trades)  (partial, game not started)
-  NFL LAR@DEN: $46,715 on DEN / $45,539 on LAR (4,381 trades)  (partial, game not started)
-  NFL PHI@CHI: $47,167 on CHI / $312,567 on PHI (8,011 trades)  (partial, game not started)
-taker tape attached to 235 locked games
-  pinnacle spreads+totals baseball_mlb: 17 games, 2 credits
-  lines 2026-09-25: 7 games (7 spreads, 7 totals)
-  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 23 MLB days
-ml.html: 14 MLB days, 3 NFL weeks, 201 graded games
-lines.html: 2 MLB days, 1 NFL weeks, 33 games
 done 03:06
 === 2026-09-25 06:05 ===
   saved nfl_depth.json
@@ -236,3 +197,4 @@ taker tape attached to 235 locked games
 archive.html: 3 NFL weeks, 23 MLB days
 ml.html: 14 MLB days, 3 NFL weeks, 204 graded games
 lines.html: 2 MLB days, 1 NFL weeks, 39 games
+done 18:06
