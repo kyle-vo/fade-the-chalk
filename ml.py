@@ -114,7 +114,7 @@ def mlb_rows():
         rows.append({'sport': 'MLB', 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAwayAsk': ka['ask'] if ka else None, 'gamePk': g['gamePk'], 'date': today, 'time': g['gameDate'], 'state': g['status']['detailedState'], 'venue': g['venue']['name'],
             'home': hab, 'away': aab, 'homeName': h['team']['name'], 'awayName': a['team']['name'], 'homeSP': hp['fullName'] if hp else 'TBD', 'awaySP': ap['fullName'] if ap else 'TBD',
             'homeRec': f"{rec.get(h['team']['id'], {}).get('w', 0)}-{rec.get(h['team']['id'], {}).get('l', 0)}", 'awayRec': f"{rec.get(a['team']['id'], {}).get('w', 0)}-{rec.get(a['team']['id'], {}).get('l', 0)}",
-            'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
+            'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0, 'koiHome': kh['oi'] if kh else 0, 'koiAway': ka['oi'] if ka else 0,
             'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'sharpSrc': 'pinnacle' if 'pinnacle' in bk['books'] else ('sharp avg' if sharp_h else None), 'skewHome': skew_h,
             'books': bk['books'], 'notes': [f"strength home {sh:.3f} away {sa:.3f} (regressed pythag), log5 {p_log5:.3f}, +.04 home", f"SP adj: home {sp_adj(hp['id']) * 100:+.1f} pts, away {sp_adj(ap['id']) * 100:+.1f} pts" if hp and ap else "SP TBD on at least one side"]})
     return rows
@@ -169,14 +169,14 @@ def nfl_rows():
         vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
         rows.append({'sport': 'NFL', 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAwayAsk': ka['ask'] if ka else None, 'eventId': e['id'], 'date': wk, 'time': e['date'], 'state': c['status']['type']['name'], 'venue': '',
             'home': hab, 'away': aab, 'homeName': home['team']['displayName'], 'awayName': away['team']['displayName'], 'homeSP': '', 'awaySP': '', 'homeRec': '', 'awayRec': '',
-            'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0,
+            'model': round(p_home, 4), 'kalshi': kh['yes'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0, 'koiHome': kh['oi'] if kh else 0, 'koiAway': ka['oi'] if ka else 0,
             'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'fliffHome': fl_h, 'fliffAway': fl_a, 'sharpHome': round(sharp_h, 4) if sharp_h else None, 'sharpSrc': 'pinnacle' if 'pinnacle' in bk['books'] else ('sharp avg' if sharp_h else None), 'skewHome': skew_h,
             'books': bk['books'], 'notes': [f"ratings (2026 results + 2025 prior): {hab} {rating.get(hab, 0):+.1f}, {aab} {rating.get(aab, 0):+.1f}, +2.0 home -> rating spread {hab} {-spread_model:+.1f}", f"Vegas: {vegas}" if vegas else '', f"ratings alone said {p_rating * 100:.0f}% home; weight {W_RATING:.0%} ratings / {1 - W_RATING:.0%} {'Pinnacle' if sharp_h is not None else 'Vegas spread'} ({games_played:.1f} games of 2026 data per team)" if anchor is not None else 'no market anchor yet - ratings only']})
     return rows
 
 # ---------------- lock + grade ----------------
 PRE = ('Scheduled', 'Pre-Game', 'Warmup', 'STATUS_SCHEDULED')
-VOL_FIELDS = ('kvol', 'kvolHome', 'kvolAway', 'takerHome$', 'takerAway$', 'takerTrades')
+VOL_FIELDS = ('kvol', 'kvolHome', 'kvolAway', 'koiHome', 'koiAway', 'takerHome$', 'takerAway$', 'takerTrades')   # koi = open interest: contracts still held = dollars actually riding on the game, no churn
 CARRY_FIELDS = ('takerPubHome', 'takerAt', 'crowdAt', 'kalshiAsk', 'kalshiAwayAsk', 'sharpHome', 'sharpSrc', 'skewHome', 'fliffHome', 'fliffAway', 'books')
 def merge_row(old, new):
     """Refresh a pre-game row without ever losing data: volumes never go down, fields the new pull lacks are carried
@@ -243,7 +243,7 @@ def crowd_refresh():
             kh, ka = kev['sides'].get(canon(r['home'])), kev['sides'].get(canon(r['away']))
             vol = (kh['vol'] if kh else 0) + (ka['vol'] if ka else 0)
             fresh = dict(r); fresh.update({'kalshi': kh['yes'] if kh else None, 'kalshiAsk': kh['ask'] if kh else None, 'kalshiAway': ka['yes'] if ka else None, 'kalshiAwayAsk': ka['ask'] if ka else None,
-                      'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0, 'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'crowdAt': datetime.datetime.now().isoformat(timespec='minutes')})
+                      'kvol': vol, 'kvolHome': kh['vol'] if kh else 0, 'kvolAway': ka['vol'] if ka else 0, 'koiHome': kh['oi'] if kh else 0, 'koiAway': ka['oi'] if ka else 0, 'pubHome': round(kh['vol'] / vol, 3) if vol and kh else None, 'crowdAt': datetime.datetime.now().isoformat(timespec='minutes')})
             r.update(merge_row(r, fresh))
             changed = True; touched += 1; snap_rows.append({k2: r.get(k2) for k2 in ('sport', 'gamePk', 'eventId', 'home', 'away', 'kalshi', 'kalshiAway', 'kvolHome', 'kvolAway', 'state', 'time')})
         if changed: json.dump(rows, open(lockf, 'w', encoding='utf-8'))
