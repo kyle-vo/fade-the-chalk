@@ -265,8 +265,7 @@ MLB model: regressed run-differential strength, starting-pitcher runs-allowed ad
 <script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('sport', 'model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'oppOdds', 'pickHit', 'pick', 'pubHome', 'pickProb', 'takerPubHome', 'mostBet')} for r in graded])};{JS}</script>"""
 
 _html = page(); _check_page(_html, 'ml.html')
-open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='
-').write(_html)
+open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='\n').write(_html)
 
 # ---------------- archive.html: every day / week, every board, one-line scorecards ----------------
 def _hr_summary(tag, sport):

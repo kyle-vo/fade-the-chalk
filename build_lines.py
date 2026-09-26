@@ -118,6 +118,5 @@ Rows lock at first pitch / kickoff (volumes only ever go up before that) and gra
 <script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)};{JS}</script>"""
 
 _html = page(); _check_page(_html, 'lines.html')
-open(os.path.join(SITE, 'lines.html'), 'w', encoding='utf-8', newline='
-').write(_html)
+open(os.path.join(SITE, 'lines.html'), 'w', encoding='utf-8', newline='\n').write(_html)
 print(f"lines.html: {len(mlb_days)} MLB days, {len(nfl_weeks)} NFL weeks, {sum(len(v) for v in boards.values())} games")
