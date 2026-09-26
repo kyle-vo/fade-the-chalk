@@ -92,6 +92,18 @@ $('#score').innerHTML = `<div class="kpi"><div>graded sides<b>${G.length}</b></d
 $('#stbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.s; if (sSort === k) sDir = -sDir; else { sSort = k; sDir = k === 'name' ? 1 : -1; } $('#stbl tbody').innerHTML = scoreRows(); }));
 """
 
+def _check_page(html, name):
+    """a broken inline script blanks the whole page, so syntax-check it before writing (needs node; skipped if node is missing)"""
+    import subprocess, tempfile
+    m = re.search(r'<script>const BOARDS = (.*?)</script>\s*$', html, re.S)
+    if not m: return
+    t = tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8'); t.write('const BOARDS = ' + m.group(1)); t.close()
+    try: r = subprocess.run(['node', '--check', t.name], capture_output=True, text=True)
+    except FileNotFoundError: return
+    finally: os.unlink(t.name)
+    if r.returncode != 0: raise SystemExit(f'page script has a syntax error, not writing {name}:
+' + r.stderr[:800])
+
 def page():
     return f"""{head()}
 <div class="tabs"><div class="tab on" data-t="mlb">MLB {today or ''}</div><div class="tab" data-t="nfl">NFL {week.replace('_', ' ') if week else ''}</div></div>
@@ -106,5 +118,7 @@ Rows lock at first pitch / kickoff (volumes only ever go up before that) and gra
 </div>
 <script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)};{JS}</script>"""
 
-open(os.path.join(SITE, 'lines.html'), 'w', encoding='utf-8', newline='\n').write(page())
+_html = page(); _check_page(_html, 'lines.html')
+open(os.path.join(SITE, 'lines.html'), 'w', encoding='utf-8', newline='
+').write(_html)
 print(f"lines.html: {len(mlb_days)} MLB days, {len(nfl_weeks)} NFL weeks, {sum(len(v) for v in boards.values())} games")

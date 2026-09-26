@@ -233,6 +233,18 @@ $('#stbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click
 render();
 """
 
+def _check_page(html, name):
+    """a broken inline script blanks the whole page, so syntax-check it before writing (needs node; skipped if node is missing)"""
+    import subprocess, tempfile
+    m = re.search(r'<script>const BOARDS = (.*?)</script>\s*$', html, re.S)
+    if not m: return
+    t = tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8'); t.write('const BOARDS = ' + m.group(1)); t.close()
+    try: r = subprocess.run(['node', '--check', t.name], capture_output=True, text=True)
+    except FileNotFoundError: return
+    finally: os.unlink(t.name)
+    if r.returncode != 0: raise SystemExit(f'page script has a syntax error, not writing {name}:
+' + r.stderr[:800])
+
 def page():
     sub = f"moneyline · model win% vs Robinhood (Kalshi) vs Pinnacle · public money split · built {datetime.datetime.now().isoformat(timespec='minutes')}"
     return f"""{head('Fade The Chalk', sub)}
@@ -253,7 +265,9 @@ MLB model: regressed run-differential strength, starting-pitcher runs-allowed ad
 </div>
 <script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('sport', 'model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'oppOdds', 'pickHit', 'pick', 'pubHome', 'pickProb', 'takerPubHome', 'mostBet')} for r in graded])};{JS}</script>"""
 
-open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='\n').write(page())
+_html = page(); _check_page(_html, 'ml.html')
+open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='
+').write(_html)
 
 # ---------------- archive.html: every day / week, every board, one-line scorecards ----------------
 def _hr_summary(tag, sport):
