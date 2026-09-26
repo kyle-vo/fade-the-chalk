@@ -40,6 +40,8 @@ for lockf in sorted(glob.glob(os.path.join(BT, 'ml_*.json'))):
         # units if you took the model pick flat 1u at Robinhood's price
         if r['pickHit'] is not None and r.get('pickOdds') is not None:
             o = r['pickOdds']; r['units'] = round((o / 100 if o > 0 else 100 / -o) if r['pickHit'] else -1.0, 3)
+    risk = lambda r: ((r.get('koiHome') or 0) + (r.get('koiAway') or 0)) or (r.get('kvol') or 0)
+    for i, r in enumerate(sorted(rows, key=risk, reverse=True)): r['mostBet'] = i < (4 if rows and rows[0]['sport'] == 'NFL' else 3)   # the slate's most-bet games
     boards[tag] = rows
 mlb_days = sorted([t for t in boards if not t.endswith(('wk1', 'wk2', 'wk3', 'wk4', 'wk5', 'wk6', 'wk7', 'wk8', 'wk9')) and '_wk' not in t], reverse=True)
 nfl_weeks = sorted([t for t in boards if '_wk' in t], reverse=True)
@@ -96,6 +98,10 @@ function verdict(r){
       else v = 'PASS';
     }
   }
+  // FADE, from 2026-09-26. Fading the model's pick is a loser on STRONG BET (15-29, -13.5u) and BET (10-17, -6.2u) but a winner on PASS games where the pick is the
+  // priced favorite: the dog went 33-40 for +7.5u in MLB and 6-11 for +4.3u in NFL at Robinhood's prices. Those are favorites priced past their real chance.
+  // The most-bet games of each day lean the same way: the dog won 16 of the top-3 MLB games (48% vs a 42% price, +4.7u) against 36% everywhere else.
+  if (v.startsWith('PASS') && r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null) v = 'FADE (dog)';
   const tpub = r.takerPubHome == null ? null : (r.pick === 'home' ? r.takerPubHome : 1 - r.takerPubHome);   // directional: taker dollars on the pick side, pre-game trade tape
   return { pub, pubSrc, volPub, kal, v, isFav, tpub };
 }
@@ -121,7 +127,7 @@ function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).map(r => { const sh = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome); return { r, ...verdict(r), diff: sh == null ? null : (r.pickProb - sh) * 100 }; });
   document.querySelector('.tab[data-t=mlb]').textContent = 'MLB ' + day; document.querySelector('.tab[data-t=nfl]').textContent = 'NFL ' + (week || '').replace('_', ' ');
   const only = $('#onlyplays').checked, hide = $('#hidedone').checked;
-  let list = rows.filter(x => (!only || x.v === 'BET' || x.v === 'STRONG BET') && (!hide || x.r.homeWin == null || tab === 'mlb'));
+  let list = rows.filter(x => (!only || x.v === 'BET' || x.v === 'STRONG BET' || x.v === 'FADE (dog)') && (!hide || x.r.homeWin == null || tab === 'mlb'));
   const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: (x.r.koiHome || x.r.koiAway) ? (x.r.koiHome || 0) + (x.r.koiAway || 0) : (x.r.kvol || 0), pub: x.pub ?? -1, time: x.r.time, sharp: x.r.sharpHome ?? -99, diff: x.diff ?? -99, v: x.v, take: x.r.bookTake ?? -1, gave: x.r.bookGave ?? -1, tpub: x.tpub ?? -1, tvol: (x.r['takerHome$'] || 0) + (x.r['takerAway$'] || 0) })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   renderSlate(list); $('#tblwrap').hidden = view !== 'table'; $('#slate').hidden = view !== 'slate';
@@ -136,7 +142,7 @@ function render(){
     const sharp = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome);
     const skew = r.skewHome == null ? null : (r.pick === 'home' ? r.skewHome : -r.skewHome);
     const tr = document.createElement('tr'); tr.className = 'row';
-    tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when}${r.homeSP ? ' · ' + r.awaySP + ' / ' + r.homeSP : ''}${r.homeRec ? ' · ' + r.awayRec + ' / ' + r.homeRec : ''}</span></td>
+    tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span>${r.mostBet ? ' <span class="tm" title="one of the slate's most-bet games by $ at risk: the dog has won 48% of these vs a 42% price" style="color:var(--warn)">🔥 most-bet</span>' : ''}<br><span class="tm">${when}${r.homeSP ? ' · ' + r.awaySP + ' / ' + r.homeSP : ''}${r.homeRec ? ' · ' + r.awayRec + ' / ' + r.homeRec : ''}</span></td>
       <td><span class="nm">${pickTeam}</span></td>
       <td class="num">${pct(r.pickProb)}</td>
       <td class="num" title="${r.sharpSrc === 'sharp avg' ? 'Pinnacle not posted yet: average of Bovada/BetOnline' : 'Pinnacle de-vigged'}">${pct(sharp)}${r.sharpSrc === 'sharp avg' ? '~' : ''}</td>
@@ -145,7 +151,7 @@ function render(){
       <td class="num ${r.edge == null ? '' : r.edge >= 0 ? 'pos' : 'neg'}">${r.edge == null ? '—' : (r.edge >= 0 ? '+' : '') + r.edge.toFixed(1)}</td>
       <td class="num" title="${x.pubSrc === 'tape' ? 'From the trade tape: every pre-game trade credited to the team the bettor backed.' + (x.volPub != null ? ' The old volume split said ' + Math.round(x.volPub * 100) + '%.' : '') : (r.sport === 'NFL' ? 'No trade tape for this game yet, so this is the volume split, which understates money on big favorites.' : 'Volume split between the two team contracts.')}"><span class="bar"><i style="width:${x.pub == null ? 0 : x.pub * 100}%"></i></span> ${pct(x.pub)}${r.sport === 'NFL' && x.pubSrc !== 'tape' && x.pub != null ? '~' : ''}</td>
       <td class="num" title="${(r.koiHome || r.koiAway) ? 'Open interest at lock: $' + ((r.koiHome || 0) + (r.koiAway || 0)).toLocaleString() + ' still held, the dollars actually riding on the result. Traded volume (both sides, includes churn): $' + (r.kvol || 0).toLocaleString() : 'Traded volume, both sides, includes churn (open interest not recorded for this game)'}">${(() => { const t = (r.koiHome || r.koiAway) ? (r.koiHome || 0) + (r.koiAway || 0) : (r.kvol || 0); return '$' + (t >= 1e6 ? (t / 1e6).toFixed(1) + 'M' : t >= 1000 ? Math.round(t / 1000) + 'k' : t) + ((r.koiHome || r.koiAway) ? '' : '~'); })()}</td>
-      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td>
+      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}" title="${x.v === 'FADE (dog)' ? 'The pick is a favorite with no edge: take the other side. Dogs on PASS games are 33-40 (+7.5u) in MLB and 6-11 (+4.3u) in NFL.' : ''}">${x.v === 'FADE (dog)' ? 'FADE · ' + other + ' ' + fmt(r.oppOdds) : x.v}</span></td>
       <td><input type="checkbox" class="bet" data-k="${key(r)}" ${e.on ? 'checked' : ''}> <input class="stk" data-k="${key(r)}" data-f="stake" value="${e.stake || ''}" placeholder="1u"></td>
       <td>${r.pickHit == null ? '<span class="res n">—</span>' : r.pickHit ? '<span class="res y">✓ ' + pickTeam + '</span>' : '<span class="res n">✗ ' + other + '</span>'}${r.score ? ' <span class="tm">' + r.score + '</span>' : ''}</td>
       <td class="num" title="${r.bookTake != null ? 'losing side had ' + Math.round(r.loserShare * 100) + '% of the $' + (r.takePool || r.kvol).toLocaleString() + (r.takeSrc === 'tape' ? ' the crowd put on this game (trade tape)' : ' traded (volume split, no tape)') : 'fills in when the game is final'}">${r.bookTake != null ? '$' + (r.bookTake >= 1000 ? Math.round(r.bookTake / 1000) + 'k' : r.bookTake) : '—'}</td>
@@ -178,6 +184,9 @@ const diffPin = r => r.sharpHome == null ? null : (r.pickProb - (r.pick === 'hom
 const isModelFav = r => r.pickProb >= 0.5, isMarketFav = r => r.pickOdds != null && r.pickOdds < 0, pubOnPick = r => r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
 const strat = {
   'Model favorite, every game': G.filter(r => r.pickOdds != null),
+  'FADE (dog) on PASS favorites [units at the dog price]': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && !(r.edge != null && r.edge >= 2) ),
+  'Dog in the most-bet games of the slate [dog price]': G.filter(r => r.mostBet && r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null),
+  'Dog in most-bet games that are also PASS [dog price]': G.filter(r => r.mostBet && r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && !(r.edge != null && r.edge >= 2)),
   'CURRENT VERDICT (MLB): STRONG BET, edge 5+ at Robinhood': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 5),
   'CURRENT VERDICT (MLB): BET, edge 2 to 5': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 2 && r.edge < 5),
   'CURRENT VERDICT (MLB): PASS, edge under 2': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge < 2),
@@ -212,7 +221,7 @@ const strat = {
   'Fade the public (65%+ of Kalshi $ on the other side)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? 1 - r.pubHome : r.pubHome) >= .65)),
   'Ride the public (65%+ of Kalshi $ on the pick)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? r.pubHome : 1 - r.pubHome) >= .65)),
 };
-const SROWS = Object.entries(strat).map(([name, b]) => { const w = b.filter(r => r.pickHit).length, pnl = b.reduce((s, r) => s + pay(r.pickOdds, r.pickHit), 0); return { name, bets: b.length, w, l: b.length - w, pct: b.length ? w / b.length : -1, pnl, roi: b.length ? pnl / b.length : -99 }; });
+const SROWS = Object.entries(strat).map(([name, b]) => { const dog = name.includes('[dog price]') || name.includes('[units at the dog price]'); const w = b.filter(r => dog ? !r.pickHit : r.pickHit).length, pnl = b.reduce((s, r) => s + (dog ? pay(r.oppOdds, !r.pickHit) : pay(r.pickOdds, r.pickHit)), 0); return { name, bets: b.length, w, l: b.length - w, pct: b.length ? w / b.length : -1, pnl, roi: b.length ? pnl / b.length : -99 }; });
 let sSort = null, sDir = -1;   // click a header to sort; click again to flip
 function scoreRows(){ const rows = sSort ? [...SROWS].sort((a, b) => ((a[sSort] > b[sSort] ? 1 : a[sSort] < b[sSort] ? -1 : 0) * sDir)) : SROWS;
   return rows.map(x => `<tr><td class="nm">${x.name}</td><td class="num">${x.bets}</td><td class="num">${x.w}-${x.l}</td><td class="num">${x.bets ? (x.pct * 100).toFixed(0) + '%' : '—'}</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.pnl >= 0 ? '+' : ''}${x.pnl.toFixed(1)}u</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.bets ? (x.roi * 100).toFixed(0) + '%' : '—'}</td></tr>`).join(''); }
@@ -238,11 +247,11 @@ def page():
 <b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ at risk</b> = open interest at lock: contracts still held, so the dollars actually riding on the result, with no churn (hover for the raw traded volume, which counts both sides of every trade and re-trades; a ~ means only volume was recorded for that game). <b>Tape $ on pick</b> = directional money from Kalshi's pre-game trade tape: every trade credited to the team the aggressor bet on (YES on a team, or NO on its opponent); hover for the dollars. <b>Tape $</b> = total taker dollars before start. Unlike Public $ on pick, which counts both sides of each market's volume, this one says which team the money actually backed.
 <b>Book take</b> = once a game is final, the dollars the crowd put on the losing team, from the trade tape (the same source as Public $ on pick); the tile sums it for the slate. Robinhood/Kalshi is an exchange, so this is what the winning bettors collected from the losing ones, not a house profit. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Book gave</b> = the dollars the crowd put on the winning team. <b>Pinnacle</b> = the sharpest book's de-vigged chance (a ~ means Pinnacle hasn't posted yet, so it's the Bovada/BetOnline average until it does).<br>
 There are three different "favorites" on every game and they do not agree: the side the <b>model</b> has over 50%, the side <b>Robinhood</b> prices over 50¢, and the side the <b>public's money</b> is on. Only the first one predicts anything. Weekend 1, 28 graded games at Robinhood prices: model's side over 50% went 9-5 (+1.3u); the market's priced favorite went 7-5 but <i>lost</i> 1.0u (short prices); the public's side went 8-8 and lost 2.0u.<br>
-The <b>Pick</b> is always the model's favorite, its side over 50%. <b>MLB verdicts</b> key off the Edge column, the model's win % minus Robinhood's price: <b>STRONG BET</b> = edge of 5 or more, <b>BET</b> = edge of 2 to 5, <b>PASS</b> = under 2. All of the MLB profit so far has come from the 5+ games; the 2 to 5 games have only broken even. <b>NFL verdicts</b> use a different rule because the NFL model leans on Pinnacle early in the season and its edge never gets that large: <b>PASS (too expensive)</b> = the favorite is priced -250 or steeper, where picks have won 60% but needed 78%; <b>PASS (priced in)</b> = Robinhood charges 3+ points over the model; otherwise <b>STRONG BET</b> when the public's money is on the other team and <b>BET</b> when it agrees. For NFL, <b>Public $ on pick</b> comes from the trade tape (each pre-game trade credited to the team the bettor actually backed), because splitting volume between the two team contracts badly understates the money on big favorites; a ~ means no tape yet, so the volume split is shown. MLB still uses the volume split. The NFL rule is still unproven. Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
+The <b>Pick</b> is always the model's favorite, its side over 50%. <b>FADE (dog)</b> = the pick is a favorite with no edge (a PASS), so take the other side at the price shown: dogs on PASS games are 33-40 for +7.5u in MLB and 6-11 for +4.3u in NFL. <b>🔥 most-bet</b> marks the slate's most-bet games by $ at risk, where the dog has won 48% against a 42% price. <b>MLB verdicts</b> key off the Edge column, the model's win % minus Robinhood's price: <b>STRONG BET</b> = edge of 5 or more, <b>BET</b> = edge of 2 to 5, <b>PASS</b> = under 2. All of the MLB profit so far has come from the 5+ games; the 2 to 5 games have only broken even. <b>NFL verdicts</b> use a different rule because the NFL model leans on Pinnacle early in the season and its edge never gets that large: <b>PASS (too expensive)</b> = the favorite is priced -250 or steeper, where picks have won 60% but needed 78%; <b>PASS (priced in)</b> = Robinhood charges 3+ points over the model; otherwise <b>STRONG BET</b> when the public's money is on the other team and <b>BET</b> when it agrees. For NFL, <b>Public $ on pick</b> comes from the trade tape (each pre-game trade credited to the team the bettor actually backed), because splitting volume between the two team contracts badly understates the money on big favorites; a ~ means no tape yet, so the volume split is shown. MLB still uses the volume split. The NFL rule is still unproven. Ignore what Robinhood or the crowd calls the favorite; bet the model's side, preferably when the crowd isn't there.
 MLB model: regressed run-differential strength, starting-pitcher runs-allowed adjustment, home field. NFL model: last season's point differential (regressed) plus 2 points for home; weak until 2026 games exist, so lean on Pinnacle vs Kalshi there.</div>
 <h2>Scorecard <small>every locked, finished game</small></h2><div id="score"></div>
 </div>
-<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('sport', 'model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'oppOdds', 'pickHit', 'pick', 'pubHome', 'pickProb', 'takerPubHome')} for r in graded])};{JS}</script>"""
+<script>const BOARDS = {jd(boards)}; const TODAY = {jd(today)}; const WEEK = {jd(week)}; const GRADED = {jd([{k: r.get(k) for k in ('sport', 'model', 'kalshi', 'sharpHome', 'homeWin', 'edge', 'pickOdds', 'oppOdds', 'pickHit', 'pick', 'pubHome', 'pickProb', 'takerPubHome', 'mostBet')} for r in graded])};{JS}</script>"""
 
 open(os.path.join(SITE, 'ml.html'), 'w', encoding='utf-8', newline='\n').write(page())
 
