@@ -95,14 +95,13 @@ $('#stbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click
 def _check_page(html, name):
     """a broken inline script blanks the whole page, so syntax-check it before writing (needs node; skipped if node is missing)"""
     import subprocess, tempfile
-    m = re.search(r'<script>const BOARDS = (.*?)</script>\s*$', html, re.S)
+    m = re.search(r'<script>const BOARDS = (.*?)</script>', html, re.S)
     if not m: return
     t = tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8'); t.write('const BOARDS = ' + m.group(1)); t.close()
     try: r = subprocess.run(['node', '--check', t.name], capture_output=True, text=True)
     except FileNotFoundError: return
     finally: os.unlink(t.name)
-    if r.returncode != 0: raise SystemExit(f'page script has a syntax error, not writing {name}:
-' + r.stderr[:800])
+    if r.returncode != 0: raise SystemExit('page script has a syntax error, not writing ' + name + ': ' + r.stderr[:800])
 
 def page():
     return f"""{head()}
