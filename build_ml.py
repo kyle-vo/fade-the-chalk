@@ -142,7 +142,7 @@ function render(){
     const sharp = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome);
     const skew = r.skewHome == null ? null : (r.pick === 'home' ? r.skewHome : -r.skewHome);
     const tr = document.createElement('tr'); tr.className = 'row';
-    tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span>${r.mostBet ? ' <span class="tm" title="one of the slate's most-bet games by $ at risk. A flag, not a verdict: once the model-backed dogs are set aside, the dog has NOT beaten its price here" style="color:var(--warn)">🔥 most-bet</span>' : ''}<br><span class="tm">${when}${r.homeSP ? ' · ' + r.awaySP + ' / ' + r.homeSP : ''}${r.homeRec ? ' · ' + r.awayRec + ' / ' + r.homeRec : ''}</span></td>
+    tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span>${r.mostBet ? ' <span class="tm" title="one of the most-bet games on the slate by $ at risk. A flag, not a verdict: once the model-backed dogs are set aside, the dog has NOT beaten its price here" style="color:var(--warn)">🔥 most-bet</span>' : ''}<br><span class="tm">${when}${r.homeSP ? ' · ' + r.awaySP + ' / ' + r.homeSP : ''}${r.homeRec ? ' · ' + r.awayRec + ' / ' + r.homeRec : ''}</span></td>
       <td><span class="nm">${pickTeam}</span></td>
       <td class="num">${pct(r.pickProb)}</td>
       <td class="num" title="${r.sharpSrc === 'sharp avg' ? 'Pinnacle not posted yet: average of Bovada/BetOnline' : 'Pinnacle de-vigged'}">${pct(sharp)}${r.sharpSrc === 'sharp avg' ? '~' : ''}</td>
