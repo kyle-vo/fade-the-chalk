@@ -198,3 +198,39 @@ archive.html: 3 NFL weeks, 25 MLB days
 ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
 lines.html: 4 MLB days, 1 NFL weeks, 66 games
 done 09:06
+=== 2026-09-27 12:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Jahmyr Gibbs           DET  RB p=0.590 fair -144 heat 81 share 0.352
+  NFL Javonte Williams       DAL  RB p=0.572 fair -134 heat 74 share 0.292
+  NFL Cam Skattebo           NYG  RB p=0.570 fair -133 heat 42 share 0.334
+  NFL Omarion Hampton        LAC  RB p=0.560 fair -127 heat 41 share 0.325
+odds cache is 69 min old (limit 90) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull.
+  Kalshi MLB 2026-09-27: 255 players, $720,772 traded
+  Kalshi NFL 2026-09-27: 299 players, $9,842,964 traded
+  Kalshi NFL 2026-09-28: 22 players, $75,699 traded
+  Kalshi NFL 2026-10-01: 2 players, $0 traded
+  ML 2026-09-27: 0/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 1/16 graded
+MLB 2026-09-27: kept 87 frozen, refreshed 176, late 0
+NFL 2026_wk3: kept 170 frozen, refreshed 111, late 0
+MLB 2026-09-27: 0/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 1/16 games graded
+site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LV@NO: $204,942 on NO / $596,769 on LV (34,475 trades)  (partial, game not started)
+  NFL LAR@DEN: $215,448 on DEN / $153,237 on LAR (13,212 trades)  (partial, game not started)
+  NFL PHI@CHI: $130,513 on CHI / $643,359 on PHI (14,009 trades)  (partial, game not started)
+taker tape attached to 262 locked games
+  pinnacle spreads+totals baseball_mlb: 16 games, 2 credits
+  lines 2026-09-27: 15 games (15 spreads, 15 totals)
+  pinnacle spreads+totals americanfootball_nfl: 15 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+archive.html: 3 NFL weeks, 25 MLB days
+ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
+lines.html: 4 MLB days, 1 NFL weeks, 67 games
