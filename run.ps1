@@ -1,4 +1,4 @@
-# Daily pipeline:  fetch -> model -> lock today's picks -> grade finished games -> build site -> push to GitHub Pages
+﻿# Daily pipeline:  fetch -> model -> lock today's picks -> grade finished games -> build site -> push to GitHub Pages
 # Usage:  .\run.ps1              today's MLB slate + current NFL week
 #         .\run.ps1 2026-09-12   a specific MLB date
 #         .\run.ps1 -NoPush      build locally only
@@ -20,7 +20,8 @@ python -X utf8 lines.py
 python -X utf8 build_ml.py
 python -X utf8 build_lines.py
 if (-not $NoPush) {
-    git add -A
+    $ErrorActionPreference = "Continue"   # git prints line-ending warnings on stderr; under Stop that aborted the commit
+    git add -A 2>$null
     git commit -m "board $(Get-Date -Format 'yyyy-MM-dd HH:mm')" --quiet
     if ($?) { git push --quiet; Write-Host "pushed - live in ~1 min at https://kyle-vo.github.io/fade-the-chalk/" } else { Write-Host "nothing new to push" }
 }
