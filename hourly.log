@@ -1,41 +1,4 @@
-﻿MLB 2026-09-27: kept 0 frozen, refreshed 268, late 0
-NFL 2026_wk3: kept 17 frozen, refreshed 270, late 0
-MLB 2026-09-27: 0/15 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 1/16 games graded
-site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $132,454 on NO / $424,991 on LV (24,123 trades)  (partial, game not started)
-  NFL LAR@DEN: $110,737 on DEN / $94,758 on LAR (8,370 trades)  (partial, game not started)
-  NFL PHI@CHI: $120,921 on CHI / $380,121 on PHI (11,772 trades)  (partial, game not started)
-taker tape attached to 262 locked games
-  pinnacle spreads+totals baseball_mlb: 16 games, 2 credits
-  lines 2026-09-27: 8 games (8 spreads, 8 totals)
-  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 25 MLB days
-ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
-lines.html: 4 MLB days, 1 NFL weeks, 60 games
-done 03:06
-=== 2026-09-27 06:05 ===
-git : error: Your local changes to the following files would be overwritten by merge:
-At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
-+ git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -A ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (error: Your loc...itten by merge::String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
-	backtest/kalshi_mlb_2026-09-27.json
-	backtest/kalshi_nfl_2026-09-27.json
-	backtest/kalshi_nfl_2026-09-28.json
-	backtest/kalshi_nfl_2026-10-01.json
-	backtest/lines_2026-09-27.json
-	backtest/lines_2026_wk3.json
-	backtest/ml_2026-09-27.json
-	backtest/ml_2026_wk3.json
-	backtest/mlboard.json
-	backtest/mlsnap_2026-09-27.json
-	backtest/nfl_2026_wk3.json
+﻿	backtest/nfl_2026_wk3.json
 	backtest/odds_2026-09-27.json
 	backtest/pred_2026-09-27.json
 	backtest/taker/MLB_822679.json
@@ -234,3 +197,4 @@ taker tape attached to 262 locked games
 archive.html: 3 NFL weeks, 25 MLB days
 ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
 lines.html: 4 MLB days, 1 NFL weeks, 67 games
+done 12:06
