@@ -125,7 +125,7 @@ function renderSlate(list){
 function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).map(r => { const sh = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome); return { r, ...verdict(r), diff: sh == null ? null : (r.pickProb - sh) * 100 }; });
   const only = $('#onlyplays').checked, hide = $('#hidedone').checked;
-  let list = rows.filter(x => (!only || x.v === 'BET' || x.v === 'STRONG BET' || x.v === 'FADE (dog)') && (!hide || x.r.homeWin == null || tab === 'mlb'));
+  let list = rows.filter(x => (!only || x.v === 'BET' || x.v === 'STRONG BET' || x.v === 'FADE (dog)') && (!hide || !(x.r.homeWin != null || (x.r.time && Date.now() - new Date(x.r.time).getTime() > 4 * 3600e3))));
   const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: (x.r.koiHome || x.r.koiAway) ? (x.r.koiHome || 0) + (x.r.koiAway || 0) : (x.r.kvol || 0), pub: x.pub ?? -1, time: x.r.time, sharp: x.r.sharpHome ?? -99, diff: x.diff ?? -99, v: x.v, take: x.r.bookTake ?? -1, gave: x.r.bookGave ?? -1, tpub: x.tpub ?? -1, tvol: (x.r['takerHome$'] || 0) + (x.r['takerAway$'] || 0) })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   renderSlate(list); $('#tblwrap').hidden = view !== 'table'; $('#slate').hidden = view !== 'slate';

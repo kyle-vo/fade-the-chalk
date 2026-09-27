@@ -39,9 +39,10 @@ function sides(r){
 }
 function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).flatMap(sides);
-  const hide = $('#onlyplays').checked, kind = $('#kind').value;
+  const hide = $('#onlyplays').checked, kind = $('#kind').value, hidefinal = $('#hidefinal').checked;
+  const finished = x => x.hit != null || x.r.finalHome != null || (x.r.time && Date.now() - new Date(x.r.time).getTime() > 4 * 3600e3);
   const get = x => ({ time: x.r.time, kind: x.kind, side: x.side, ask: x.ask ?? -1, fair: x.fair ?? -1, edge: x.edge ?? -99, crowd: x.crowd ?? -1, tape: x.tape || 0, vol: x.vol || 0, v: x.v, hit: x.hit ?? -1, own: x.own || 0, take: x.take ?? -1, gave: x.gave ?? -1 })[sortKey];
-  const list = rows.filter(x => (!hide || x.v === 'BET' || x.v === 'STRONG BET') && (kind === 'all' || x.kind === kind)).sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
+  const list = rows.filter(x => (!hidefinal || !finished(x)) && (!hide || x.v === 'BET' || x.v === 'STRONG BET') && (kind === 'all' || x.kind === kind)).sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   document.querySelectorAll('#tbl thead th').forEach(th => th.textContent = th.dataset.l + (th.dataset.k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''));
   const tb = $('#tbl tbody'); tb.innerHTML = '';
   let g = 0, w = 0, u = 0, take = 0, gave = 0;
@@ -59,7 +60,7 @@ function render(){
 function setTab(t){ tab = t; history.replaceState(null, '', '#' + t); if (window.navSport) navSport(t, t === 'mlb' ? day : week); render(); }
 window.onNavSport = t => setTab(t);
 window.onNavSlate = (sp, v) => { if (sp === 'mlb') day = v; else week = v; setTab(sp); };
-['#onlyplays', '#kind'].forEach(s => $(s).addEventListener('input', render));
+['#onlyplays', '#hidefinal', '#kind'].forEach(s => $(s).addEventListener('input', render));
 document.querySelectorAll('#tbl thead th').forEach(th => { th.dataset.l = th.textContent; th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'time' || k === 'side' || k === 'kind' ? 1 : -1; } render(); }); });
 setTab(tab);
 // ---- scorecard over every graded side ----
@@ -107,7 +108,7 @@ def page():
     return f"""{head()}
 <div class="panel top">
 <div class="kpi" id="kpi"></div>
-<div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label>show <select id="kind"><option value="all">spreads and totals</option><option value="spread">spreads only</option><option value="total">totals only</option></select></label></div>
+<div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label><input type="checkbox" id="hidefinal"> hide finished games</label><label>show <select id="kind"><option value="all">spreads and totals</option><option value="spread">spreads only</option><option value="total">totals only</option></select></label></div>
 <div class="wrap"><table id="tbl"><thead><tr><th data-k="time">Game</th><th data-k="kind">Market</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd share</th><th class="num" data-k="own">$ on this side</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th><th class="num" data-k="take">Book take</th><th class="num" data-k="gave">Book gave</th></tr></thead><tbody></tbody></table></div>
 <div class="legend"><b>No model here.</b> Each row is one side of a spread or total, so a 12-game slate is 48 rows (24 with spreads or totals only). Click any column header to sort; click again to flip. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line (a ~ means Pinnacle's line was a whole number, Robinhood only lists half points, so the nearest strike is shown and the fair price is nudged for the half point).
 <b>Edge</b> = fair minus ask, in points; <b>BET</b> at 2+, <b>STRONG BET</b> at 5+: you are simply being paid more than the sharpest book says the side is worth. <b>Crowd $ on this side</b> = share of the taker dollars on this exact market from the trade tape (each trade credited to the side the bettor backed); <b>$ on this side</b> = those taker dollars; <b>Tape $</b> = both sides together; <b>Book take</b> = once graded, the dollars on a side that lost (what the winners collected), <b>Book gave</b> = the dollars on a side that won; the tiles sum them. <b>$ traded</b> = the whole ladder of lines for this game.
