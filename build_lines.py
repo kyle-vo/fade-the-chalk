@@ -14,13 +14,12 @@ mlb_days = sorted([t for t in boards if '_wk' not in t], reverse=True); nfl_week
 today = mlb_days[0] if mlb_days else None; week = nfl_weeks[0] if nfl_weeks else None
 
 def head():
-    nav = ('<nav><div class="row site"><a href="index.html">Today</a><a href="ml.html">Moneyline</a><a href="lines.html" class="on">Spreads &amp; Totals</a><a href="track.html">Track</a><a href="archive.html">Archive</a></div>'
-           '<div class="row mlb"><span class="lbl">MLB</span><a href="index.html#mlb">Home runs today</a><a href="ml.html#mlb">Moneyline</a><a href="#mlb" class="sportl on" data-t="mlb">Spreads &amp; Totals</a>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:8]) + '</div>'
-           '<div class="row nfl"><span class="lbl">NFL</span><a href="index.html#nfl">Touchdowns this week</a><a href="ml.html#nfl">Moneyline</a><a href="#nfl" class="sportl" data-t="nfl">Spreads &amp; Totals</a>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">week {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</div></nav>')
+    from navbar import navbar, day_label, week_label
+    nav = navbar('lines', '', {'mlb': [(d, day_label(d), '') for d in mlb_days], 'nfl': [(w, week_label(w), '') for w in nfl_weeks]}, {'mlb': today, 'nfl': week})
     return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fade The Chalk</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">spreads &amp; totals · Pinnacle fair vs Robinhood ask at the same line · crowd money by side · built {datetime.datetime.now().isoformat(timespec="minutes")}</div></header>{nav}'
 
 JS = r"""
-const $ = s => document.querySelector(s); let tab = location.hash === '#nfl' ? 'nfl' : 'mlb'; let day = TODAY; let week = WEEK;
+const $ = s => document.querySelector(s); let tab = window.NAV_SPORT === 'nfl' ? 'nfl' : 'mlb'; let day = TODAY; let week = WEEK;
 let sortKey = 'edge', sortDir = -1;
 const pct = p => p == null ? '—' : Math.round(p * 100) + '%'; const cents = p => p == null ? '—' : Math.round(p * 100) + '¢';
 const money = v => v == null ? '—' : '$' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1000 ? Math.round(v / 1000) + 'k' : v);
@@ -29,38 +28,37 @@ const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'nume
 function sides(r){
   const out = [];
   if (r.spread && r.spread.ticker) { const s = r.spread, tot = (s['tapeFav$'] || 0) + (s['tapeDog$'] || 0);
-    out.push({ r, kind: 'spread', side: s.fav + ' -' + s.line, ask: s.favAsk, fair: s.pinFavFair, crowd: tot ? s['tapeFav$'] / tot : null, tape: tot, vol: s.ladderVol, hit: s.favCovered, shift: s.shift, pinLine: s.pinLine });
-    out.push({ r, kind: 'spread', side: s.dog + ' +' + s.line, ask: s.dogAsk, fair: s.pinDogFair, crowd: tot ? s['tapeDog$'] / tot : null, tape: tot, vol: s.ladderVol, hit: s.favCovered == null ? null : 1 - s.favCovered, shift: s.shift, pinLine: s.pinLine }); }
+    out.push({ r, kind: 'spread', side: s.fav + ' -' + s.line, ask: s.favAsk, fair: s.pinFavFair, crowd: tot ? s['tapeFav$'] / tot : null, own: s['tapeFav$'] || 0, tape: tot, vol: s.ladderVol, hit: s.favCovered, shift: s.shift, pinLine: s.pinLine });
+    out.push({ r, kind: 'spread', side: s.dog + ' +' + s.line, ask: s.dogAsk, fair: s.pinDogFair, crowd: tot ? s['tapeDog$'] / tot : null, own: s['tapeDog$'] || 0, tape: tot, vol: s.ladderVol, hit: s.favCovered == null ? null : 1 - s.favCovered, shift: s.shift, pinLine: s.pinLine }); }
   if (r.total && r.total.ticker) { const t = r.total, tot = (t['tapeOver$'] || 0) + (t['tapeUnder$'] || 0);
-    out.push({ r, kind: 'total', side: 'Over ' + t.line, ask: t.overAsk, fair: t.pinOverFair, crowd: tot ? t['tapeOver$'] / tot : null, tape: tot, vol: t.ladderVol, hit: t.over, shift: t.shift, pinLine: t.pinLine });
-    out.push({ r, kind: 'total', side: 'Under ' + t.line, ask: t.underAsk, fair: t.pinUnderFair, crowd: tot ? t['tapeUnder$'] / tot : null, tape: tot, vol: t.ladderVol, hit: t.over == null ? null : 1 - t.over, shift: t.shift, pinLine: t.pinLine }); }
+    out.push({ r, kind: 'total', side: 'Over ' + t.line, ask: t.overAsk, fair: t.pinOverFair, crowd: tot ? t['tapeOver$'] / tot : null, own: t['tapeOver$'] || 0, tape: tot, vol: t.ladderVol, hit: t.over, shift: t.shift, pinLine: t.pinLine });
+    out.push({ r, kind: 'total', side: 'Under ' + t.line, ask: t.underAsk, fair: t.pinUnderFair, crowd: tot ? t['tapeUnder$'] / tot : null, own: t['tapeUnder$'] || 0, tape: tot, vol: t.ladderVol, hit: t.over == null ? null : 1 - t.over, shift: t.shift, pinLine: t.pinLine }); }
+  for (const x of out) { x.take = (x.hit === 0 && x.tape) ? x.own : null; x.gave = (x.hit === 1 && x.tape) ? x.own : null; }
   for (const x of out) { x.edge = (x.ask != null && x.fair != null) ? (x.fair - x.ask) * 100 : null; x.v = x.edge == null ? '—' : x.edge >= 5 ? 'STRONG BET' : x.edge >= 2 ? 'BET' : 'PASS'; }
   return out;
 }
 function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).flatMap(sides);
-  document.querySelector('.tab[data-t=mlb]').textContent = 'MLB ' + (day || ''); document.querySelector('.tab[data-t=nfl]').textContent = 'NFL ' + (week || '').replace('_', ' ');
   const hide = $('#onlyplays').checked, kind = $('#kind').value;
-  const get = x => ({ time: x.r.time, kind: x.kind, side: x.side, ask: x.ask ?? -1, fair: x.fair ?? -1, edge: x.edge ?? -99, crowd: x.crowd ?? -1, tape: x.tape || 0, vol: x.vol || 0, v: x.v, hit: x.hit ?? -1 })[sortKey];
+  const get = x => ({ time: x.r.time, kind: x.kind, side: x.side, ask: x.ask ?? -1, fair: x.fair ?? -1, edge: x.edge ?? -99, crowd: x.crowd ?? -1, tape: x.tape || 0, vol: x.vol || 0, v: x.v, hit: x.hit ?? -1, own: x.own || 0, take: x.take ?? -1, gave: x.gave ?? -1 })[sortKey];
   const list = rows.filter(x => (!hide || x.v === 'BET' || x.v === 'STRONG BET') && (kind === 'all' || x.kind === kind)).sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   document.querySelectorAll('#tbl thead th').forEach(th => th.textContent = th.dataset.l + (th.dataset.k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''));
   const tb = $('#tbl tbody'); tb.innerHTML = '';
-  let g = 0, w = 0, u = 0;
-  for (const x of list) { const r = x.r; if (x.hit != null && x.ask) { g++; w += x.hit; u += x.hit ? (1 / x.ask - 1) : -1; }
+  let g = 0, w = 0, u = 0, take = 0, gave = 0;
+  for (const x of list) { const r = x.r; take += x.take || 0; gave += x.gave || 0; if (x.hit != null && x.ask) { g++; w += x.hit; u += x.hit ? (1 / x.ask - 1) : -1; }
     const tr = document.createElement('tr'); tr.className = 'row';
     tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}</span></td><td>${x.kind}</td><td><span class="nm">${x.side}</span>${x.shift ? `<br><span class="tm" title="Pinnacle's line is ${x.pinLine}; Robinhood only lists half points, so this is the nearest strike and Pinnacle's fair price is nudged for the half point">Pinnacle ${x.pinLine}~</span>` : ''}</td>
       <td class="num">${cents(x.ask)}</td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
-      <td class="num" title="share of the crowd's taker dollars on this side (trade tape)"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${money(x.tape)}</td><td class="num">${money(x.vol)}</td>
-      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td><td>${x.hit == null ? '<span class="res n">—</span>' : x.hit ? '<span class="res y">✓ covered</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>`;
+      <td class="num" title="share of the crowd's taker dollars on this side (trade tape)"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${x.tape ? money(Math.round(x.own)) : '—'}</td><td class="num">${money(x.tape)}</td><td class="num">${money(x.vol)}</td>
+      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td><td>${x.hit == null ? '<span class="res n">—</span>' : x.hit ? '<span class="res y">✓ covered</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>
+      <td class="num neg">${x.take == null ? '' : money(Math.round(x.take))}</td><td class="num pos">${x.gave == null ? '' : money(Math.round(x.gave))}</td>`;
     tb.appendChild(tr); }
   const games = new Set(list.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size;
-  $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>graded<b>${g}</b></div><div>record<b>${w}-${g - w}</b></div><div>units, 1u each side<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '');
+  $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>graded<b>${g}</b></div><div>record<b>${w}-${g - w}</b></div><div>units, 1u each side<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '') + (take + gave ? `<div>book take<b class="neg">${money(Math.round(take))}</b></div><div>book gave<b class="pos">${money(Math.round(gave))}</b></div>` : '');
 }
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.t)));
-function setTab(t){ tab = t; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === t)); document.querySelectorAll('nav a.sportl').forEach(x => x.classList.toggle('on', x.dataset.t === t)); history.replaceState(null, '', '#' + t); render(); }
-document.querySelectorAll('nav a.sportl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); setTab(a.dataset.t); }));
-document.querySelectorAll('nav a.dayl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); day = a.dataset.day; setTab('mlb'); }));
-document.querySelectorAll('nav a.weekl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); week = a.dataset.week; setTab('nfl'); }));
+function setTab(t){ tab = t; history.replaceState(null, '', '#' + t); if (window.navSport) navSport(t, t === 'mlb' ? day : week); render(); }
+window.onNavSport = t => setTab(t);
+window.onNavSlate = (sp, v) => { if (sp === 'mlb') day = v; else week = v; setTab(sp); };
 ['#onlyplays', '#kind'].forEach(s => $(s).addEventListener('input', render));
 document.querySelectorAll('#tbl thead th').forEach(th => { th.dataset.l = th.textContent; th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'time' || k === 'side' || k === 'kind' ? 1 : -1; } render(); }); });
 setTab(tab);
@@ -86,7 +84,9 @@ const SROWS = Object.entries(strat).map(([name, b]) => { const w = b.filter(x =>
 let sSort = null, sDir = -1;
 function scoreRows(){ const rows = sSort ? [...SROWS].sort((a, b) => ((a[sSort] > b[sSort] ? 1 : a[sSort] < b[sSort] ? -1 : 0) * sDir)) : SROWS;
   return rows.map(x => `<tr><td class="nm">${x.name}</td><td class="num">${x.bets}</td><td class="num">${x.w}-${x.l}</td><td class="num">${x.bets ? (x.pct * 100).toFixed(0) + '%' : '—'}</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.pnl >= 0 ? '+' : ''}${x.pnl.toFixed(1)}u</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.bets ? (x.roi * 100).toFixed(0) + '%' : '—'}</td></tr>`).join(''); }
-$('#score').innerHTML = `<div class="kpi"><div>graded sides<b>${G.length}</b></div><div>games<b>${new Set(G.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size}</b></div></div>
+const TK = G.reduce((a, x) => a + (x.take || 0), 0), GV = G.reduce((a, x) => a + (x.gave || 0), 0);
+const BIG = G.filter(x => x.crowd != null && x.crowd > 0.5), BIGW = BIG.filter(x => x.hit).length;
+$('#score').innerHTML = `<div class="kpi"><div>graded sides<b>${G.length}</b></div><div>games<b>${new Set(G.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size}</b></div><div>book take<b class="neg">${money(Math.round(TK))}</b></div><div>book gave<b class="pos">${money(Math.round(GV))}</b></div><div>bigger-$ side won<b>${BIGW} of ${BIG.length}</b></div></div>
   <div class="wrap"><table id="stbl"><thead><tr><th data-s="name">Strategy (flat 1u at Robinhood)</th><th class="num" data-s="bets">Bets</th><th class="num" data-s="pct">Record</th><th class="num" data-s="pct">Win %</th><th class="num" data-s="pnl">Units</th><th class="num" data-s="roi">ROI</th></tr></thead><tbody>${scoreRows()}</tbody></table></div>
   <p class="note">Click a header to sort. Every side of every graded market is counted once, so "every side" is what a coin flip returns minus the spread. The crowd rows are the test: if the side with more money covers less than its price, the fade rows go green.</p>`;
 $('#stbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.s; if (sSort === k) sDir = -sDir; else { sSort = k; sDir = k === 'name' ? 1 : -1; } $('#stbl tbody').innerHTML = scoreRows(); }));
@@ -105,13 +105,12 @@ def _check_page(html, name):
 
 def page():
     return f"""{head()}
-<div class="tabs"><div class="tab on" data-t="mlb">MLB {today or ''}</div><div class="tab" data-t="nfl">NFL {week.replace('_', ' ') if week else ''}</div></div>
-<div class="panel">
+<div class="panel top">
 <div class="kpi" id="kpi"></div>
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label>show <select id="kind"><option value="all">spreads and totals</option><option value="spread">spreads only</option><option value="total">totals only</option></select></label></div>
-<div class="wrap"><table id="tbl"><thead><tr><th data-k="time">Game</th><th data-k="kind">Market</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd $ on this side</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th></tr></thead><tbody></tbody></table></div>
+<div class="wrap"><table id="tbl"><thead><tr><th data-k="time">Game</th><th data-k="kind">Market</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd share</th><th class="num" data-k="own">$ on this side</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th><th class="num" data-k="take">Book take</th><th class="num" data-k="gave">Book gave</th></tr></thead><tbody></tbody></table></div>
 <div class="legend"><b>No model here.</b> Each row is one side of a spread or total, so a 12-game slate is 48 rows (24 with spreads or totals only). Click any column header to sort; click again to flip. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line (a ~ means Pinnacle's line was a whole number, Robinhood only lists half points, so the nearest strike is shown and the fair price is nudged for the half point).
-<b>Edge</b> = fair minus ask, in points; <b>BET</b> at 2+, <b>STRONG BET</b> at 5+: you are simply being paid more than the sharpest book says the side is worth. <b>Crowd $ on this side</b> = share of the taker dollars on this exact market from the trade tape (each trade credited to the side the bettor backed); <b>Tape $</b> = both sides together; <b>$ traded</b> = the whole ladder of lines for this game.
+<b>Edge</b> = fair minus ask, in points; <b>BET</b> at 2+, <b>STRONG BET</b> at 5+: you are simply being paid more than the sharpest book says the side is worth. <b>Crowd $ on this side</b> = share of the taker dollars on this exact market from the trade tape (each trade credited to the side the bettor backed); <b>$ on this side</b> = those taker dollars; <b>Tape $</b> = both sides together; <b>Book take</b> = once graded, the dollars on a side that lost (what the winners collected), <b>Book gave</b> = the dollars on a side that won; the tiles sum them. <b>$ traded</b> = the whole ladder of lines for this game.
 Rows lock at first pitch / kickoff (volumes only ever go up before that) and grade from the final score. The scorecard at the bottom is the point: does the side with more of the crowd's money cover less than its price says?</div>
 <h2 style="margin-top:18px">Scorecard</h2><div id="score"></div>
 </div>

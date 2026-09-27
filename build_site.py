@@ -200,14 +200,12 @@ _mlb = os.path.join(BT, 'mlboard.json'); MLH = json.load(open(_mlb, encoding='ut
 
 # ---------- templates ----------
 FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">'
-CSS = r"""<style>nav{display:flex;flex-direction:column;gap:6px;padding:12px 26px 0;font-size:13px}nav .row{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}nav a{color:var(--mute);text-decoration:none;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}nav a.on{color:var(--ink);border-color:var(--acc)}nav .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;padding:5px 10px;border-radius:6px;min-width:52px;text-align:center}nav .row.mlb .lbl{color:#7fb8ff;background:#14202e}nav .row.mlb a.on{border-color:#7fb8ff}nav .row.nfl .lbl{color:#7fe0a5;background:#122a1e}nav .row.nfl a.on{border-color:#7fe0a5}nav .row.site a{border-color:#2f3944}nav .row.site a.on{border-color:var(--acc)}
-:root{--bg:#0b0d10;--panel:#14181e;--line:#232a33;--ink:#e6e9ee;--mute:#8a94a3;--acc:#ffb020;--good:#2fd47a;--bad:#ff4d5e;--warn:#ffb020;--blue:#4aa3ff;--font:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;--disp:"Barlow Condensed","Arial Narrow",Impact,sans-serif;color-scheme:dark}
+CSS = r"""<style>:root{--bg:#0b0d10;--panel:#14181e;--line:#232a33;--ink:#e6e9ee;--mute:#8a94a3;--acc:#ffb020;--good:#2fd47a;--bad:#ff4d5e;--warn:#ffb020;--blue:#4aa3ff;--font:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;--disp:"Barlow Condensed","Arial Narrow",Impact,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--ink);font-family:var(--font);margin:0;padding:0 0 60px;font-size:14px}
 header{padding:18px 26px 12px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
 h1{margin:0;font-family:var(--disp);font-size:34px;font-weight:800;letter-spacing:1.5px;line-height:1}h1 span{color:var(--acc)}h1 a{color:inherit;text-decoration:none}
 .sub{color:var(--mute);font-size:13px}
 
-nav a:hover{color:var(--ink);border-color:#3a4552}
 .tabs{display:flex;gap:6px;padding:14px 26px 0}
 .tab{font-family:var(--disp);font-size:17px;letter-spacing:.6px;text-transform:uppercase;padding:8px 16px;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:var(--panel);color:var(--mute);cursor:pointer;font-weight:600}
 .tab.on{color:var(--ink);background:#1b2129;border-color:#2f3944}
@@ -249,13 +247,16 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 </style>"""
 
 def nav(active, root, sport=None):
-    """three rows: site pages / MLB (today's HR board, moneyline, day pages) / NFL (today's TD board, moneyline, week pages)"""
-    on = lambda h: ' class="on"' if active == h else ''
-    site = f'<div class="row site"><a href="{root}index.html"{on("index.html")}>Today</a><a href="{root}ml.html"{on("ml.html")}>Moneyline</a><a href="{root}lines.html"{on("lines.html")}>Spreads &amp; Totals</a><a href="{root}track.html"{on("track.html")}>Track</a><a href="{root}archive.html"{on("archive.html")}>Archive</a></div>'
-    on_mlb = ' class="on"' if active == "index.html" and sport == "mlb" else ''; on_nfl = ' class="on"' if active == "index.html" and sport == "nfl" else ''
-    mlb = f'<div class="row mlb"><span class="lbl">MLB</span><a href="{root}index.html#mlb"{on_mlb}>Home runs today</a><a href="{root}ml.html#mlb">Moneyline</a><a href="{root}lines.html#mlb">Spreads &amp; Totals</a>' + ''.join(f'<a href="{root}days/{d}.html"{on("days/" + d)}>{d[5:]}</a>' for d in sorted(days, reverse=True)[:8]) + '</div>'
-    nfl = f'<div class="row nfl"><span class="lbl">NFL</span><a href="{root}index.html#nfl"{on_nfl}>Touchdowns this week</a><a href="{root}ml.html#nfl">Moneyline</a><a href="{root}lines.html#nfl">Spreads &amp; Totals</a>' + ''.join(f'<a href="{root}nfl/{w}.html"{on("nfl/" + w)}>week {w.split("wk")[1]}</a>' for w in sorted(weeks, reverse=True)[:8]) + '</div>'
-    return f'<nav>{site}{mlb}{nfl}</nav>'
+    """one bar for every page (navbar.py): sport switch, page, slate picker, then Track / Archive"""
+    from navbar import navbar, day_label, week_label
+    idx_day = INDEX_DAY if 'INDEX_DAY' in globals() else None; idx_wk = max(weeks) if weeks else None
+    dl = sorted(days, reverse=True); wl = sorted(weeks, reverse=True)
+    slates = {'mlb': [(d, day_label(d) + (' (today)' if d == idx_day else ''), f'{root}index.html#mlb' if d == idx_day else f'{root}days/{d}.html') for d in dl],
+              'nfl': [(w, week_label(w) + (' (this week)' if w == idx_wk else ''), f'{root}index.html#nfl' if w == idx_wk else f'{root}nfl/{w}.html') for w in wl]}
+    if active in ('track.html', 'archive.html'): return navbar(active[:-5], root)
+    fixed = 'mlb' if active.startswith('days/') else 'nfl' if active.startswith('nfl/') else None
+    cur = {'mlb': active[5:] if active.startswith('days/') else idx_day, 'nfl': active[4:] if active.startswith('nfl/') else idx_wk}
+    return navbar('props', root, slates, cur, fixed)
 
 def head(title, sub, active, root):
     return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}{CSS}<header><h1><a href="{root}index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav(active, root)}'
@@ -263,9 +264,10 @@ def head(title, sub, active, root):
 BOARD_JS = r"""
 const $ = s => document.querySelector(s);
 let tab = PAGE.tab, sortKey = 'prob', sortDir = -1;
-if (location.hash === '#nfl' && (PAGE.rows.nfl || []).length) tab = 'nfl'; else if (location.hash === '#mlb' && (PAGE.rows.mlb || []).length) tab = 'mlb';
+if (window.NAV_SPORT === 'nfl' && (PAGE.rows.nfl || []).length) tab = 'nfl'; else if (window.NAV_SPORT === 'mlb' && (PAGE.rows.mlb || []).length) tab = 'mlb';
+window.onNavSport = s => { if (!(PAGE.rows[s] || []).length || !((PAGE.rows.mlb || []).length && (PAGE.rows.nfl || []).length)) return false; tab = s; history.replaceState(null, '', '#' + s); markNav(); render(); };
 document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === tab));
-function markNav(){ document.querySelectorAll('nav .row.mlb a, nav .row.nfl a').forEach(a => { if (/index\.html#(mlb|nfl)$/.test(a.getAttribute('href'))) a.classList.toggle('on', a.getAttribute('href').endsWith('#' + tab) && PAGE.tab !== 'single'); }); }
+function markNav(){ if (window.navSport) navSport(tab); }
 let store = {};
 try { store = JSON.parse(localStorage.getItem('ftc_bets') || '{}'); } catch (e) { store = {}; }
 function save(){ try { localStorage.setItem('ftc_bets', JSON.stringify(store)); } catch (e) {} }
@@ -547,7 +549,8 @@ gen = board['generated']
 for r in board['mlb']: r.setdefault('date', today)
 for r in board['nfl']: r.setdefault('date', 'now')
 # today's page: use the locked rows for today if present (so results show once graded), else the live board
-_cal = datetime.date.today().isoformat()   # output/board.json is local and gitignored, so it can be a day behind the locks pulled from git: the calendar day's lock wins
+_cal = datetime.date.today().isoformat()
+INDEX_DAY = _cal if _cal in days else today   # output/board.json is local and gitignored, so it can be a day behind the locks pulled from git: the calendar day's lock wins
 today_rows = days.get(_cal) or days.get(today, board['mlb'])
 cur_week = max(weeks) if weeks else None
 nfl_today = weeks[cur_week] if cur_week else board['nfl']   # locked + graded rows, same as the week page

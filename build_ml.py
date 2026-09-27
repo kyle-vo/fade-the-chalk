@@ -51,14 +51,13 @@ graded = [r for rows in boards.values() for r in rows if r['homeWin'] is not Non
 ML_KEEP = ('sport', 'date', 'gamePk', 'eventId', 'home', 'away', 'time', 'homeSP', 'awaySP', 'pick', 'pickOdds', 'pickProb', 'pickHit', 'score', 'kalshiAsk', 'kalshiAwayAsk', 'pubHome', 'takerPubHome')
 json.dump([{k: r.get(k) for k in ML_KEEP} for rows in boards.values() for r in rows], open(os.path.join(BT, 'mlboard.json'), 'w', encoding='utf-8'))
 
-def head(title, sub):
-    nav = ('<nav><div class="row site"><a href="index.html">Today</a><a href="ml.html" class="on">Moneyline</a><a href="lines.html">Spreads &amp; Totals</a><a href="track.html">Track</a><a href="archive.html">Archive</a></div>'
-           '<div class="row mlb"><span class="lbl">MLB</span><a href="index.html#mlb">Home runs today</a><a href="#mlb" class="sportl on" data-t="mlb">Moneyline</a><a href="lines.html#mlb">Spreads &amp; Totals</a>' + ''.join(f'<a href="#" data-day="{d}" class="dayl">{d[5:]}</a>' for d in mlb_days[:8]) + '</div>'
-           '<div class="row nfl"><span class="lbl">NFL</span><a href="index.html#nfl">Touchdowns this week</a><a href="#nfl" class="sportl" data-t="nfl">Moneyline</a><a href="lines.html#nfl">Spreads &amp; Totals</a>' + ''.join(f'<a href="#" data-week="{w}" class="weekl">week {w.split("wk")[1]}</a>' for w in nfl_weeks[:8]) + '</div></nav>')
+def head(title, sub, page='ml'):
+    from navbar import navbar, day_label, week_label
+    nav = navbar(page, '', {'mlb': [(d, day_label(d), '') for d in mlb_days], 'nfl': [(w, week_label(w), '') for w in nfl_weeks]} if page == 'ml' else None, {'mlb': today, 'nfl': week})
     return f'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">{sub}</div></header>{nav}'
 
 JS = r"""
-const $ = s => document.querySelector(s); let tab = location.hash === '#nfl' ? 'nfl' : 'mlb'; let day = TODAY; let week = WEEK; let sortKey = 'edge', sortDir = -1;
+const $ = s => document.querySelector(s); let tab = window.NAV_SPORT === 'nfl' ? 'nfl' : 'mlb'; let day = TODAY; let week = WEEK; let sortKey = 'edge', sortDir = -1;
 let store = {}; try { store = JSON.parse(localStorage.getItem('ftc_ml_bets') || '{}'); } catch (e) {}
 function save(){ try { localStorage.setItem('ftc_ml_bets', JSON.stringify(store)); } catch (e) {} }
 const implied = o => { o = +o; if (!o || isNaN(o)) return null; return o < 0 ? (-o) / (-o + 100) : 100 / (o + 100); };
@@ -125,7 +124,6 @@ function renderSlate(list){
 }
 function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).map(r => { const sh = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome); return { r, ...verdict(r), diff: sh == null ? null : (r.pickProb - sh) * 100 }; });
-  document.querySelector('.tab[data-t=mlb]').textContent = 'MLB ' + day; document.querySelector('.tab[data-t=nfl]').textContent = 'NFL ' + (week || '').replace('_', ' ');
   const only = $('#onlyplays').checked, hide = $('#hidedone').checked;
   let list = rows.filter(x => (!only || x.v === 'BET' || x.v === 'STRONG BET' || x.v === 'FADE (dog)') && (!hide || x.r.homeWin == null || tab === 'mlb'));
   const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: (x.r.koiHome || x.r.koiAway) ? (x.r.koiHome || 0) + (x.r.koiAway || 0) : (x.r.kvol || 0), pub: x.pub ?? -1, time: x.r.time, sharp: x.r.sharpHome ?? -99, diff: x.diff ?? -99, v: x.v, take: x.r.bookTake ?? -1, gave: x.r.bookGave ?? -1, tpub: x.tpub ?? -1, tvol: (x.r['takerHome$'] || 0) + (x.r['takerAway$'] || 0) })[sortKey];
@@ -165,14 +163,12 @@ function render(){
   tb.querySelectorAll('input').forEach(i => i.addEventListener('change', () => { const k = i.dataset.k; store[k] = store[k] || {}; if (i.type === 'checkbox') store[k].on = i.checked; else store[k][i.dataset.f] = i.value.trim(); save(); render(); }));
   $('#tbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = -1; } render(); }));
 }
-function setTab(t){ tab = t; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === t)); document.querySelectorAll('nav a.sportl').forEach(x => x.classList.toggle('on', x.dataset.t === t)); history.replaceState(null, '', '#' + t); render(); }
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.t)));
+function setTab(t){ tab = t; history.replaceState(null, '', '#' + t); if (window.navSport) navSport(t, t === 'mlb' ? day : week); render(); }
+window.onNavSport = t => setTab(t);
+window.onNavSlate = (sp, v) => { if (sp === 'mlb') day = v; else week = v; setTab(sp); };
 document.querySelectorAll('.vb').forEach(b => b.addEventListener('click', () => { view = b.dataset.v; document.querySelectorAll('.vb').forEach(x => x.classList.toggle('on', x === b)); try { localStorage.setItem('ftc_ml_view', view); } catch (e) {} render(); }));
 try { const v = localStorage.getItem('ftc_ml_view'); if (v === 'slate') { view = 'slate'; document.querySelectorAll('.vb').forEach(x => x.classList.toggle('on', x.dataset.v === 'slate')); } } catch (e) {}
-document.querySelectorAll('nav a.sportl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); setTab(a.dataset.t); }));
 setTab(tab);
-document.querySelectorAll('nav a.dayl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); day = a.dataset.day; setTab('mlb'); document.querySelectorAll('nav a.dayl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
-document.querySelectorAll('nav a.weekl').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); week = a.dataset.week; setTab('nfl'); document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); document.querySelector('.tab[data-t=nfl]').classList.add('on'); document.querySelectorAll('nav a.weekl').forEach(x => x.classList.remove('on')); a.classList.add('on'); render(); }));
 ['#onlyplays', '#hidedone'].forEach(s => $(s).addEventListener('input', render));
 // ---- scorecard over every graded game ----
 const G = GRADED; const brier = (ps) => ps.length ? ps.reduce((s, [p, y]) => s + (p - y) ** 2, 0) / ps.length : null;
@@ -248,8 +244,7 @@ def page():
     sub = f"moneyline · model win% vs Robinhood (Kalshi) vs Pinnacle · public money split · built {datetime.datetime.now().isoformat(timespec='minutes')}"
     return f"""{head('Fade The Chalk', sub)}
 <style>.vsw{{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}}.vb{{background:var(--panel);color:var(--mute);border:0;padding:5px 12px;cursor:pointer;font:inherit}}.vb.on{{background:#1b2129;color:var(--ink)}}#slate{{max-width:1500px}}.sday{{font-family:var(--disp);font-size:22px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,#1d4ed8,#1e3a8a);padding:6px 14px;margin:14px 0 8px;border-radius:5px}}.sday:first-child{{margin-top:0}}.sgrid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:8px}}.mrow{{display:grid;grid-template-columns:1fr 1fr 96px;align-items:stretch;background:#0e1115;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:76px}}.mrow .t{{display:flex;align-items:center;gap:10px;padding:0 12px;opacity:.5;border-bottom:3px solid transparent}}.mrow .t img{{width:48px;height:48px;object-fit:contain;flex:none}}.mrow .t .ab{{font-family:var(--disp);font-size:22px;letter-spacing:.8px;line-height:1}}.mrow .t .pr{{font:12px var(--mono);color:var(--mute);display:block;margin-top:2px}}.mrow .t.pick{{opacity:1;background:#1c1706;border-bottom-color:var(--acc)}}.mrow .t.pick .pr{{color:var(--acc)}}.mrow.strong .t.pick{{background:#0d2016;border-bottom-color:var(--good)}}.mrow.strong .t.pick .pr{{color:var(--good)}}.mrow.pass .t.pick{{background:#151a21;border-bottom-color:#3a4450}}.mrow.pass .t.pick .pr{{color:var(--mute)}}.mrow .info{{display:flex;flex-direction:column;justify-content:center;align-items:center;background:#161c24;font:12px var(--mono);color:var(--mute);gap:3px;border-left:1px solid var(--line)}}.mrow .info .tm{{color:var(--ink);font-size:13px;white-space:nowrap}}.mrow .info .v{{font-weight:700;letter-spacing:.4px}}.mrow .info .v.strong{{color:var(--good)}}.mrow .info .v.bet{{color:var(--blue)}}.mrow.won{{border-color:#1f6b3e}}.mrow.lost{{border-color:#7a2a34}}.mrow .info .res{{font-weight:700}}.mrow.won .info .res{{color:var(--good)}}.mrow.lost .info .res{{color:var(--bad)}}.mrow .t.winner .ab{{text-decoration:underline;text-decoration-color:var(--good);text-decoration-thickness:2px;text-underline-offset:3px}}@media(max-width:600px){{.sgrid{{grid-template-columns:1fr 1fr}}}}</style>
-<div class="tabs"><div class="tab on" data-t="mlb">MLB {today or ''}</div><div class="tab" data-t="nfl">NFL {week.replace('_', ' ') if week else ''}</div></div>
-<div class="panel">
+<div class="panel top">
 <div class="kpi" id="kpi"></div>
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label><input type="checkbox" id="hidedone"> hide finished</label><span class="vsw"><button class="vb on" data-v="table">Table</button><button class="vb" data-v="slate">Slate</button></span></div>
 <div class="wrap" id="tblwrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
@@ -293,7 +288,7 @@ def _row(label, href, hr, ml, what):
     return f'<tr><td><a href="{href}">{label}</a></td><td class="tm">{what}</td><td class="tm">{hrc}</td><td class="tm">{mlc}</td></tr>'
 mlb_tags = sorted({os.path.basename(f)[5:15] for f in glob.glob(os.path.join(BT, 'pred_*.json'))} | {t for t in boards if '_wk' not in t}, reverse=True)
 nfl_tags = sorted({os.path.basename(f)[4:-5] for f in glob.glob(os.path.join(BT, 'nfl_*.json'))} | {t for t in boards if '_wk' in t}, reverse=True)
-arch = head('Fade The Chalk', 'archive · every locked day and week, both boards, kept forever').replace('href="ml.html" class="on"', 'href="ml.html"').replace('href="archive.html"', 'href="archive.html" class="on"')
+arch = head('Fade The Chalk', 'archive · every locked day and week, both boards, kept forever', 'archive')
 arch += '<div class="panel top"><h2>NFL weeks <small>touchdowns page · moneylines tab</small></h2><div class="wrap"><table><thead><tr><th>Week</th><th></th><th>Anytime TD</th><th>Moneyline</th></tr></thead><tbody>'
 for t in nfl_tags: arch += _row(t.replace('_', ' '), f'nfl/{t}.html', _hr_summary(t, 'NFL'), _ml_summary(t), 'TD board → nfl page · ML → Moneyline, pick the week')
 arch += '</tbody></table></div><h2>MLB days <small>home runs page · moneylines tab</small></h2><div class="wrap"><table><thead><tr><th>Day</th><th></th><th>Home runs</th><th>Moneyline</th></tr></thead><tbody>'
