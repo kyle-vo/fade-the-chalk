@@ -1,84 +1,4 @@
-﻿  NFL PHI@CHI: $56,546 on CHI / $327,883 on PHI (9,430 trades)  (partial, game not started)
-taker tape attached to 248 locked games
-  pinnacle spreads+totals baseball_mlb: 13 games, 2 credits
-  lines 2026-09-26: 13 games (13 spreads, 13 totals)
-  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 24 MLB days
-ml.html: 15 MLB days, 3 NFL weeks, 218 graded games
-lines.html: 3 MLB days, 1 NFL weeks, 52 games
-done 08:15
-=== 2026-09-26 09:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Bijan Robinson         ATL  RB p=0.611 fair -157 heat 57 share 0.373
-  NFL James Cook III         BUF  RB p=0.582 fair -139 heat 83 share 0.264
-  NFL Javonte Williams       DAL  RB p=0.569 fair -132 heat 74 share 0.292
-  NFL De'Von Achane          MIA  RB p=0.567 fair -131 heat 62 share 0.41
-odds cache is 52 min old (limit 90) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull.
-  Kalshi MLB 2026-09-26: 85 players, $233,734 traded
-  Kalshi NFL 2026-09-27: 308 players, $1,305,910 traded
-  Kalshi NFL 2026-09-28: 21 players, $28,806 traded
-  ML 2026-09-26: 0/13 graded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 1/16 graded
-MLB 2026-09-26: kept 0 frozen, refreshed 233, late 0
-NFL 2026_wk3: kept 17 frozen, refreshed 268, late 0
-MLB 2026-09-26: 0/13 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 1/16 games graded
-site: index + 24 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $83,800 on NO / $282,698 on LV (17,067 trades)  (partial, game not started)
-  NFL LAR@DEN: $65,641 on DEN / $60,743 on LAR (6,001 trades)  (partial, game not started)
-  NFL PHI@CHI: $56,949 on CHI / $328,451 on PHI (9,489 trades)  (partial, game not started)
-taker tape attached to 248 locked games
-  pinnacle spreads+totals baseball_mlb: 13 games, 2 credits
-  lines 2026-09-26: 13 games (13 spreads, 13 totals)
-  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 24 MLB days
-ml.html: 15 MLB days, 3 NFL weeks, 218 graded games
-lines.html: 3 MLB days, 1 NFL weeks, 52 games
-done 09:06
-=== 2026-09-26 12:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Bijan Robinson         ATL  RB p=0.611 fair -157 heat 57 share 0.373
-  NFL James Cook III         BUF  RB p=0.582 fair -139 heat 83 share 0.264
-  NFL Javonte Williams       DAL  RB p=0.572 fair -134 heat 74 share 0.292
-  NFL De'Von Achane          MIA  RB p=0.567 fair -131 heat 62 share 0.41
-odds cache is 50 min old (limit 90) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull.
-  Kalshi MLB 2026-09-26: 149 players, $626,263 traded
-  Kalshi NFL 2026-09-27: 310 players, $1,443,275 traded
-  Kalshi NFL 2026-09-28: 21 players, $31,906 traded
-  ML 2026-09-26: 0/13 graded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 1/16 graded
-MLB 2026-09-26: kept 36 frozen, refreshed 194, late 0
-NFL 2026_wk3: kept 17 frozen, refreshed 269, late 0
-MLB 2026-09-26: 0/13 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 1/16 games graded
-site: index + 24 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $88,789 on NO / $297,213 on LV (18,061 trades)  (partial, game not started)
-  NFL LAR@DEN: $69,558 on DEN / $68,418 on LAR (6,362 trades)  (partial, game not started)
-  NFL PHI@CHI: $107,587 on CHI / $335,848 on PHI (10,050 trades)  (partial, game not started)
-taker tape attached to 248 locked games
-  pinnacle spreads+totals baseball_mlb: 13 games, 2 credits
-  lines 2026-09-26: 13 games (13 spreads, 13 totals)
-  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 24 MLB days
-ml.html: 15 MLB days, 3 NFL weeks, 218 graded games
-lines.html: 3 MLB days, 1 NFL weeks, 52 games
+﻿lines.html: 3 MLB days, 1 NFL weeks, 52 games
 done 12:06
 === 2026-09-26 15:05 ===
   saved nfl_depth.json
@@ -237,3 +157,140 @@ taker tape attached to 262 locked games
 archive.html: 3 NFL weeks, 25 MLB days
 ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
 lines.html: 4 MLB days, 1 NFL weeks, 60 games
+done 00:06
+=== 2026-09-27 03:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Bijan Robinson         ATL  RB p=0.611 fair -157 heat 57 share 0.373
+  NFL James Cook III         BUF  RB p=0.582 fair -139 heat 83 share 0.264
+  NFL Javonte Williams       DAL  RB p=0.569 fair -132 heat 74 share 0.292
+  NFL De'Von Achane          MIA  RB p=0.567 fair -131 heat 62 share 0.41
+  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 07:06))
+  baseball_mlb/batter_home_runs: 149 players priced, 17 on Fliff, 0 Underdog-only (credits used this month: 186 used / 314 left on key #7)
+key #7 used this run
+snapshot 2 saved for 2026-09-27
+  Kalshi MLB 2026-09-27: 66 players, $26,304 traded
+  Kalshi NFL 2026-09-27: 319 players, $2,490,582 traded
+  Kalshi NFL 2026-09-28: 22 players, $50,490 traded
+  Kalshi NFL 2026-10-01: 2 players, $0 traded
+  ML 2026-09-27: 0/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 1/16 graded
+MLB 2026-09-27: kept 0 frozen, refreshed 268, late 0
+NFL 2026_wk3: kept 17 frozen, refreshed 270, late 0
+MLB 2026-09-27: 0/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 1/16 games graded
+site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LV@NO: $132,454 on NO / $424,991 on LV (24,123 trades)  (partial, game not started)
+  NFL LAR@DEN: $110,737 on DEN / $94,758 on LAR (8,370 trades)  (partial, game not started)
+  NFL PHI@CHI: $120,921 on CHI / $380,121 on PHI (11,772 trades)  (partial, game not started)
+taker tape attached to 262 locked games
+  pinnacle spreads+totals baseball_mlb: 16 games, 2 credits
+  lines 2026-09-27: 8 games (8 spreads, 8 totals)
+  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+archive.html: 3 NFL weeks, 25 MLB days
+ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
+lines.html: 4 MLB days, 1 NFL weeks, 60 games
+done 03:06
+=== 2026-09-27 06:05 ===
+git : error: Your local changes to the following files would be overwritten by merge:
+At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
++ git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -A ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (error: Your loc...itten by merge::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+	backtest/kalshi_mlb_2026-09-27.json
+	backtest/kalshi_nfl_2026-09-27.json
+	backtest/kalshi_nfl_2026-09-28.json
+	backtest/kalshi_nfl_2026-10-01.json
+	backtest/lines_2026-09-27.json
+	backtest/lines_2026_wk3.json
+	backtest/ml_2026-09-27.json
+	backtest/ml_2026_wk3.json
+	backtest/mlboard.json
+	backtest/mlsnap_2026-09-27.json
+	backtest/nfl_2026_wk3.json
+	backtest/odds_2026-09-27.json
+	backtest/pred_2026-09-27.json
+	backtest/taker/MLB_822679.json
+	backtest/taker/MLB_822761.json
+	backtest/taker/MLB_823084.json
+	backtest/taker/MLB_823164.json
+	backtest/taker/MLB_823246.json
+	backtest/taker/MLB_823408.json
+	backtest/taker/MLB_823490.json
+	backtest/taker/MLB_823650.json
+	backtest/taker/MLB_823731.json
+	backtest/taker/MLB_823814.json
+	backtest/taker/MLB_824055.json
+	backtest/taker/MLB_824217.json
+	backtest/taker/MLB_824542.json
+	backtest/taker/MLB_824948.json
+	backtest/taker/NFL_401872949.json
+	backtest/taker/NFL_401872950.json
+	backtest/taker/NFL_401872951.json
+	backtest/taker/NFL_401872952.json
+	backtest/taker/NFL_401872953.json
+	backtest/taker/NFL_401872954.json
+	backtest/taker/NFL_401872955.json
+	backtest/taker/NFL_401872956.json
+	backtest/taker/NFL_401872957.json
+	backtest/taker/NFL_401872958.json
+	backtest/taker/NFL_401872959.json
+	backtest/taker/NFL_401872960.json
+	backtest/taker/NFL_401872961.json
+	backtest/taker/NFL_401872962.json
+	backtest/taker/NFL_401872963.json
+	docs/days/2026-09-27.html
+	docs/index.html
+	docs/lines.html
+	docs/ml.html
+	docs/nfl/2026_wk3.html
+	docs/track.html
+Please commit your changes or stash them before you merge.
+Aborting
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Bijan Robinson         ATL  RB p=0.611 fair -157 heat 57 share 0.373
+  NFL James Cook III         BUF  RB p=0.582 fair -139 heat 83 share 0.264
+  NFL De'Von Achane          MIA  RB p=0.572 fair -134 heat 63 share 0.41
+  NFL Javonte Williams       DAL  RB p=0.569 fair -132 heat 74 share 0.292
+  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 07:06))
+  baseball_mlb/batter_home_runs: 278 players priced, 273 on Fliff, 0 Underdog-only (credits used this month: 136 used / 364 left on key #8)
+key #8 used this run
+snapshot 3 saved for 2026-09-27
+  Kalshi MLB 2026-09-27: 77 players, $44,210 traded
+  Kalshi NFL 2026-09-27: 319 players, $3,628,251 traded
+  Kalshi NFL 2026-09-28: 22 players, $52,776 traded
+  Kalshi NFL 2026-10-01: 2 players, $0 traded
+  ML 2026-09-27: 0/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 1/16 graded
+MLB 2026-09-27: kept 0 frozen, refreshed 268, late 0
+NFL 2026_wk3: kept 17 frozen, refreshed 269, late 0
+MLB 2026-09-27: 0/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 1/16 games graded
+site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LV@NO: $141,780 on NO / $435,059 on LV (24,896 trades)  (partial, game not started)
+  NFL LAR@DEN: $114,242 on DEN / $99,201 on LAR (8,735 trades)  (partial, game not started)
+  NFL PHI@CHI: $121,542 on CHI / $382,752 on PHI (12,006 trades)  (partial, game not started)
+taker tape attached to 262 locked games
+  pinnacle spreads+totals baseball_mlb: 16 games, 2 credits
+  lines 2026-09-27: 13 games (13 spreads, 13 totals)
+  pinnacle spreads+totals americanfootball_nfl: 29 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+archive.html: 3 NFL weeks, 25 MLB days
+ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
+lines.html: 4 MLB days, 1 NFL weeks, 65 games
