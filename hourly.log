@@ -1,38 +1,4 @@
-﻿  Kalshi NFL 2026-10-01: 2 players, $50 traded
-  ML 2026-09-27: 12/15 graded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 10/16 graded
-MLB 2026-09-27: kept 263 frozen, refreshed 0, late 0
-NFL 2026_wk3: kept 241 frozen, refreshed 37, late 0
-MLB 2026-09-27: 12/15 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 10/16 games graded
-=== 2026-09-27 18:05 ===
-git : error: Your local changes to the following files would be overwritten by merge:
-At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
-+ git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -A ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (error: Your loc...itten by merge::String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
-	backtest/kalshi_nfl_2026-09-27.json
-	backtest/kalshi_nfl_2026-09-28.json
-	backtest/kalshi_nfl_2026-10-01.json
-	backtest/ml_2026_wk3.json
-	backtest/mlres_2026-09-27.json
-	backtest/mlres_2026_wk3.json
-	backtest/mlsnap_2026-09-27.json
-	backtest/odds_2026-09-27.json
-	backtest/res_2026-09-27.json
-	backtest/taker/NFL_401872962.json
-	backtest/taker/NFL_401872963.json
-	docs/days/2026-09-27.html
-	docs/index.html
-	docs/nfl/2026_wk3.html
-	docs/track.html
-Please commit your changes or stash them before you merge.
+﻿Please commit your changes or stash them before you merge.
 Aborting
   saved nfl_depth.json
   depth charts: 32 teams
@@ -225,6 +191,40 @@ NFL 2026_wk2: 16/16 games graded
 NFL 2026_wk3: 15/16 games graded
 site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
   NFL PHI@CHI: $317,638 on CHI / $1,957,091 on PHI (38,244 trades)  (partial, game not started)
+taker tape attached to 262 locked games
+  pinnacle spreads+totals americanfootball_nfl: 17 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+archive.html: 3 NFL weeks, 25 MLB days
+ml.html: 16 MLB days, 3 NFL weeks, 259 graded games
+lines.html: 4 MLB days, 1 NFL weeks, 67 games
+done 06:05
+=== 2026-09-28 09:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Cam Skattebo           NYG  RB p=0.571 fair -133 heat 42 share 0.334
+  NFL Omarion Hampton        LAC  RB p=0.569 fair -132 heat 41 share 0.333
+  NFL Ashton Jeanty          LV   RB p=0.559 fair -127 heat 49 share 0.324
+  NFL Christian McCaffrey    SF   RB p=0.554 fair -124 heat 78 share 0.319
+  NFL touchdown props: skipped, 0 credits (already pulled for the Sunday night window (Sun 19:35))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #2 used this run
+snapshot 5 saved for 2026-09-28
+  Kalshi MLB 2026-09-29: 32 players, $13,832 traded
+  Kalshi NFL 2026-09-28: 22 players, $719,464 traded
+  Kalshi NFL 2026-10-01: 15 players, $2,948 traded
+  ML 2026-09-27: 14/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 15/16 graded
+NFL 2026_wk3: kept 259 frozen, refreshed 17, late 0
+MLB 2026-09-27: 14/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 15/16 games graded
+site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL PHI@CHI: $371,984 on CHI / $2,337,194 on PHI (48,264 trades)  (partial, game not started)
 taker tape attached to 262 locked games
   pinnacle spreads+totals americanfootball_nfl: 17 games, 2 credits
   lines 2026_wk3: 14 games (14 spreads, 14 totals)
