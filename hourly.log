@@ -1,38 +1,4 @@
-﻿archive.html: 3 NFL weeks, 25 MLB days
-ml.html: 16 MLB days, 3 NFL weeks, 258 graded games
-lines.html: 4 MLB days, 1 NFL weeks, 67 games
-Auto-merging backtest/kalshi_nfl_2026-09-27.json
-Auto-merging backtest/kalshi_nfl_2026-09-28.json
-Auto-merging backtest/kalshi_nfl_2026-10-01.json
-Auto-merging backtest/lines_2026_wk3.json
-Auto-merging backtest/ml_2026_wk3.json
-Auto-merging backtest/mlboard.json
-Auto-merging backtest/mlres_2026-09-27.json
-Auto-merging backtest/mlres_2026_wk3.json
-Auto-merging backtest/mlsnap_2026-09-27.json
-Auto-merging backtest/nfl_2026_wk3.json
-Auto-merging backtest/nflres_2026_wk3.json
-Auto-merging backtest/odds_2026-09-27.json
-Auto-merging backtest/res_2026-09-27.json
-Auto-merging backtest/taker/NFL_401872962.json
-Auto-merging backtest/taker/NFL_401872963.json
-Auto-merging docs/archive.html
-Auto-merging docs/days/2026-09-27.html
-Auto-merging docs/index.html
-Auto-merging docs/lines.html
-Auto-merging docs/ml.html
-Auto-merging docs/nfl/2026_wk3.html
-Auto-merging docs/track.html
-done 18:06
-=== 2026-09-27 21:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Cam Skattebo           NYG  RB p=0.570 fair -133 heat 42 share 0.334
-  NFL Omarion Hampton        LAC  RB p=0.560 fair -127 heat 41 share 0.325
-  NFL Christian McCaffrey    SF   RB p=0.558 fair -126 heat 78 share 0.322
-  NFL Ashton Jeanty          LV   RB p=0.549 fair -122 heat 48 share 0.315
+﻿  NFL Ashton Jeanty          LV   RB p=0.549 fair -122 heat 48 share 0.315
   NFL touchdown props: skipped, 0 credits (already pulled for the Sunday night window (Sun 19:35))
   baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
 key #8 used this run
@@ -225,6 +191,40 @@ NFL 2026_wk2: 16/16 games graded
 NFL 2026_wk3: 15/16 games graded
 site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
   NFL PHI@CHI: $449,288 on CHI / $2,799,242 on PHI (61,863 trades)  (partial, game not started)
+taker tape attached to 262 locked games
+  pinnacle spreads+totals americanfootball_nfl: 17 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+archive.html: 3 NFL weeks, 25 MLB days
+ml.html: 16 MLB days, 3 NFL weeks, 259 graded games
+lines.html: 4 MLB days, 1 NFL weeks, 67 games
+done 12:05
+=== 2026-09-28 15:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Omarion Hampton        LAC  RB p=0.569 fair -132 heat 41 share 0.333
+  NFL Christian McCaffrey    SF   RB p=0.554 fair -124 heat 78 share 0.319
+  NFL Chase Brown            CIN  RB p=0.551 fair -123 heat 58 share 0.316
+  NFL Ashton Jeanty          LV   RB p=0.547 fair -121 heat 48 share 0.313
+  NFL touchdown props: skipped, 0 credits (already pulled for the Sunday night window (Sun 19:35))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #4 used this run
+snapshot 9 saved for 2026-09-28
+  Kalshi MLB 2026-09-29: 32 players, $37,865 traded
+  Kalshi NFL 2026-09-28: 23 players, $1,944,969 traded
+  Kalshi NFL 2026-10-01: 18 players, $4,937 traded
+  ML 2026-09-27: 14/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 15/16 graded
+NFL 2026_wk3: kept 259 frozen, refreshed 17, late 0
+MLB 2026-09-27: 14/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 15/16 games graded
+site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL PHI@CHI: $690,318 on CHI / $3,680,238 on PHI (83,099 trades)  (partial, game not started)
 taker tape attached to 262 locked games
   pinnacle spreads+totals americanfootball_nfl: 17 games, 2 credits
   lines 2026_wk3: 14 games (14 spreads, 14 totals)
