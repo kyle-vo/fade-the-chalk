@@ -198,3 +198,90 @@ archive.html: 3 NFL weeks, 25 MLB days
 ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
 lines.html: 4 MLB days, 1 NFL weeks, 67 games
 done 12:06
+=== 2026-09-27 15:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Cam Skattebo           NYG  RB p=0.570 fair -133 heat 42 share 0.334
+  NFL Omarion Hampton        LAC  RB p=0.560 fair -127 heat 41 share 0.325
+  NFL Christian McCaffrey    SF   RB p=0.558 fair -126 heat 78 share 0.322
+  NFL Chase Brown            CIN  RB p=0.547 fair -121 heat 58 share 0.313
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #5 used this run
+snapshot 8 saved for 2026-09-27
+  Kalshi MLB 2026-09-27: 89 players, $505,494 traded
+  Kalshi NFL 2026-09-27: 104 players, $5,040,046 traded
+  Kalshi NFL 2026-09-28: 22 players, $88,582 traded
+  Kalshi NFL 2026-10-01: 2 players, $50 traded
+  ML 2026-09-27: 12/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 10/16 graded
+MLB 2026-09-27: kept 263 frozen, refreshed 0, late 0
+NFL 2026_wk3: kept 241 frozen, refreshed 37, late 0
+MLB 2026-09-27: 12/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 10/16 games graded
+=== 2026-09-27 18:05 ===
+git : error: Your local changes to the following files would be overwritten by merge:
+At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
++ git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -A ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (error: Your loc...itten by merge::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+	backtest/kalshi_nfl_2026-09-27.json
+	backtest/kalshi_nfl_2026-09-28.json
+	backtest/kalshi_nfl_2026-10-01.json
+	backtest/ml_2026_wk3.json
+	backtest/mlres_2026-09-27.json
+	backtest/mlres_2026_wk3.json
+	backtest/mlsnap_2026-09-27.json
+	backtest/odds_2026-09-27.json
+	backtest/res_2026-09-27.json
+	backtest/taker/NFL_401872962.json
+	backtest/taker/NFL_401872963.json
+	docs/days/2026-09-27.html
+	docs/index.html
+	docs/nfl/2026_wk3.html
+	docs/track.html
+Please commit your changes or stash them before you merge.
+Aborting
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Cam Skattebo           NYG  RB p=0.570 fair -133 heat 42 share 0.334
+  NFL Omarion Hampton        LAC  RB p=0.560 fair -127 heat 41 share 0.325
+  NFL Christian McCaffrey    SF   RB p=0.558 fair -126 heat 78 share 0.322
+  NFL Ashton Jeanty          LV   RB p=0.549 fair -122 heat 48 share 0.315
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+  americanfootball_nfl/player_anytime_td: 30 players priced, 26 on Fliff, 0 Underdog-only (credits used this month: 312 used / 188 left on key #6)
+key #6 used this run
+snapshot 9 saved for 2026-09-27
+  Kalshi NFL 2026-09-27: 21 players, $4,704,571 traded
+  Kalshi NFL 2026-09-28: 22 players, $111,851 traded
+  Kalshi NFL 2026-10-01: 2 players, $50 traded
+  ML 2026-09-27: 14/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 14/16 graded
+MLB 2026-09-27: kept 263 frozen, refreshed 0, late 0
+NFL 2026_wk3: kept 261 frozen, refreshed 17, late 0
+MLB 2026-09-27: 14/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 14/16 games graded
+site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL PHI@CHI: $156,153 on CHI / $812,854 on PHI (20,912 trades)  (partial, game not started)
+taker tape attached to 262 locked games
+  pinnacle spreads+totals americanfootball_nfl: 16 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+  lines 2026-09-27: graded 13
+  lines 2026_wk3: graded 4
+archive.html: 3 NFL weeks, 25 MLB days
+ml.html: 16 MLB days, 3 NFL weeks, 258 graded games
+lines.html: 4 MLB days, 1 NFL weeks, 67 games
