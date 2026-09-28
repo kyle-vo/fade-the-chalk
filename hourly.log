@@ -1,38 +1,4 @@
-﻿NFL 2026_wk3: kept 170 frozen, refreshed 111, late 0
-MLB 2026-09-27: 0/15 games graded
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 1/16 games graded
-site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LV@NO: $204,942 on NO / $596,769 on LV (34,475 trades)  (partial, game not started)
-  NFL LAR@DEN: $215,448 on DEN / $153,237 on LAR (13,212 trades)  (partial, game not started)
-  NFL PHI@CHI: $130,513 on CHI / $643,359 on PHI (14,009 trades)  (partial, game not started)
-taker tape attached to 262 locked games
-  pinnacle spreads+totals baseball_mlb: 16 games, 2 credits
-  lines 2026-09-27: 15 games (15 spreads, 15 totals)
-  pinnacle spreads+totals americanfootball_nfl: 15 games, 2 credits
-  lines 2026_wk3: 14 games (14 spreads, 14 totals)
-archive.html: 3 NFL weeks, 25 MLB days
-ml.html: 16 MLB days, 3 NFL weeks, 231 graded games
-lines.html: 4 MLB days, 1 NFL weeks, 67 games
-done 12:06
-=== 2026-09-27 15:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Cam Skattebo           NYG  RB p=0.570 fair -133 heat 42 share 0.334
-  NFL Omarion Hampton        LAC  RB p=0.560 fair -127 heat 41 share 0.325
-  NFL Christian McCaffrey    SF   RB p=0.558 fair -126 heat 78 share 0.322
-  NFL Chase Brown            CIN  RB p=0.547 fair -121 heat 58 share 0.313
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #5 used this run
-snapshot 8 saved for 2026-09-27
-  Kalshi MLB 2026-09-27: 89 players, $505,494 traded
-  Kalshi NFL 2026-09-27: 104 players, $5,040,046 traded
-  Kalshi NFL 2026-09-28: 22 players, $88,582 traded
-  Kalshi NFL 2026-10-01: 2 players, $50 traded
+﻿  Kalshi NFL 2026-10-01: 2 players, $50 traded
   ML 2026-09-27: 12/15 graded
   ML 2026_wk1: 16/16 graded
   ML 2026_wk2: 16/16 graded
@@ -225,6 +191,40 @@ NFL 2026_wk2: 16/16 games graded
 NFL 2026_wk3: 15/16 games graded
 site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
   NFL PHI@CHI: $237,909 on CHI / $1,756,252 on PHI (33,795 trades)  (partial, game not started)
+taker tape attached to 262 locked games
+  pinnacle spreads+totals americanfootball_nfl: 17 games, 2 credits
+  lines 2026_wk3: 14 games (14 spreads, 14 totals)
+archive.html: 3 NFL weeks, 25 MLB days
+ml.html: 16 MLB days, 3 NFL weeks, 259 graded games
+lines.html: 4 MLB days, 1 NFL weeks, 67 games
+done 03:05
+=== 2026-09-28 06:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Cam Skattebo           NYG  RB p=0.571 fair -133 heat 42 share 0.334
+  NFL Omarion Hampton        LAC  RB p=0.569 fair -132 heat 41 share 0.333
+  NFL Ashton Jeanty          LV   RB p=0.559 fair -127 heat 49 share 0.324
+  NFL Christian McCaffrey    SF   RB p=0.554 fair -124 heat 78 share 0.319
+  NFL touchdown props: skipped, 0 credits (already pulled for the Sunday night window (Sun 19:35))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #1 used this run
+snapshot 4 saved for 2026-09-28
+  Kalshi MLB 2026-09-29: 32 players, $8,969 traded
+  Kalshi NFL 2026-09-28: 22 players, $437,843 traded
+  Kalshi NFL 2026-10-01: 15 players, $238 traded
+  ML 2026-09-27: 14/15 graded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 15/16 graded
+NFL 2026_wk3: kept 259 frozen, refreshed 17, late 0
+MLB 2026-09-27: 14/15 games graded
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 15/16 games graded
+site: index + 25 day pages + 3 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL PHI@CHI: $317,638 on CHI / $1,957,091 on PHI (38,244 trades)  (partial, game not started)
 taker tape attached to 262 locked games
   pinnacle spreads+totals americanfootball_nfl: 17 games, 2 credits
   lines 2026_wk3: 14 games (14 spreads, 14 totals)
