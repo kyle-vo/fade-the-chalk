@@ -265,6 +265,8 @@ BOARD_JS = r"""
 const $ = s => document.querySelector(s);
 let tab = PAGE.tab, sortKey = 'prob', sortDir = -1;
 if (window.NAV_SPORT === 'nfl' && (PAGE.rows.nfl || []).length) tab = 'nfl'; else if (window.NAV_SPORT === 'mlb' && (PAGE.rows.mlb || []).length) tab = 'mlb';
+// arriving on the today board asking for a sport it has no rows for (e.g. index.html#mlb on an MLB off day): open that sport's latest slate instead
+if ((location.hash === '#mlb' || location.hash === '#nfl') && !(PAGE.rows[location.hash.slice(1)] || []).length && window.navFallback && navFallback(location.hash.slice(1))) location.replace(navFallback(location.hash.slice(1)));
 window.onNavSport = s => { if (!(PAGE.rows[s] || []).length || !((PAGE.rows.mlb || []).length && (PAGE.rows.nfl || []).length)) return false; tab = s; history.replaceState(null, '', '#' + s); markNav(); render(); };
 document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === tab));
 function markNav(){ if (window.navSport) navSport(tab); }

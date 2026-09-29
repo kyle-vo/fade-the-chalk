@@ -36,6 +36,9 @@ if (!sp) { try { sp = localStorage.getItem('ftc_sport'); } catch (e) {} }
 if (sp !== 'mlb' && sp !== 'nfl') sp = 'mlb';
 window.NAV_SPORT = sp;
 const link = (pg, s) => NAV.root + PAGES[pg] + '#' + s;
+// the latest slate that has its own page (not the today board): used when the today board has nothing for a sport, e.g. an MLB off day
+window.navFallback = s => { const o = ((NAV.slates || {})[s] || []).find(x => x[2] && !/(^|\/)index\.html/.test(x[2])); return o ? o[2] : null; };
+const samePage = href => { const a = document.createElement('a'); a.href = href; return a.pathname === location.pathname || (/\/$/.test(location.pathname) && /\/index\.html$/.test(a.pathname) && a.pathname.replace(/index\.html$/, '') === location.pathname); };
 window.navSport = function(s, cur){
   sp = s; window.NAV_SPORT = s; window.__navSet = true; try { localStorage.setItem('ftc_sport', s); } catch (e) {}
   document.querySelectorAll('nav.nb .sp a').forEach(a => a.classList.toggle('on', a.dataset.sp === s));
@@ -49,7 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('nav.nb .sp a').forEach(a => a.addEventListener('click', ev => {
     ev.preventDefault(); const s = a.dataset.sp;
     if (NAV.page === 'track' || NAV.page === 'archive') { navSport(s); return; }
-    if (!(window.onNavSport && window.onNavSport(s) !== false)) location.href = link(NAV.page, s);
+    if (window.onNavSport && window.onNavSport(s) !== false) return;
+    const t = link(NAV.page, s);
+    location.href = (samePage(t) && window.navFallback(s)) || t;   // same page with nothing for that sport: go to its latest slate instead of only changing the hash
   }));
   const sel = document.querySelector('nav.nb .sl select');
   if (sel) sel.addEventListener('change', () => {
