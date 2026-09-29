@@ -81,29 +81,30 @@ function verdict(r){
   //   edge 5+ 19-5 (+12.0u) | edge 2 to 5 4-4 (-1.3u) | edge 0 to 2 5-5 (-1.7u) | edge below 0 12-10 (-2.1u). Profitable 4 of 5 days, flat the other.
   // NFL: the model is ~89% Pinnacle early in the season, so its edge vs Robinhood has never reached +2 (best this week +0.3) and the MLB rule could never fire.
   //   NFL keeps the original rule: skip a favorite Robinhood overprices by 3+, otherwise STRONG when the public's money is on the other team. Untested: 15 games, every bucket won.
+  // Verdicts, from 2026-09-28. Every earlier rule stays on the scorecard. Checked on both halves of the graded games before switching.
+  // MLB (170 graded games with a Robinhood price):
+  //   STRONG BET = edge 5+ and the crowd's tape $ is NOT on the pick: 17-9, +9.6u (+45% / +33% by half)
+  //   LEAN       = edge 5+ with the crowd on the pick, or edge 2 to 5: about break-even overall and negative in the 2nd half (-27%, -7%): small or skip
+  //   FADE (dog) = favorite priced about right, edge -3 to +2: dog 25-21, +15.4u (+21% / +44%)
+  //   BET (chalk)= the model says the favorite is overpriced by 3+, but it keeps winning: 29-9, +8.0u (+8% / +47%). The market knows something the model does not.
+  // NFL (32 graded games; the model is ~Pinnacle, so its edge never reaches +2):
+  //   STRONG BET = crowd tape $ NOT on the pick, edge -3 or better, pick not -250 or steeper: 3-1
+  //   FADE (dog) = every other priced favorite with edge -3 or better, including the old BET tier: dog 10-13, +9.0u (+39% both weeks); the pick side of those lost 4.1u
+  //   PASS       = favorite overpriced by 3+.
   let v = 'PASS';
-  if (r.pickOdds != null) {
+  const tp = tapePub != null ? tapePub : volPub, e = r.edge;
+  if (r.pickOdds != null && e != null) {
     if (r.sport === 'NFL') {
-      // Price cap, from 2026-09-21. Through two weeks (29 priced games) favorites at -250 or steeper went 6-4 and lost 2.2u: they won 60% but needed 78%, and one
-      // upset erases three or four wins (LAC -441, LAC -285, TB -376, BAL -376 all lost outright). Medium favorites went 10-2 (+3.4u), small ones 5-2 (+2.0u).
-      // Ten games is thin, but the break-even math stands on its own. Checked before the public split, because a heavy price is a reason to skip whoever the crowd is on.
-      if (r.pickOdds <= -250) v = 'PASS (too expensive)';
-      else if (r.edge != null && r.edge < -3) v = 'PASS (priced in)';
-      else if (pub != null && pub < 0.5) v = 'STRONG BET';
-      else v = 'BET';
-    } else {
-      if (r.edge != null && r.edge >= 5) v = 'STRONG BET';
-      else if (r.edge != null && r.edge >= 2) v = 'BET';
+      if (tp != null && tp < 0.5 && e >= -3 && r.pickOdds > -250) v = 'STRONG BET';
+      else if (r.pickOdds < 0 && r.oppOdds != null && e >= -3) v = 'FADE (dog)';
       else v = 'PASS';
+    } else {
+      if (e >= 5) v = (tp != null && tp >= 0.5) ? 'LEAN' : 'STRONG BET';
+      else if (e >= 2) v = 'LEAN';
+      else if (e >= -3) v = (r.pickOdds < 0 && r.oppOdds != null) ? 'FADE (dog)' : 'PASS';
+      else v = r.pickOdds < 0 ? 'BET (chalk)' : 'PASS';
     }
   }
-  // FADE, from 2026-09-26. Fading the model's pick is a loser on STRONG BET (15-29, -13.5u) and BET (10-17, -6.2u) but a winner on PASS games where the pick is the
-  // priced favorite: the dog went 33-40 for +7.5u in MLB and 6-11 for +4.3u in NFL at Robinhood's prices. Those are favorites priced past their real chance.
-  // Most-bet games: the dog won 16 of the top-3 MLB games overall, but driven by dogs the model picked; with the model on the favorite the dog is 10-23 (-8u). Flagged, not faded.
-  // FADE narrowed, from 2026-09-27. Split by the model's edge on the favorite, the fade only pays when the favorite is roughly fairly priced (edge -3 to +2):
-  //   MLB 25-21 (+15.5u), NFL 10-15 (+7.6u). When the model says the favorite is overpriced by 3+ it is usually the model that is wrong: MLB 9-29 (-15.8u), NFL 1-3.
-  //   Those games are a plain PASS now. The cutoff was picked after seeing the results, so expect less than the table shows.
-  if (v.startsWith('PASS') && r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && !(r.edge != null && r.edge < -3)) v = 'FADE (dog)';
   const tpub = r.takerPubHome == null ? null : (r.pick === 'home' ? r.takerPubHome : 1 - r.takerPubHome);   // directional: taker dollars on the pick side, pre-game trade tape
   return { pub, pubSrc, volPub, kal, v, isFav, tpub };
 }
@@ -128,7 +129,7 @@ function renderSlate(list){
 function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).map(r => { const sh = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome); return { r, ...verdict(r), diff: sh == null ? null : (r.pickProb - sh) * 100 }; });
   const only = $('#onlyplays').checked, hide = $('#hidedone').checked, hidestart = $('#hidestart').checked;
-  let list = rows.filter(x => (!hidestart || (x.r.homeWin == null && new Date(x.r.time).getTime() > Date.now())) && (!only || x.v === 'BET' || x.v === 'STRONG BET' || x.v === 'FADE (dog)') && (!hide || !(x.r.homeWin != null || (x.r.time && Date.now() - new Date(x.r.time).getTime() > 4 * 3600e3))));
+  let list = rows.filter(x => (!hidestart || (x.r.homeWin == null && new Date(x.r.time).getTime() > Date.now())) && (!only || !x.v.startsWith('PASS')) && (!hide || !(x.r.homeWin != null || (x.r.time && Date.now() - new Date(x.r.time).getTime() > 4 * 3600e3))));
   const get = x => ({ edge: x.r.edge ?? -99, model: x.r.pickProb, kvol: (x.r.koiHome || x.r.koiAway) ? (x.r.koiHome || 0) + (x.r.koiAway || 0) : (x.r.kvol || 0), pub: x.pub ?? -1, time: x.r.time, sharp: x.r.sharpHome ?? -99, diff: x.diff ?? -99, v: x.v, take: x.r.bookTake ?? -1, gave: x.r.bookGave ?? -1, tpub: x.tpub ?? -1, tvol: (x.r['takerHome$'] || 0) + (x.r['takerAway$'] || 0) })[sortKey];
   list.sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   renderSlate(list); $('#tblwrap').hidden = view !== 'table'; $('#slate').hidden = view !== 'slate';
@@ -137,7 +138,7 @@ function render(){
   $('#tbl thead').innerHTML = '<tr>' + cols.map(([l, k]) => `<th data-k="${k}" class="${k === sortKey ? 'on' : ''} ${R.has(l) ? 'r' : ''}">${l}</th>`).join('') + '</tr>';
   const tb = $('#tbl tbody'); tb.innerHTML = ''; let n = { s: 0, f: 0, g: 0, hit: 0, exp: 0, units: 0, staked: 0, take: 0, gave: 0 };
   for (const x of list) { const r = x.r, e = store[key(r)] || {};
-    if (x.v === 'BET' || x.v === 'STRONG BET') n.s++; if (x.v.startsWith('PASS')) n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; if (r.bookGave) n.gave += r.bookGave; }
+    if (!x.v.startsWith('PASS')) n.s++; if (x.v.startsWith('PASS')) n.f++; if (r.pickHit != null) { n.g++; n.hit += r.pickHit; n.exp += r.pickProb; if (r.units != null) { n.units += r.units; n.staked++; } if (r.bookTake) n.take += r.bookTake; if (r.bookGave) n.gave += r.bookGave; }
     const when = new Date(r.time).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     const pickTeam = r.pick === 'home' ? r.home : r.away, other = r.pick === 'home' ? r.away : r.home;
     const sharp = r.sharpHome == null ? null : (r.pick === 'home' ? r.sharpHome : 1 - r.sharpHome);
@@ -183,17 +184,24 @@ const diffPin = r => r.sharpHome == null ? null : (r.pickProb - (r.pick === 'hom
 const isModelFav = r => r.pickProb >= 0.5, isMarketFav = r => r.pickOdds != null && r.pickOdds < 0, pubOnPick = r => r.pubHome == null ? null : (r.pick === 'home' ? r.pubHome : 1 - r.pubHome);
 const strat = {
   'Model favorite, every game': G.filter(r => r.pickOdds != null),
-  'CURRENT FADE (dog): PASS favorite, edge -3 to +2 [units at the dog price]': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && r.edge != null && r.edge >= -3 && r.edge < 2),
+  'OLD FADE to 09-27: PASS favorite, edge -3 to +2 [units at the dog price]': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && r.edge != null && r.edge >= -3 && r.edge < 2),
   'Old FADE: every PASS favorite [units at the dog price]': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && !(r.edge != null && r.edge >= 2) ),
   'Dog when the favorite is overpriced by 3+ (now plain PASS) [dog price]': G.filter(r => r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && r.edge != null && r.edge < -3),
   'Dog in the most-bet games of the slate [dog price]': G.filter(r => r.mostBet && r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null),
   'Dog in most-bet games that are also PASS [dog price]': G.filter(r => r.mostBet && r.pickOdds != null && r.pickOdds < 0 && r.oppOdds != null && !(r.edge != null && r.edge >= 2)),
-  'CURRENT VERDICT (MLB): STRONG BET, edge 5+ at Robinhood': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 5),
-  'CURRENT VERDICT (MLB): BET, edge 2 to 5': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 2 && r.edge < 5),
-  'CURRENT VERDICT (MLB): PASS, edge under 2': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge < 2),
-  'CURRENT VERDICT (NFL): STRONG BET, tape $ on the other team': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && r.pickOdds > -250 && !(r.edge != null && r.edge < -3) && nflPub(r) != null && nflPub(r) < 0.5),
-  'CURRENT VERDICT (NFL): PASS, favorite -250 or steeper (too expensive)': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && r.pickOdds <= -250),
-  'CURRENT VERDICT (NFL): BET, tape $ agrees': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && r.pickOdds > -250 && !(r.edge != null && r.edge < -3) && !(nflPub(r) != null && nflPub(r) < 0.5)),
+  'CURRENT (MLB): STRONG BET, edge 5+ and the crowd not on the pick': G.filter(r => r.sport === 'MLB' && verdict(r).v === 'STRONG BET'),
+  'CURRENT (MLB): LEAN, edge 2+ otherwise': G.filter(r => r.sport === 'MLB' && verdict(r).v === 'LEAN'),
+  'CURRENT (MLB): FADE (dog), favorite edge -3 to +2 [dog price]': G.filter(r => r.sport === 'MLB' && verdict(r).v === 'FADE (dog)'),
+  'CURRENT (MLB): BET (chalk), favorite the model calls overpriced by 3+': G.filter(r => r.sport === 'MLB' && verdict(r).v === 'BET (chalk)'),
+  'CURRENT (NFL): STRONG BET, crowd not on the pick': G.filter(r => r.sport === 'NFL' && verdict(r).v === 'STRONG BET'),
+  'CURRENT (NFL): FADE (dog), every other favorite not overpriced [dog price]': G.filter(r => r.sport === 'NFL' && verdict(r).v === 'FADE (dog)'),
+  'CURRENT: every play the page shows, flat 1u [dog price on FADE]': G.filter(r => verdict(r).v !== 'PASS'),
+  'OLD VERDICT to 09-27 (MLB): STRONG BET, edge 5+ at Robinhood': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 5),
+  'OLD VERDICT to 09-27 (MLB): BET, edge 2 to 5': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge >= 2 && r.edge < 5),
+  'OLD VERDICT to 09-27 (MLB): PASS, edge under 2': G.filter(r => r.sport === 'MLB' && r.pickOdds != null && r.edge != null && r.edge < 2),
+  'OLD VERDICT to 09-27 (NFL): STRONG BET, tape $ on the other team': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && r.pickOdds > -250 && !(r.edge != null && r.edge < -3) && nflPub(r) != null && nflPub(r) < 0.5),
+  'OLD VERDICT to 09-27 (NFL): PASS, favorite -250 or steeper (too expensive)': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && r.pickOdds <= -250),
+  'OLD VERDICT to 09-27 (NFL): BET, tape $ agrees': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && r.pickOdds > -250 && !(r.edge != null && r.edge < -3) && !(nflPub(r) != null && nflPub(r) < 0.5)),
   'OLD NFL VERDICT (volume split): STRONG BET': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && pubOnPick(r) != null && pubOnPick(r) < 0.5),
   'OLD NFL VERDICT (volume split): BET': G.filter(r => r.sport === 'NFL' && r.pickOdds != null && !(r.edge != null && r.edge < -3) && !(pubOnPick(r) != null && pubOnPick(r) < 0.5)),
   'PLAYBOOK A: model pick is a plus-money underdog': G.filter(r => r.pickOdds != null && r.pickOdds > 0),
@@ -222,7 +230,7 @@ const strat = {
   'Fade the public (65%+ of Kalshi $ on the other side)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? 1 - r.pubHome : r.pubHome) >= .65)),
   'Ride the public (65%+ of Kalshi $ on the pick)': G.filter(r => r.pubHome != null && r.pickOdds != null && ((r.pick === 'home' ? r.pubHome : 1 - r.pubHome) >= .65)),
 };
-const SROWS = Object.entries(strat).map(([name, b]) => { const dog = name.includes('[dog price]') || name.includes('[units at the dog price]'); const w = b.filter(r => dog ? !r.pickHit : r.pickHit).length, pnl = b.reduce((s, r) => s + (dog ? pay(r.oppOdds, !r.pickHit) : pay(r.pickOdds, r.pickHit)), 0); return { name, bets: b.length, w, l: b.length - w, pct: b.length ? w / b.length : -1, pnl, roi: b.length ? pnl / b.length : -99 }; });
+const SROWS = Object.entries(strat).map(([name, b]) => { const dog0 = name.includes('[dog price]') || name.includes('[units at the dog price]'), mix = name.includes('[dog price on FADE]'); const dg = r => dog0 || (mix && verdict(r).v === 'FADE (dog)'); const w = b.filter(r => dg(r) ? !r.pickHit : r.pickHit).length, pnl = b.reduce((s, r) => s + (dg(r) ? pay(r.oppOdds, !r.pickHit) : pay(r.pickOdds, r.pickHit)), 0); return { name, bets: b.length, w, l: b.length - w, pct: b.length ? w / b.length : -1, pnl, roi: b.length ? pnl / b.length : -99 }; });
 let sSort = null, sDir = -1;   // click a header to sort; click again to flip
 function scoreRows(){ const rows = sSort ? [...SROWS].sort((a, b) => ((a[sSort] > b[sSort] ? 1 : a[sSort] < b[sSort] ? -1 : 0) * sDir)) : SROWS;
   return rows.map(x => `<tr><td class="nm">${x.name}</td><td class="num">${x.bets}</td><td class="num">${x.w}-${x.l}</td><td class="num">${x.bets ? (x.pct * 100).toFixed(0) + '%' : '—'}</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.pnl >= 0 ? '+' : ''}${x.pnl.toFixed(1)}u</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.bets ? (x.roi * 100).toFixed(0) + '%' : '—'}</td></tr>`).join(''); }
@@ -254,7 +262,7 @@ def page():
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label><input type="checkbox" id="hidestart"> hide started games</label><label><input type="checkbox" id="hidedone"> hide finished games</label><span class="vsw"><button class="vb on" data-v="table">Table</button><button class="vb" data-v="slate">Slate</button></span></div>
 <div class="wrap" id="tblwrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
 <div id="slate" hidden></div>
-<div class="legend"><b>Pick</b> = the side the model likes against Robinhood's price. <b>Model</b> = win chance for that side. <b>Robinhood</b> = what a $1 contract on that side costs right now (the ask), with the equivalent American odds; Robinhood's contracts are Kalshi's. <b>Edge</b> = model minus that price, in points; your fee is about a penny a contract, so +2 is real.
+<div class="legend"><b>Verdicts, from Sept 28.</b> <b>MLB:</b> <b>STRONG BET</b> = model edge 5+ over Robinhood's price and the crowd's money is on the other team. <b>LEAN</b> = edge 2+ otherwise; about break-even, small stakes or skip. <b>FADE (dog)</b> = the favorite is priced about right (edge -3 to +2), so take the underdog at the price shown. <b>BET (chalk)</b> = the model thinks the favorite is overpriced by 3+, but those favorites keep winning: bet the favorite. <b>NFL:</b> the model is close to Pinnacle, so there is no big edge; <b>STRONG BET</b> = the crowd's money is on the other team (pick not -250 or steeper), <b>FADE (dog)</b> = every other favorite that is not overpriced. Every older rule stays in the scorecard below so they keep being compared.<br><b>Pick</b> = the side the model likes against Robinhood's price. <b>Model</b> = win chance for that side. <b>Robinhood</b> = what a $1 contract on that side costs right now (the ask), with the equivalent American odds; Robinhood's contracts are Kalshi's. <b>Edge</b> = model minus that price, in points; your fee is about a penny a contract, so +2 is real.
 <b>Public $ on pick</b> = share of the Kalshi/Robinhood dollars on the pick side: over 65% is a crowded side. <b>$ at risk</b> = open interest at lock: contracts still held, so the dollars actually riding on the result, with no churn (hover for the raw traded volume, which counts both sides of every trade and re-trades; a ~ means only volume was recorded for that game). <b>Tape $ on pick</b> = directional money from Kalshi's pre-game trade tape: every trade credited to the team the aggressor bet on (YES on a team, or NO on its opponent); hover for the dollars. <b>Tape $</b> = total taker dollars before start. Unlike Public $ on pick, which counts both sides of each market's volume, this one says which team the money actually backed.
 <b>Book take</b> = once a game is final, the dollars the crowd put on the losing team, from the trade tape (the same source as Public $ on pick); the tile sums it for the slate. Robinhood/Kalshi is an exchange, so this is what the winning bettors collected from the losing ones, not a house profit. <b>Units</b> = flat 1u on every model pick at Robinhood's price. <b>Book gave</b> = the dollars the crowd put on the winning team. <b>Pinnacle</b> = the sharpest book's de-vigged chance (a ~ means Pinnacle hasn't posted yet, so it's the Bovada/BetOnline average until it does).<br>
 There are three different "favorites" on every game and they do not agree: the side the <b>model</b> has over 50%, the side <b>Robinhood</b> prices over 50¢, and the side the <b>public's money</b> is on. Only the first one predicts anything. Weekend 1, 28 graded games at Robinhood prices: model's side over 50% went 9-5 (+1.3u); the market's priced favorite went 7-5 but <i>lost</i> 1.0u (short prices); the public's side went 8-8 and lost 2.0u.<br>
