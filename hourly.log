@@ -198,3 +198,41 @@ archive.html: 4 NFL weeks, 26 MLB days
 ml.html: 17 MLB days, 4 NFL weeks, 263 graded games
 lines.html: 5 MLB days, 2 NFL weeks, 85 games
 done 21:05
+=== 2026-09-30 00:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Chase Brown            CIN  RB p=0.621 fair -164 heat 69 share 0.313
+  NFL Christian McCaffrey    SF   RB p=0.604 fair -153 heat 85 share 0.319
+  NFL James Cook III         BUF  RB p=0.583 fair -140 heat 81 share 0.274
+  NFL Kenneth Walker III     KC   RB p=0.581 fair -139 heat 48 share 0.291
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 72 players priced, 70 on Fliff, 0 Underdog-only (credits used this month: 215 used / 285 left on key #5)
+key #5 used this run
+snapshot 1 saved for 2026-09-30
+  Kalshi MLB 2026-09-30: 24 players, $50,939 traded
+  Kalshi NFL 2026-10-01: 18 players, $144,866 traded
+  Kalshi NFL 2026-10-04: 204 players, $68,204 traded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 0/16 graded
+MLB 2026-09-30: kept 0 frozen, refreshed 72, late 0
+NFL 2026_wk4: kept 0 frozen, refreshed 285, late 0
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 0/16 games graded
+site: index + 27 day pages + 4 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LAC@SEA: $20,250 on SEA / $10,445 on LAC (2,081 trades)  (partial, game not started)
+  NFL DET@CAR: $7,495 on CAR / $18,705 on DET (1,412 trades)  (partial, game not started)
+  NFL ATL@NO: $19,495 on NO / $29,430 on ATL (2,525 trades)  (partial, game not started)
+taker tape attached to 286 locked games
+  lines 2026-09-30: 3 games (3 spreads, 3 totals)
+  pinnacle spreads+totals americanfootball_nfl: 31 games, 2 credits
+  lines 2026_wk4: 14 games (14 spreads, 14 totals)
+  lines 2026-09-29: graded 1
+archive.html: 4 NFL weeks, 27 MLB days
+ml.html: 18 MLB days, 4 NFL weeks, 264 graded games
+lines.html: 6 MLB days, 2 NFL weeks, 88 games
