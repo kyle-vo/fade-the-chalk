@@ -52,7 +52,7 @@ function render(){
   document.querySelectorAll('table.lt thead th').forEach(th => th.textContent = th.dataset.l + (th.dataset.k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''));
   const tbS = $('#tblS tbody'), tbT = $('#tblT tbody'); tbS.innerHTML = ''; tbT.innerHTML = '';
   let g = 0, w = 0, u = 0, take = 0, gave = 0, nS = 0, nT = 0;
-  for (const x of list) { const r = x.r; take += x.take || 0; gave += x.gave || 0; if (x.hit != null && x.ask) { g++; w += x.hit; u += x.hit ? (1 / x.ask - 1) : -1; }
+  for (const x of list) { const r = x.r; take += x.take || 0; gave += x.gave || 0; if (x.hit != null && x.ask && x.v !== 'PASS') { g++; w += x.hit; u += x.hit ? (1 / x.ask - 1) : -1; }   // record counts plays only: we never take both sides
     const tr = document.createElement('tr'); tr.className = 'row';
     tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}</span></td><td><span class="nm">${x.side}</span>${x.shift ? `<br><span class="tm" title="Pinnacle's line is ${x.pinLine}; Robinhood only lists half points, so this is the nearest strike and Pinnacle's fair price is nudged for the half point">Pinnacle ${x.pinLine}~</span>` : ''}</td>
       <td class="num">${cents(x.ask)}</td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
@@ -65,7 +65,7 @@ function render(){
   $('#secS').hidden = kind === 'total'; $('#secT').hidden = kind === 'spread';
   $('#cntS').textContent = nS + ' sides'; $('#cntT').textContent = nT + ' sides';
   const games = new Set(list.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size;
-  $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>graded<b>${g}</b></div><div>record<b>${w}-${g - w}</b></div><div>units, 1u each side<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '') + (take + gave ? `<div>book take<b class="neg">${money(Math.round(take))}</b></div><div>book gave<b class="pos">${money(Math.round(gave))}</b></div>` : '');
+  $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>plays graded<b>${g}</b></div><div>record<b>${w}-${g - w}</b></div><div>units, 1u each play<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '') + (take + gave ? `<div>book take<b class="neg">${money(Math.round(take))}</b></div><div>book gave<b class="pos">${money(Math.round(gave))}</b></div>` : '');
 }
 function setTab(t){ tab = t; history.replaceState(null, '', '#' + t); if (window.navSport) navSport(t, t === 'mlb' ? day : week); render(); }
 window.onNavSport = t => setTab(t);
