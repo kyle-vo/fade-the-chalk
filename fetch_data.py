@@ -119,8 +119,8 @@ def fetch_nfl():
     # current season usage (targets, carries, TDs). ESPN only lists 'qualified' players per sort, so pull the receiving and rushing leaderboards and union them.
     season_cur = sb['season']['year']; cur = {}
     for sort in ('receiving.receivingTargets:desc', 'rushing.rushingAttempts:desc', 'scoring.totalTouchdowns:desc'):
-        for page in range(1, 6):
-            try: r = get(f"{ESPNW}/football/nfl/statistics/byathlete", season=season_cur, seasontype=2, category='offense' if not sort.startswith('scoring') else 'scoring', limit=200, page=page, sort=sort)
+        for page in range(1, 9):
+            try: r = get(f"{ESPNW}/football/nfl/statistics/byathlete", season=season_cur, seasontype=2, category='offense' if not sort.startswith('scoring') else 'scoring', limit=200, page=page, sort=sort, isqualified='false')   # without isqualified=false ESPN lists only 'qualified' leaders: ~150 regular players (Loveland, Pitts, Harrison Jr., Jennings) had no 2026 line
             except Exception as e: print(f"  2026 usage ({sort}) failed: {e}"); break
             names = {c['name']: c.get('names', []) for c in r.get('categories', [])}
             for a in r.get('athletes', []):

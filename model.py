@@ -259,7 +259,7 @@ def nfl():
                         if pos == 'QB': cs = min(cs, 0.11)
                         r['share25'] = share; share = (1 - w) * share + w * cs
                         r['usage26'] = {'gp': c['gp'], 'tgt': c['tgt'], 'att': c['att'], 'td': c['rushTD'] + c['recTD'], 'share': round(cs, 3), 'w': round(w, 2)}
-                    elif not (dc and dc['rank'] == 1):                 # no 2026 touches and not a listed starter: he isn't part of the offense yet
+                    elif not (dc and dc['rank'] == 1) or team_games.get(team, 0) >= 2:   # no 2026 touches and not a listed starter, or 2+ team games played with none: he isn't part of the offense yet (Jennings, wk4: 39% off his 2025 SF role)
                         r['share25'] = share; share = (1 - w) * share
                         r['usage26'] = {'gp': 0, 'tgt': 0, 'att': 0, 'td': 0, 'share': 0.0, 'w': round(w, 2)}
                 cands.append((r, p, share, inj))
