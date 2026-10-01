@@ -198,3 +198,42 @@ archive.html: 4 NFL weeks, 27 MLB days
 ml.html: 18 MLB days, 4 NFL weeks, 264 graded games
 lines.html: 6 MLB days, 2 NFL weeks, 89 games
 done 06:05
+=== 2026-09-30 20:46 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Bijan Robinson         ATL  RB p=0.619 fair -162 heat 58 share 0.373
+  NFL Christian McCaffrey    SF   RB p=0.606 fair -154 heat 86 share 0.321
+  NFL James Cook III         BUF  RB p=0.591 fair -144 heat 81 share 0.282
+  NFL Kenneth Walker III     KC   RB p=0.581 fair -139 heat 48 share 0.291
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+  americanfootball_nfl/player_anytime_td: 504 players priced, 420 on Fliff, 0 Underdog-only (credits used this month: 16 used / 484 left on key #9)
+key #9 used this run
+snapshot 11 saved for 2026-09-30
+  Kalshi MLB 2026-10-03: 6 players, $0 traded
+  Kalshi NFL 2026-10-01: 20 players, $260,615 traded
+  Kalshi NFL 2026-10-04: 302 players, $188,608 traded
+  Kalshi NFL 2026-10-05: 20 players, $140 traded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 0/16 graded
+MLB 2026-09-30: kept 72 frozen, refreshed 0, late 0
+NFL 2026_wk4: kept 0 frozen, refreshed 282, late 0
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 0/16 games graded
+site: index + 27 day pages + 4 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LAC@SEA: $26,362 on SEA / $14,312 on LAC (2,656 trades)  (partial, game not started)
+  NFL DET@CAR: $9,407 on CAR / $22,583 on DET (1,836 trades)  (partial, game not started)
+  NFL ATL@NO: $21,294 on NO / $32,660 on ATL (2,969 trades)  (partial, game not started)
+taker tape attached to 286 locked games
+  lines 2026-09-30: 4 games (4 spreads, 4 totals)
+  pinnacle spreads+totals americanfootball_nfl: 31 games, 2 credits
+  lines 2026_wk4: 14 games (14 spreads, 14 totals)
+  lines 2026-09-30: graded 2
+archive.html: 4 NFL weeks, 27 MLB days
+ml.html: 18 MLB days, 4 NFL weeks, 267 graded games
+lines.html: 6 MLB days, 2 NFL weeks, 89 games
