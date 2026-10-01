@@ -252,6 +252,7 @@ def nfl():
                     else: share *= 0.08; r['depth'] = 'not on chart'
                 # blend in this season. The 2026 share already reflects role, so it is NOT depth-multiplied; injuries still apply.
                 c = cur.get(r['id']); w = w_cur(team); r['usage26'] = None
+                if w and p and p.get('prevTeam') and p['prevTeam'] != team: w = min(0.9, w + 0.25)   # changed teams: last year's role belongs to another offense, so lean harder on this season
                 if w and team_usage.get(team):
                     if c and c.get('team') == team:
                         cs = 0.95 * usage_score(c) / team_usage[team]
