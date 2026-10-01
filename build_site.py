@@ -216,6 +216,7 @@ h1{margin:0;font-family:var(--disp);font-size:34px;font-weight:800;letter-spacin
 .ctl label{color:var(--mute)}.ctl select{background:#0e1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:inherit;max-width:320px}
 textarea{width:100%;background:#0e1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px;font:12px var(--mono);min-height:64px}
 details.top5{margin-bottom:14px}.top5 h2{margin:0 0 8px;font-size:15px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.card{background:#0e1115;border:1px solid var(--line);border-radius:8px;padding:10px 12px;position:relative}.card .rk{position:absolute;top:8px;right:10px;color:var(--mute);font:600 11px var(--mono)}.card .nm{font-weight:700;font-size:14px}.card .tm{display:block;margin-top:2px}.card .st{display:flex;gap:10px;margin-top:8px;font:12px var(--mono);font-variant-numeric:tabular-nums}.card .st b{display:block;font-size:14px;color:var(--ink)}.card .st span{color:var(--mute)}.card .why{margin-top:8px;font-size:12px;color:var(--mute)}.card.hit{border-color:#2fd47a}.card.miss{border-color:#3a2a2e}.paste{margin-bottom:12px;font-size:13px;color:var(--mute)}details.paste summary{cursor:pointer;color:var(--ink);font-weight:600}
+.top3 .card.pick1{border-color:var(--good);box-shadow:inset 0 0 0 1px #123d26}.top3 .rk{color:var(--ink)}.top3 .card.pick1 .rk{color:var(--good)}
 button{background:#1b2129;border:1px solid #2f3944;color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}button:hover{border-color:var(--acc)}
 .wrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:13px;min-width:1000px}
@@ -330,7 +331,7 @@ function resultCell(r){
   const line = r.sport === 'MLB' && r.actualPA ? ` <span class="tm">${r.actual} HR / ${r.actualPA} PA</span>` : r.sport === 'NFL' && r.hit != null ? ` <span class="tm">${r.actual} TD</span>` : '';
   return r.hit ? `<span class="res y">✓ ${r.sport === 'MLB' ? 'HR' : 'TD'}${r.actual > 1 ? ' x' + r.actual : ''}</span>${line}` : `<span class="res n">✗</span>${line}`;
 }
-function render(){ top5();
+function render(){ top5(); top3();
   const rows = (PAGE.rows[tab] || []).map(r => ({ r, ...verdict(r) }));
   const q = norm($('#q').value), minp = +$('#minp').value / 100, maxh = +$('#maxh').value, hide = $('#hidedone').checked, only = $('#onlyplays').checked, hidefinal = $('#hidefinal').checked;
   // finished = graded, a final state, or 4+ hours past first pitch / kickoff (the site only rebuilds every few hours, so the clock catches games that ended since)
@@ -384,6 +385,61 @@ function fillGames(){
   const games = [...seen.entries()].sort((a, b) => a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0);
   $('#game').innerHTML = '<option value="">all games (' + games.length + ')</option>' + games.map(([g, t]) => `<option value="${g.replace(/"/g, '&quot;')}">${g}${t ? ' · ' + new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''}</option>`).join('');
 }
+// ---- Top 3 plays: ranked by what beat the PRICE, not by model % ----
+// Measured on 3,773 graded hitters who had a Robinhood/Kalshi price, 18 slates, flat 1u at that price:
+//   verdict BET 18.2% homered vs a 15.8% price (+16.8% ROI, n=391) · LEAN with the model at or above the price
+//   16.5% vs 12.7% (+33.0%, n=243) · LEAN overall 14.4% vs 13.6% (+10.8%, n=616) · AVOID 9.2% vs 11.0% (-18.5%, n=2473).
+// Inside BET the profit is all in the cheap half: model under 15% +37.0% ROI (n=223) but model 15%+ -10.0% (n=168);
+// priced 10-15c +21.8% (n=151); bats 1-2 +21.8% (n=192); lineup already posted +19.6% (n=315) vs projected +5.3% (n=76).
+// So this list will deliberately rank a 12% hitter at 13c ABOVE an 18% hitter at 20c. The Top 5 below still ranks by
+// model %, which is the opposite read: keep both, they disagree on purpose. AVOID is never ranked here at any price.
+// Small samples once sliced (n=46-391 per split, one month of slates), so treat the order as a shortlist, not a lock.
+function playScore(r, v, edge){
+  let s = 0; const why = [];
+  if (tab === 'mlb') {
+    if (v === 'BET') { s += 100; why.push('BET: his team is the favourite, bats ' + r.slot + ', 65%+ of the moneyline money (18.2% vs a 15.8% price)'); }
+    else if (v === 'LEAN' && edge != null && edge >= 0) { s += 85; why.push('LEAN and the model is at or above the price (16.5% vs 12.7%)'); }
+    else if (v === 'LEAN') { s += 40; why.push('LEAN: on the favourite at 8c+, outside slots 5-6 (14.4% vs 13.6%)'); }
+    else return null;                                                    // AVOID and PASS never make this list
+    if (r.prob < .15) { s += 25; why.push('model under 15%: the cheap half is where this rule made its money (+37% ROI, against -10% for 15%+)'); }
+    const px = r.kalshi != null ? r.kalshi : implied(r.book);
+    if (px != null && px >= .10 && px < .15) { s += 15; why.push('priced 10-15c, the best-returning bracket (+21.8%)'); }
+    if (r.slot >= 1 && r.slot <= 2) { s += 10; why.push('bats 1-2 (+21.8%)'); }
+    if (r.lineupPosted) { s += 15; why.push('lineup posted, he is confirmed in'); }
+    else { s -= 10; why.push('lineup not posted, slot is projected (projected rows returned +5.3% against +19.6% once posted)'); }
+    if (restRisk(r)) { s -= 20; why.push('has started only ' + r.starts + ' of ' + r.team + "'s last " + r.teamGames + ': ' + (r.prob * 100).toFixed(1) + '% if he plays, ' + (playAdj(r) * 100).toFixed(1) + '% counting days off'); }
+    if (r.skew != null && r.skew > 1) { s -= 10; why.push('retail books priced shorter than Pinnacle: public money on him'); }
+  } else {
+    if (v === 'BET') { s += 100; why.push('BET: WR/TE on a crowd-backed favourite (27.9% scored vs a 22.9% price)'); }
+    else if (v === 'LEAN') { s += 85; why.push('LEAN: tight ends have beaten their price every week (26.4% vs 20.4%)'); }
+    else return null;
+    if (edge != null && edge >= 0) { s += 15; why.push('model at or above the price'); }
+  }
+  if (edge != null) s += Math.max(-15, Math.min(15, edge * 200));        // mild tilt on the model's own edge, capped so it can never outvote the rules above
+  return { s, why };
+}
+function top3(){
+  const gsel = $('#game').value;
+  const rows = (PAGE.rows[tab] || []).filter(r => !gsel || r.game === gsel);
+  const now = Date.now();                                                // same 'still takeable' test as top5: the clock decides, locked rows keep their lock-time state
+  const pre = r => r.hit == null && !r.dnp && (!r.time || new Date(r.time).getTime() > now) && /Scheduled|Pre-Game|Warmup|STATUS_SCHEDULED/i.test(r.state || 'Scheduled') && (tab === 'nfl' || r.slot);
+  const upcoming = PAGE.graded ? [] : rows.filter(pre); const live = upcoming.length > 0;
+  const cand = live ? upcoming : rows.filter(r => !r.dnp && (tab === 'nfl' || r.slot));
+  const ranked = cand.map(r => { const vd = verdict(r); const sc = playScore(r, vd.v, vd.edge); return sc ? { r, vd, s: sc.s, why: sc.why } : null; })
+                     .filter(Boolean).sort((a, b) => b.s - a.s).slice(0, 3);
+  const noun = tab === 'mlb' ? 'homers' : 'touchdowns';
+  $('#top3h').textContent = live ? 'Top 3 plays to take' : 'Top 3 plays, how they did';
+  $('#top3').innerHTML = ranked.length ? ranked.map((x, i) => { const r = x.r, done = r.hit != null, e = x.vd.edge;
+    return `<div class="card ${i === 0 ? 'pick1' : ''} ${done ? (r.hit ? 'hit' : 'miss') : ''}"><span class="rk">#${i + 1}</span><span class="nm">${r.name}</span> <span class="v ${x.vd.v}" title="${x.vd.why}">${x.vd.v}</span><span class="tm">${r.team}${tab === 'mlb' && r.slot ? ' · bats ' + r.slot : r.pos ? ' · ' + r.pos : ''} · ${r.game}${r.pitcher ? ' · vs ' + r.pitcher : ''}</span>
+      <div class="st"><div><span>model</span><b>${(r.prob * 100).toFixed(1)}%</b></div><div><span>price</span><b>${r.kalshi != null ? Math.round(r.kalshi * 100) + '¢' : r.book ? fmtOdds(r.book) : '—'}</b></div><div><span>edge</span><b class="${e == null ? '' : e >= 0 ? 'pos' : 'neg'}">${e == null ? '—' : (e >= 0 ? '+' : '') + (e * 100).toFixed(1)}</b></div>${done ? `<div><span>result</span><b class="${r.hit ? 'pos' : 'neg'}">${r.hit ? '✓ ' + (tab === 'mlb' ? 'HR' : 'TD') : '✗'}</b></div>` : ''}</div>
+      <div class="why">${x.why.join(' · ')}</div></div>`; }).join('')
+    : `<div class="empty">${live || !PAGE.graded ? 'No ' + noun + ' clear the price rules on what is left of this slate.' : 'Nothing on this slate cleared the price rules.'}</div>`;
+  $('#top3n').textContent = ranked.length ? (tab === 'mlb'
+      ? 'Ranked by what beat the PRICE across 18 graded slates (3,773 priced hitters), not by model % — so a cheap hitter the book has too long outranks a bigger name at a short price, and a 15%+ model number counts against a BET rather than for it. AVOID never appears here at any price, and an unposted lineup is marked down.'
+      : 'Ranked by what beat the PRICE across weeks 1-3 (497 priced players), not by model % — WR and TE on crowd-backed favourites first, then any tight end. Running backs never appear here: they scored 23.8% against a 33.1% price, the most overpriced group on the board.')
+    + ' Each card lists the rule that put it there. The slices behind this are small (one month, 46-391 bets each), so read it as a shortlist, not a lock. The Top 5 below ranks by model % instead and will often disagree.'
+    + (live ? ' Started games drop off.' : '') : '';
+}
 function top5(){
   fillGames();
   const gsel = $('#game').value; const rows = (tab === 'mlb' ? (PAGE.rows.mlb || []) : (PAGE.rows.nfl || [])).filter(r => !gsel || r.game === gsel);
@@ -427,6 +483,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
     return f"""{head(title, sub, active, root)}{tabhtml}
 <div class="panel {'' if tabhtml else 'top'}">
 <div class="kpi" id="kpi"></div>
+<div class="top5 top3"><h2 id="top3h">Top 3 plays</h2><div class="cards" id="top3"></div><div class="note" id="top3n"></div></div>
 <div class="top5"><h2 id="top5h">Top 5 to take</h2><div class="cards" id="top5"></div><div class="note" id="top5n"></div></div>
 <div class="ctl">
 <label>search <input type="text" id="q" placeholder="player / team / game"></label>
