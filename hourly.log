@@ -1,84 +1,4 @@
-﻿=== 2026-10-01 07:14 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Christian McCaffrey    SF   RB p=0.602 fair -151 heat 85 share 0.317
-  NFL James Cook III         BUF  RB p=0.592 fair -145 heat 82 share 0.284
-  NFL Chase Brown            CIN  RB p=0.587 fair -142 heat 67 share 0.285
-  NFL Kenneth Walker III     KC   RB p=0.587 fair -142 heat 48 share 0.296
-odds cache is 1 min old (limit 90) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull.
-  Kalshi MLB 2026-10-03: 18 players, $1,550 traded
-  Kalshi NFL 2026-10-01: 20 players, $533,900 traded
-  Kalshi NFL 2026-10-04: 309 players, $224,339 traded
-  Kalshi NFL 2026-10-05: 20 players, $2,423 traded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 16/16 graded
-  ML 2026_wk4: 0/16 graded
-MLB 2026-10-01: kept 0 frozen, refreshed 18, late 0
-NFL 2026_wk4: kept 0 frozen, refreshed 310, late 0
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 16/16 games graded
-NFL 2026_wk4: 0/16 games graded
-site: index + 28 day pages + 4 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LAC@SEA: $27,889 on SEA / $15,605 on LAC (2,858 trades)  (partial, game not started)
-  NFL DET@CAR: $9,903 on CAR / $23,477 on DET (1,970 trades)  (partial, game not started)
-  NFL ATL@NO: $21,944 on NO / $43,315 on ATL (3,120 trades)  (partial, game not started)
-taker tape attached to 287 locked games
-  pinnacle spreads+totals baseball_mlb: 4 games, 2 credits
-  lines 2026-10-01: 1 games (1 spreads, 1 totals)
-  pinnacle spreads+totals americanfootball_nfl: 31 games, 2 credits
-  lines 2026_wk4: 14 games (14 spreads, 14 totals)
-archive.html: 4 NFL weeks, 28 MLB days
-ml.html: 19 MLB days, 4 NFL weeks, 268 graded games
-lines.html: 7 MLB days, 2 NFL weeks, 90 games
-done 07:15
-=== 2026-10-01 09:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Christian McCaffrey    SF   RB p=0.602 fair -151 heat 85 share 0.317
-  NFL James Cook III         BUF  RB p=0.592 fair -145 heat 82 share 0.284
-  NFL Chase Brown            CIN  RB p=0.587 fair -142 heat 67 share 0.285
-  NFL Kenneth Walker III     KC   RB p=0.587 fair -142 heat 48 share 0.296
-  NFL touchdown props: skipped, 0 credits (already pulled for the Wednesday night window (Wed 20:46))
-  baseball_mlb/batter_home_runs: 20 players priced, 19 on Fliff, 0 Underdog-only (credits used this month: 23 used / 477 left on key #4)
-key #4 used this run
-snapshot 3 saved for 2026-10-01
-  Kalshi MLB 2026-10-03: 18 players, $1,825 traded
-  Kalshi NFL 2026-10-01: 20 players, $632,611 traded
-  Kalshi NFL 2026-10-04: 309 players, $233,815 traded
-  Kalshi NFL 2026-10-05: 20 players, $3,883 traded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 16/16 graded
-  ML 2026_wk4: 0/16 graded
-MLB 2026-10-01: kept 0 frozen, refreshed 18, late 0
-NFL 2026_wk4: kept 0 frozen, refreshed 310, late 0
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 16/16 games graded
-NFL 2026_wk4: 0/16 games graded
-site: index + 28 day pages + 4 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL LAC@SEA: $28,669 on SEA / $15,833 on LAC (2,919 trades)  (partial, game not started)
-  NFL DET@CAR: $10,148 on CAR / $24,051 on DET (2,012 trades)  (partial, game not started)
-  NFL ATL@NO: $22,360 on NO / $43,815 on ATL (3,178 trades)  (partial, game not started)
-taker tape attached to 287 locked games
-  pinnacle spreads+totals baseball_mlb: 4 games, 2 credits
-  lines 2026-10-01: 1 games (1 spreads, 1 totals)
-  pinnacle spreads+totals americanfootball_nfl: 31 games, 2 credits
-  lines 2026_wk4: 14 games (14 spreads, 14 totals)
-archive.html: 4 NFL weeks, 28 MLB days
-ml.html: 19 MLB days, 4 NFL weeks, 268 graded games
-lines.html: 7 MLB days, 2 NFL weeks, 90 games
-done 09:05
-=== 2026-10-01 12:05 ===
-git : error: cannot lock ref 'refs/remotes/origin/main': is at fe38b4357087090e71104464a5efe4f2b7dd33dc but expected 
-8f39650bbe8a76c17de1aafe4c1c1e7540d943e9
-At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
+﻿At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
 + git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -A ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (error: cannot l...c1c1e7540d943e9:String) [], RemoteException
@@ -244,4 +164,75 @@ taker tape attached to 287 locked games
   lines 2026_wk4: 14 games (14 spreads, 14 totals)
 archive.html: 4 NFL weeks, 28 MLB days
 ml.html: 19 MLB days, 4 NFL weeks, 268 graded games
+lines.html: 7 MLB days, 2 NFL weeks, 90 games
+Auto-merging backtest/kalshi_mlb_2026-10-01.json
+Auto-merging backtest/kalshi_mlb_2026-10-03.json
+Auto-merging backtest/kalshi_nfl_2026-10-01.json
+Auto-merging backtest/kalshi_nfl_2026-10-04.json
+Auto-merging backtest/kalshi_nfl_2026-10-05.json
+Auto-merging backtest/lines_2026-10-01.json
+Auto-merging backtest/lines_2026_wk4.json
+Auto-merging backtest/ml_2026_wk4.json
+Auto-merging backtest/mlboard.json
+Auto-merging backtest/mlsnap_2026-10-01.json
+Auto-merging backtest/nfl_2026_wk4.json
+Auto-merging backtest/odds_2026-10-01.json
+Auto-merging backtest/taker/NFL_401872965.json
+Auto-merging backtest/taker/NFL_401872966.json
+Auto-merging backtest/taker/NFL_401872967.json
+Auto-merging backtest/taker/NFL_401872968.json
+Auto-merging backtest/taker/NFL_401872969.json
+Auto-merging backtest/taker/NFL_401872970.json
+Auto-merging backtest/taker/NFL_401872971.json
+Auto-merging backtest/taker/NFL_401872972.json
+Auto-merging backtest/taker/NFL_401872973.json
+Auto-merging backtest/taker/NFL_401872974.json
+Auto-merging backtest/taker/NFL_401872975.json
+Auto-merging backtest/taker/NFL_401872976.json
+Auto-merging backtest/taker/NFL_401872977.json
+Auto-merging backtest/taker/NFL_401872978.json
+Auto-merging backtest/taker/NFL_401872979.json
+Auto-merging docs/index.html
+Auto-merging docs/lines.html
+Auto-merging docs/ml.html
+Auto-merging docs/nfl/2026_wk4.html
+Auto-merging docs/track.html
+done 18:05
+=== 2026-10-01 21:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Christian McCaffrey    SF   RB p=0.601 fair -151 heat 85 share 0.317
+  NFL James Cook III         BUF  RB p=0.596 fair -147 heat 82 share 0.284
+  NFL Chase Brown            CIN  RB p=0.587 fair -142 heat 67 share 0.285
+  NFL Kenneth Walker III     KC   RB p=0.587 fair -142 heat 48 share 0.296
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #8 used this run
+snapshot 10 saved for 2026-10-01
+  Kalshi MLB 2026-10-03: 18 players, $9,277 traded
+  Kalshi NFL 2026-10-04: 314 players, $655,153 traded
+  Kalshi NFL 2026-10-05: 20 players, $7,795 traded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 1/16 graded
+MLB 2026-10-01: kept 18 frozen, refreshed 0, late 0
+NFL 2026_wk4: kept 18 frozen, refreshed 292, late 0
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 1/16 games graded
+site: index + 28 day pages + 4 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL LAC@SEA: $35,692 on SEA / $19,396 on LAC (3,457 trades)  (partial, game not started)
+  NFL DET@CAR: $12,281 on CAR / $27,669 on DET (2,398 trades)  (partial, game not started)
+  NFL ATL@NO: $25,068 on NO / $47,208 on ATL (3,589 trades)  (partial, game not started)
+taker tape attached to 287 locked games
+  pinnacle spreads+totals americanfootball_nfl: 28 games, 2 credits
+  lines 2026_wk4: 14 games (14 spreads, 14 totals)
+  lines 2026-10-01: graded 1
+  lines 2026_wk4: graded 1
+archive.html: 4 NFL weeks, 28 MLB days
+ml.html: 19 MLB days, 4 NFL weeks, 270 graded games
 lines.html: 7 MLB days, 2 NFL weeks, 90 games
