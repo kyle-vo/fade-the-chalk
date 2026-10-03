@@ -55,11 +55,11 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .nb .pg a.on,.nb .aux a.on{color:var(--ink);border-bottom-color:var(--acc)}
 .nb .sl{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
 .nb .sl select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:600 13px var(--font);text-transform:none;letter-spacing:0;cursor:pointer}
-.nb .aux{margin-left:auto}.nb .aux a.rr{color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:5px 10px}.nb .aux a.rr:hover{border-color:var(--acc)}
+.nb .aux{margin-left:auto}.nb .aux .upd{color:var(--mute);font-size:12px;align-self:center;white-space:nowrap}.nb .aux .upd.old{color:var(--warn)}.nb .aux a.rr{color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:5px 10px}.nb .aux a.rr:hover{border-color:var(--acc)}
 .panel.top{margin-top:16px}
 @media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
-</style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a></div><div class="aux"><a href="track.html" class="on">Track</a><a href="archive.html">Archive</a><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
-const NAV = {"page": "track", "root": "", "slates": {}, "cur": {}, "fixed": null};
+</style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a></div><div class="aux"><a href="track.html" class="on">Track</a><a href="archive.html">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
+const NAV = {"page": "track", "root": "", "slates": {}, "cur": {}, "fixed": null, "built": "2026-10-03T16:41:55+00:00"};
 const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
@@ -93,6 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (o[2]) location.href = o[2]; else if (window.onNavSlate) window.onNavSlate(sp, o[0]);
   });
   if (!window.__navSet) navSport(sp);
+  // last updated: build time of this page, as a clock time and how long ago; turns amber past 4 hours (a missed scheduled run)
+  const upd = document.getElementById('navupd');
+  if (upd && NAV.built) { const t = new Date(NAV.built);
+    const tick = () => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)), ago = m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min ago' : Math.floor(m / 1440) + ' d ago';
+      upd.textContent = 'updated ' + t.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ' · ' + ago; upd.title = t.toString(); upd.classList.toggle('old', m > 240); };
+    tick(); setInterval(tick, 60000); }
 });
 })();</script>
 <style>button.rm{background:#1c2430;border:1px solid #2b3440;color:#8a94a3;border-radius:6px;padding:2px 8px;cursor:pointer;font:inherit}button.rm:hover{color:#ff4d5e;border-color:#ff4d5e}</style><div class="panel top">
