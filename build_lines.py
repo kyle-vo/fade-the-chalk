@@ -38,6 +38,13 @@ function sides(r){
     // What has paid so far is a trend, not a price gap, on only 4 MLB days and 1 NFL week, so the most it earns is LEAN (small stakes):
     //   MLB run-line favorite -1.5: 26-26, +8.2u (priced ~40c, so a coin flip pays).  MLB over: 30-22, +6.4u.  NFL: one week, observe only.
     x.v = x.r.sport === 'MLB' && ((x.kind === 'spread' && x.side.includes(' -')) || (x.kind === 'total' && x.side.startsWith('Over'))) ? 'LEAN' : 'PASS';
+    // NFL, from 2026-10-04: FADE THE CROWD on spreads. The side with LESS of the crowd's tape $ covered 18 of 22 (wk3 10-4, wk4 8-0, +14u);
+    //   when that side is also the underdog 13-2 (+10.6u) -> BET; when it is the favorite 5-2 -> LEAN. Totals: the crowd's side 14-7 (wk3 10-4, wk4 4-3) -> LEAN.
+    //   Two weeks, 22 spreads: strong but young.
+    if (x.r.sport === 'NFL' && x.crowd != null && x.tape >= 1000) {
+      if (x.kind === 'spread' && x.crowd < 0.5) x.v = x.side.includes(' +') ? 'BET' : 'LEAN';
+      if (x.kind === 'total' && x.crowd > 0.5) x.v = 'LEAN';
+    }
     x.oldV = x.edge == null ? '—' : x.edge >= 5 ? 'STRONG BET' : x.edge >= 2 ? 'BET' : 'PASS'; }
   return out;
 }
@@ -82,7 +89,10 @@ const strat = {
   'FADE the crowd (less taker $ on it)': G.filter(x => x.crowd != null && x.crowd < 0.5),
   'Heavy crowd: 70%+ of the $ on it': G.filter(x => x.crowd != null && x.crowd >= 0.7),
   'Fade heavy crowd: under 30% of the $ on it': G.filter(x => x.crowd != null && x.crowd < 0.3),
-  'CURRENT LEAN: MLB run-line favorite and MLB over': G.filter(x => x.v === 'LEAN'),
+  'CURRENT LEAN: MLB run-line favorite and MLB over': G.filter(x => x.v === 'LEAN' && x.r.sport === 'MLB'),
+  'CURRENT NFL BET: spread underdog with less of the crowd $': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && x.v === 'BET'),
+  'CURRENT NFL LEAN: spread favorite with less of the crowd $': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && x.v === 'LEAN'),
+  'CURRENT NFL LEAN: total, the crowd side': G.filter(x => x.r.sport === 'NFL' && x.kind === 'total' && x.v === 'LEAN'),
   'OLD verdict: Robinhood cheaper than Pinnacle fair by 2+ (BET)': G.filter(x => x.edge != null && x.edge >= 2),
   'Robinhood dearer than Pinnacle fair by 2+': G.filter(x => x.edge != null && x.edge <= -2),
   'Favorite covers': G.filter(x => x.kind === 'spread' && x.side.includes(' -')),
@@ -122,7 +132,7 @@ def page():
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label><input type="checkbox" id="hidestart"> hide started games</label><label><input type="checkbox" id="hidefinal"> hide finished games</label><label>game <select id="game"><option value="">all games</option></select></label><label>show <select id="kind"><option value="all">spreads and totals</option><option value="spread">spreads only</option><option value="total">totals only</option></select></label></div>
 <div id="secS"><h2 class="mk">Spreads <small id="cntS"></small></h2><div class="wrap"><table id="tblS" class="lt"><thead><tr><th data-k="time">Game</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd share</th><th class="num" data-k="own">$ on this side</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th><th class="num" data-k="take">Book take</th><th class="num" data-k="gave">Book gave</th></tr></thead><tbody></tbody></table></div></div><div id="secT"><h2 class="mk">Totals <small id="cntT"></small></h2><div class="wrap"><table id="tblT" class="lt"><thead><tr><th data-k="time">Game</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd share</th><th class="num" data-k="own">$ on this side</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th><th class="num" data-k="take">Book take</th><th class="num" data-k="gave">Book gave</th></tr></thead><tbody></tbody></table></div></div>
 <div class="legend"><b>No model here.</b> Each row is one side of a spread or total, so a 12-game slate is 48 rows (24 with spreads or totals only). Click any column header to sort; click again to flip. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line (a ~ means Pinnacle's line was a whole number, Robinhood only lists half points, so the nearest strike is shown and the fair price is nudged for the half point).
-<b>Edge</b> = fair minus ask, in points. It is shown for reference only: betting the side Robinhood sells below Pinnacle's price lost money here. <b>LEAN</b> = the only trends that have paid so far, on 4 MLB days: the MLB run-line favorite (-1.5) and the MLB over. Small stakes only; NFL has one graded week, so every NFL side is PASS until more weeks come in. <b>Crowd $ on this side</b> = share of the taker dollars on this exact market from the trade tape (each trade credited to the side the bettor backed); <b>$ on this side</b> = those taker dollars; <b>Tape $</b> = both sides together; <b>Book take</b> = once graded, the dollars on a side that lost (what the winners collected), <b>Book gave</b> = the dollars on a side that won; the tiles sum them. <b>$ traded</b> = the whole ladder of lines for this game.
+<b>Edge</b> = fair minus ask, in points. It is shown for reference only: betting the side Robinhood sells below Pinnacle's price lost money here. <b>LEAN</b> = the only trends that have paid so far, on 4 MLB days: the MLB run-line favorite (-1.5) and the MLB over. Small stakes only; <b>NFL spreads fade the crowd:</b> the side with less of the crowd's money covered 18 of 22 over weeks 3-4; <b>BET</b> when that side is the underdog (13-2), <b>LEAN</b> when it is the favorite. NFL totals: <b>LEAN</b> the crowd's side (14-7). Two weeks of data, so size accordingly. <b>Crowd $ on this side</b> = share of the taker dollars on this exact market from the trade tape (each trade credited to the side the bettor backed); <b>$ on this side</b> = those taker dollars; <b>Tape $</b> = both sides together; <b>Book take</b> = once graded, the dollars on a side that lost (what the winners collected), <b>Book gave</b> = the dollars on a side that won; the tiles sum them. <b>$ traded</b> = the whole ladder of lines for this game.
 Rows lock at first pitch / kickoff (volumes only ever go up before that) and grade from the final score. The scorecard at the bottom is the point: does the side with more of the crowd's money cover less than its price says?</div>
 <h2 style="margin-top:18px">Scorecard</h2><div id="score"></div>
 </div>
