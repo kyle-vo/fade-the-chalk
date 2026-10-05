@@ -59,7 +59,7 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .panel.top{margin-top:16px}
 @media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
 </style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a></div><div class="aux"><a href="track.html" class="on">Track</a><a href="archive.html">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
-const NAV = {"page": "track", "root": "", "slates": {}, "cur": {}, "fixed": null, "built": "2026-10-05T05:16:32+00:00"};
+const NAV = {"page": "track", "root": "", "slates": {}, "cur": {}, "fixed": null, "built": "2026-10-05T05:18:29+00:00"};
 const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
@@ -127,7 +127,7 @@ function verdict(r){
     else if (r.teamFav === true && px != null) v = 'LEAN'; }
   else { const pos = (r.pos || '').slice(0, 2);
     if (r.teamFav === true && tp != null && tp >= .5 && (pos === 'WR' || pos === 'TE')) v = 'BET';
-    else if (pos === 'TE') v = 'LEAN'; else if (pos === 'RB' || (tp != null && tp < .5)) v = 'AVOID'; }
+    else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID'; else if ((pos === 'WR' || pos === 'TE') && r.kalshi != null && r.kalshi < .15) v = 'LEAN'; }
   return { v };
 }
 
@@ -175,8 +175,8 @@ const strat = {
   'HR VERDICT LEAN: other favorites at 8c+, not slots 5-6': d => G.filter(r => r.date === d && verdict(r).v === 'LEAN'),
   'HR VERDICT AVOID: underdog, under 8c, or slot 5-6': d => G.filter(r => r.date === d && verdict(r).v === 'AVOID'),
   'TD VERDICT BET: WR/TE on a crowd-backed favorite': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'BET'),
-  'TD VERDICT LEAN: other tight ends': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'LEAN'),
-  'TD VERDICT AVOID: running backs, or team under 50% of the money': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'AVOID'),
+  'TD VERDICT LEAN: other WR/TE under 15c': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'LEAN'),
+  'TD VERDICT AVOID: QBs, and RBs on the favorite': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'AVOID'),
   'OLD HR BET: big name, public 65%+ on his team': d => G.filter(r => r.date === d && r.big && r.teamPub != null && r.teamPub >= .65),
   'OLD HR LEAN: smaller name, public 65%+ on his team': d => G.filter(r => r.date === d && !r.big && r.teamPub != null && r.teamPub >= .65),
   'OLD TD BET: public 65%+ on his team': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && r.teamPub != null && r.teamPub >= .65),

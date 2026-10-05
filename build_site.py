@@ -302,16 +302,17 @@ function verdict(r){
     why = [dog ? 'his team is the priced underdog' : fav ? 'his team is the favorite' : 'no moneyline for his game yet', tp == null ? '' : Math.round(tp * 100) + '% of the moneyline money on ' + r.team,
            sl ? 'bats ' + sl + (r.lineupPosted ? '' : ' (projected)') + (mid ? ': slots 5-6 have run cold' : '') : '', cheap ? 'priced under 8¢: longshots have hit well under their price' : ''].filter(Boolean).join(' · ');
   } else if (r.sport === 'NFL') {
-    // Touchdowns, from 2026-09-28 (497 players with a Robinhood price, weeks 1-3; weeks 2 and 3 each agree):
-    //   running backs are the most overpriced group: 23.8% scored vs 33.1% price (-21%). Tight ends are the most underpriced: 26.4% vs 20.4% (+38%), every week.
-    //   BET  = WR or TE on the favorite with 50%+ of the moneyline money: 27.9% vs 22.9% (+40%; wk2 +25%, wk3 +66%)
-    //   LEAN = any other tight end.   AVOID = running backs, and non-TEs whose team has under 50% of the money (18.7% vs 21.8%).
-    const tp = r.teamPub, pos = (r.pos || '').slice(0, 2);
+    // Touchdowns, from 2026-10-05 (729 priced players, weeks 1-4). Week 4 was the first out-of-sample test of the 09-28 rules, and several 'findings'
+    // flipped (running backs overall, heavy/light player money, tight ends overall). Only what held in weeks 2, 3 AND 4 is kept:
+    //   BET   = WR or TE on the favorite with 50%+ of the moneyline money: 26.3% vs 22.8% price (+26%; wk2 +9%, wk3 +69%, wk4 +14%)
+    //   AVOID = quarterbacks, and running backs on the favorite: 24.4% vs 27.2% (-16%; wk2 -9%, wk3 -34%, wk4 -14%)
+    //   LEAN  = other WRs/TEs priced under 15c: cheap players have beaten their price overall (+33%) but swing hard week to week (wk2 0 for 29): small stakes.
+    const tp = r.teamPub, pos = (r.pos || '').slice(0, 2), px = r.kalshi != null ? r.kalshi : implied(r.book);
     const favBacked = r.teamFav === true && tp != null && tp >= .5;
     if (favBacked && (pos === 'WR' || pos === 'TE')) v = 'BET';
-    else if (pos === 'TE') v = 'LEAN';
-    else if (pos === 'RB' || (tp != null && tp < .5)) v = 'AVOID';
-    why = [pos === 'RB' ? 'running backs have scored far less than their price' : pos === 'TE' ? 'tight ends have beaten their price every week' : '',
+    else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID';
+    else if ((pos === 'WR' || pos === 'TE') && px != null && px < .15) v = 'LEAN';
+    why = [pos === 'QB' ? 'quarterbacks have scored less than their price' : pos === 'RB' && r.teamFav ? 'running backs on the favorite have scored less than their price' : (pos === 'WR' || pos === 'TE') && px != null && px < .15 && v === 'LEAN' ? 'cheap receivers have beaten their price, but it swings week to week' : '',
            r.teamFav === false ? 'his team is the underdog' : r.teamFav ? 'his team is the favorite' : '', tp == null ? 'no moneyline money data yet' : Math.round(tp * 100) + '% of the moneyline money on ' + r.team].filter(Boolean).join(' · ');
   } else if (edge != null) {
     if (edge >= .04 && heat < 45) v = 'SLEEPER'; else if (edge >= .03) v = 'VALUE';
@@ -411,7 +412,7 @@ function playScore(r, v, edge){
     if (r.skew != null && r.skew > 1) { s -= 10; why.push('retail books priced shorter than Pinnacle: public money on him'); }
   } else {
     if (v === 'BET') { s += 100; why.push('BET: WR/TE on a crowd-backed favourite (27.9% scored vs a 22.9% price)'); }
-    else if (v === 'LEAN') { s += 85; why.push('LEAN: tight ends have beaten their price every week (26.4% vs 20.4%)'); }
+    else if (v === 'LEAN') { s += 85; why.push('LEAN: a cheap receiver under 15c; cheap players have beaten their price overall but swing week to week'); }
     else return null;
     if (edge != null && edge >= 0) { s += 15; why.push('model at or above the price'); }
   }
@@ -436,7 +437,7 @@ function top3(){
     : `<div class="empty">${live || !PAGE.graded ? 'No ' + noun + ' clear the price rules on what is left of this slate.' : 'Nothing on this slate cleared the price rules.'}</div>`;
   $('#top3n').textContent = ranked.length ? (tab === 'mlb'
       ? 'Ranked by what beat the PRICE across 18 graded slates (3,773 priced hitters), not by model % — so a cheap hitter the book has too long outranks a bigger name at a short price, and a 15%+ model number counts against a BET rather than for it. AVOID never appears here at any price, and an unposted lineup is marked down.'
-      : 'Ranked by what beat the PRICE across weeks 1-3 (497 priced players), not by model % — WR and TE on crowd-backed favourites first, then any tight end. Running backs never appear here: they scored 23.8% against a 33.1% price, the most overpriced group on the board.')
+      : 'Ranked by what beat the PRICE across weeks 1-4 (729 priced players), not by model %: WR and TE on crowd-backed favourites first (+26%, positive in weeks 2, 3 and 4), then cheap receivers under 15c. Quarterbacks and running backs on the favourite never appear here: they scored 24.4% against a 27.2% price.')
     + ' Each card lists the rule that put it there. The slices behind this are small (one month, 46-391 bets each), so read it as a shortlist, not a lock. The Top 5 below ranks by model % instead and will often disagree.'
     + (live ? ' Started games drop off.' : '') : '';
 }
@@ -500,7 +501,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <div class="legend">
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Robinhood</b> = the Kalshi/Robinhood ask for his home run market, shown as American odds (a 22¢ contract = +355); hover for Fliff's price. FL = no Robinhood market, Fliff's price shown; UD = Underdog; * = best sportsbook price; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). For MLB the Public column shows <b>Kalshi</b>: the prediction-market crowd's own price for him and how many dollars they've put on it; crowd above the model, heavy volume, or a rising price all raise Heat. Typing a real public-bet % overrides all of it.<br>
-<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> (from Sept 28, 3,160 priced hitters): <b>BET</b> = his team is the favorite, he bats 1-4, he costs 8¢ or more, and his team has 65%+ of the moneyline money (19.3% homered against a 15.1% price). <b>LEAN</b> = other hitters on the favorite at 8¢+ outside slots 5-6 (about +21%). <b>AVOID</b> = his team is the underdog, he costs under 8¢, or he bats 5th or 6th (9.0% against 9.9%). <b>PASS</b> = no moneyline for his game yet. <b>Touchdown verdicts</b> (from Sept 28, weeks 1-3): <b>BET</b> = a WR or TE on the favorite with 50%+ of the moneyline money (27.9% scored against a 22.9% price). <b>LEAN</b> = any other tight end: tight ends have beaten their price every week. <b>AVOID</b> = running backs (23.8% scored against a 33.1% price, the most overpriced group) and players whose team has under 50% of the money. Hover a verdict for the reason; the Track page scores the new and old rules side by side. The old heat-based labels are retired: <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
+<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> (from Sept 28, 3,160 priced hitters): <b>BET</b> = his team is the favorite, he bats 1-4, he costs 8¢ or more, and his team has 65%+ of the moneyline money (19.3% homered against a 15.1% price). <b>LEAN</b> = other hitters on the favorite at 8¢+ outside slots 5-6 (about +21%). <b>AVOID</b> = his team is the underdog, he costs under 8¢, or he bats 5th or 6th (9.0% against 9.9%). <b>PASS</b> = no moneyline for his game yet. <b>Touchdown verdicts</b> (from Oct 5, weeks 1-4, only what held in weeks 2, 3 and 4): <b>BET</b> = a WR or TE on the favorite with 50%+ of the moneyline money (26.3% scored against a 22.8% price). <b>LEAN</b> = other WRs and TEs priced under 15¢ (they beat their price overall but swing hard week to week). <b>AVOID</b> = quarterbacks and running backs on the favorite (24.4% against 27.2%). Hover a verdict for the reason; the Track page scores the new and old rules side by side. The old heat-based labels are retired: <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Result</b> fills in as games go final and stays on the page with the crowd money, so hits can be checked against where the public was. <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
 </div>
@@ -518,7 +519,7 @@ function verdict(r){
     else if (r.teamFav === true && px != null) v = 'LEAN'; }
   else { const pos = (r.pos || '').slice(0, 2);
     if (r.teamFav === true && tp != null && tp >= .5 && (pos === 'WR' || pos === 'TE')) v = 'BET';
-    else if (pos === 'TE') v = 'LEAN'; else if (pos === 'RB' || (tp != null && tp < .5)) v = 'AVOID'; }
+    else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID'; else if ((pos === 'WR' || pos === 'TE') && r.kalshi != null && r.kalshi < .15) v = 'LEAN'; }
   return { v };
 }
 
@@ -566,8 +567,8 @@ const strat = {
   'HR VERDICT LEAN: other favorites at 8c+, not slots 5-6': d => G.filter(r => r.date === d && verdict(r).v === 'LEAN'),
   'HR VERDICT AVOID: underdog, under 8c, or slot 5-6': d => G.filter(r => r.date === d && verdict(r).v === 'AVOID'),
   'TD VERDICT BET: WR/TE on a crowd-backed favorite': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'BET'),
-  'TD VERDICT LEAN: other tight ends': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'LEAN'),
-  'TD VERDICT AVOID: running backs, or team under 50% of the money': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'AVOID'),
+  'TD VERDICT LEAN: other WR/TE under 15c': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'LEAN'),
+  'TD VERDICT AVOID: QBs, and RBs on the favorite': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'AVOID'),
   'OLD HR BET: big name, public 65%+ on his team': d => G.filter(r => r.date === d && r.big && r.teamPub != null && r.teamPub >= .65),
   'OLD HR LEAN: smaller name, public 65%+ on his team': d => G.filter(r => r.date === d && !r.big && r.teamPub != null && r.teamPub >= .65),
   'OLD TD BET: public 65%+ on his team': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && r.teamPub != null && r.teamPub >= .65),
