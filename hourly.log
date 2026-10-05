@@ -1,44 +1,4 @@
-﻿  lines 2026-10-04: 2 games (2 spreads, 2 totals)
-  pinnacle spreads+totals americanfootball_nfl: 14 games, 2 credits
-  lines 2026_wk4: 14 games (14 spreads, 14 totals)
-archive.html: 4 NFL weeks, 30 MLB days
-ml.html: 21 MLB days, 4 NFL weeks, 275 graded games
-lines.html: 9 MLB days, 2 NFL weeks, 96 games
-done 12:06
-=== 2026-10-04 15:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Cam Skattebo           NYG  RB p=0.570 fair -132 heat 41 share 0.333
-  NFL Ashton Jeanty          LV   RB p=0.560 fair -127 heat 49 share 0.324
-  NFL Christian McCaffrey    SF   RB p=0.544 fair -119 heat 78 share 0.31
-  NFL Kenneth Walker III     KC   RB p=0.536 fair -116 heat 40 share 0.304
-odds cache is 88 min old (limit 90) - reusing, 0 credits. Use --force or ODDS_CACHE_MIN=0 to re-pull.
-  Kalshi MLB 2026-10-05: 12 players, $7,315 traded
-  Kalshi NFL 2026-10-04: 115 players, $5,854,497 traded
-  Kalshi NFL 2026-10-05: 25 players, $112,884 traded
-  Kalshi NFL 2026-10-08: 2 players, $51,721 traded
-  ML 2026_wk1: 16/16 graded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 16/16 graded
-  ML 2026_wk4: 10/16 graded
-MLB 2026-10-04: kept 18 frozen, refreshed 18, late 0
-NFL 2026_wk4: kept 255 frozen, refreshed 40, late 0
-NFL 2026_wk1: 16/16 games graded
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 16/16 games graded
-NFL 2026_wk4: 10/16 games graded
-site: index + 30 day pages + 4 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  MLB ATL@LAD: $3,228,719 on LAD / $144,320 on ATL (12,741 trades)  (partial, game not started)
-  NFL DET@CAR: $131,225 on CAR / $216,261 on DET (14,899 trades)  (partial, game not started)
-  NFL ATL@NO: $64,838 on NO / $100,968 on ATL (8,620 trades)  (partial, game not started)
-taker tape attached to 293 locked games
-  pinnacle spreads+totals baseball_mlb: 4 games, 2 credits
-  lines 2026-10-04: 2 games (2 spreads, 2 totals)
-  pinnacle spreads+totals americanfootball_nfl: 6 games, 2 credits
-  lines 2026_wk4: 14 games (14 spreads, 14 totals)
-archive.html: 4 NFL weeks, 30 MLB days
+﻿archive.html: 4 NFL weeks, 30 MLB days
 ml.html: 21 MLB days, 4 NFL weeks, 283 graded games
 lines.html: 9 MLB days, 2 NFL weeks, 96 games
 done 15:05
@@ -237,3 +197,4 @@ taker tape attached to 295 locked games
 archive.html: 4 NFL weeks, 31 MLB days
 ml.html: 22 MLB days, 4 NFL weeks, 290 graded games
 lines.html: 10 MLB days, 2 NFL weeks, 98 games
+done 06:05
