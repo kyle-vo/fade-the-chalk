@@ -198,3 +198,40 @@ archive.html: 4 NFL weeks, 30 MLB days
 ml.html: 21 MLB days, 4 NFL weeks, 283 graded games
 lines.html: 9 MLB days, 2 NFL weeks, 96 games
 done 15:05
+=== 2026-10-04 18:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Cam Skattebo           NYG  RB p=0.570 fair -132 heat 41 share 0.333
+  NFL Kenneth Walker III     KC   RB p=0.562 fair -128 heat 41 share 0.326
+  NFL Ashton Jeanty          LV   RB p=0.560 fair -127 heat 49 share 0.324
+  NFL Christian McCaffrey    SF   RB p=0.546 fair -120 heat 78 share 0.312
+  NFL touchdown props: PULLING (Sunday night window)
+  americanfootball_nfl/player_anytime_td: 29 players priced, 25 on Fliff, 0 Underdog-only (credits used this month: 30 used / 470 left on key #6)
+key #6 used this run
+snapshot 15 saved for 2026-10-04
+  Kalshi MLB 2026-10-06: 6 players, $34 traded
+  Kalshi NFL 2026-10-04: 20 players, $2,828,533 traded
+  Kalshi NFL 2026-10-05: 25 players, $124,565 traded
+  Kalshi NFL 2026-10-08: 2 players, $51,732 traded
+  ML 2026_wk1: 16/16 graded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 14/16 graded
+MLB 2026-10-04: kept 36 frozen, refreshed 0, late 0
+NFL 2026_wk4: kept 273 frozen, refreshed 21, late 0
+NFL 2026_wk1: 16/16 games graded
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 14/16 games graded
+site: index + 30 day pages + 4 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL ATL@NO: $96,226 on NO / $129,208 on ATL (11,552 trades)  (partial, game not started)
+taker tape attached to 293 locked games
+  pinnacle spreads+totals baseball_mlb: 4 games, 2 credits
+  lines 2026-10-04: 2 games (2 spreads, 2 totals)
+  pinnacle spreads+totals americanfootball_nfl: 16 games, 2 credits
+  lines 2026_wk4: 14 games (14 spreads, 14 totals)
+archive.html: 4 NFL weeks, 30 MLB days
+ml.html: 21 MLB days, 4 NFL weeks, 288 graded games
+lines.html: 9 MLB days, 2 NFL weeks, 96 games
