@@ -198,3 +198,42 @@ archive.html: 5 NFL weeks, 32 MLB days
 ml.html: 23 MLB days, 5 NFL weeks, 293 graded games
 lines.html: 11 MLB days, 3 NFL weeks, 110 games
 done 06:05
+=== 2026-10-06 09:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Kyren Williams         LAR  RB p=0.605 fair -153 heat 80 share 0.284
+  NFL Derrick Henry          BAL  RB p=0.598 fair -149 heat 76 share 0.391
+  NFL James Cook III         BUF  RB p=0.566 fair -130 heat 78 share 0.279
+  NFL Christian McCaffrey    SF   RB p=0.555 fair -125 heat 78 share 0.316
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 38 players priced, 35 on Fliff, 0 Underdog-only (credits used this month: 86 used / 414 left on key #10)
+key #10 used this run
+snapshot 5 saved for 2026-10-06
+  Kalshi MLB 2026-10-06: 15 players, $207,661 traded
+  Kalshi MLB 2026-10-07: 12 players, $3,756 traded
+  Kalshi NFL 2026-10-08: 22 players, $109,308 traded
+  Kalshi NFL 2026-10-11: 19 players, $83 traded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 16/16 graded
+  ML 2026_wk5: 0/15 graded
+MLB 2026-10-06: kept 0 frozen, refreshed 36, late 0
+NFL 2026_wk5: kept 0 frozen, refreshed 277, late 0
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 16/16 games graded
+NFL 2026_wk5: 0/15 games graded
+site: index + 32 day pages + 5 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL SF@SEA: $74,111 on SEA / $110,289 on SF (6,653 trades)  (partial, game not started)
+  NFL BAL@ATL: $150,150 on ATL / $58,461 on BAL (2,601 trades)  (partial, game not started)
+  NFL BUF@LAR: $13,257 on LAR / $32,097 on BUF (1,902 trades)  (partial, game not started)
+taker tape attached to 312 locked games
+  pinnacle spreads+totals baseball_mlb: 4 games, 2 credits
+  lines 2026-10-06: 2 games (2 spreads, 2 totals)
+  pinnacle spreads+totals americanfootball_nfl: 15 games, 2 credits
+  lines 2026_wk5: 12 games (12 spreads, 12 totals)
+archive.html: 5 NFL weeks, 32 MLB days
+ml.html: 23 MLB days, 5 NFL weeks, 293 graded games
+lines.html: 11 MLB days, 3 NFL weeks, 112 games
