@@ -283,6 +283,7 @@ const key = r => r.date + '|' + r.sport + ':' + r.id;
 // r.prob itself is never changed: it stays 'if he plays', which is how results are graded (a scratch is a void, not a miss).
 const restRisk = r => r.sport === 'MLB' && !r.lineupPosted && r.startRate != null && r.startRate < 0.9;      // worth calling out on the row
 const playAdj = r => (r.sport === 'MLB' && !r.lineupPosted && r.startRate != null) ? r.prob * r.startRate : r.prob;   // applied to every projected hitter: even everyday players sit ~7%
+const isPrime = t => { if (!t) return false; const d = new Date(t), tz = { timeZone: 'America/Los_Angeles' }; const day = d.toLocaleString('en-US', { ...tz, weekday: 'short' }), hr = +d.toLocaleString('en-US', { ...tz, hour: 'numeric', hourCycle: 'h23' }); return ['Thu', 'Mon', 'Fri', 'Sat'].includes(day) || (day === 'Sun' && hr >= 17); };
 function verdict(r){
   const e = store[key(r)] || {}; const oddsIn = e.odds || r.book; const imp = implied(oddsIn); const edge = imp == null ? null : r.prob - imp;
   const heat = e.pub != null && e.pub !== '' ? +e.pub : r.heat;
@@ -309,7 +310,9 @@ function verdict(r){
     //   LEAN  = other WRs/TEs priced under 15c: cheap players have beaten their price overall (+33%) but swing hard week to week (wk2 0 for 29): small stakes.
     const tp = r.teamPub, pos = (r.pos || '').slice(0, 2), px = r.kalshi != null ? r.kalshi : implied(r.book);
     const favBacked = r.teamFav === true && tp != null && tp >= .5;
-    if (favBacked && (pos === 'WR' || pos === 'TE')) v = 'BET';
+    // PRIMETIME, from 2026-10-06 (Thu / Sun night / Mon): more scoring than priced (26.9% vs 23.1%), led by tight ends: 40% on the favorite and 28% on the dog,
+    //   against ~18-23% prices (33 players). So every primetime TE is a BET. Small sample.
+    if ((favBacked && (pos === 'WR' || pos === 'TE')) || (pos === 'TE' && isPrime(r.time))) v = 'BET';
     else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID';
     else if ((pos === 'WR' || pos === 'TE') && px != null && px < .15) v = 'LEAN';
     why = [pos === 'QB' ? 'quarterbacks have scored less than their price' : pos === 'RB' && r.teamFav ? 'running backs on the favorite have scored less than their price' : (pos === 'WR' || pos === 'TE') && px != null && px < .15 && v === 'LEAN' ? 'cheap receivers have beaten their price, but it swings week to week' : '',
@@ -501,7 +504,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <div class="legend">
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Robinhood</b> = the Kalshi/Robinhood ask for his home run market, shown as American odds (a 22¢ contract = +355); hover for Fliff's price. FL = no Robinhood market, Fliff's price shown; UD = Underdog; * = best sportsbook price; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). For MLB the Public column shows <b>Kalshi</b>: the prediction-market crowd's own price for him and how many dollars they've put on it; crowd above the model, heavy volume, or a rising price all raise Heat. Typing a real public-bet % overrides all of it.<br>
-<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> (from Sept 28, 3,160 priced hitters): <b>BET</b> = his team is the favorite, he bats 1-4, he costs 8¢ or more, and his team has 65%+ of the moneyline money (19.3% homered against a 15.1% price). <b>LEAN</b> = other hitters on the favorite at 8¢+ outside slots 5-6 (about +21%). <b>AVOID</b> = his team is the underdog, he costs under 8¢, or he bats 5th or 6th (9.0% against 9.9%). <b>PASS</b> = no moneyline for his game yet. <b>Touchdown verdicts</b> (from Oct 5, weeks 1-4, only what held in weeks 2, 3 and 4): <b>BET</b> = a WR or TE on the favorite with 50%+ of the moneyline money (26.3% scored against a 22.8% price). <b>LEAN</b> = other WRs and TEs priced under 15¢ (they beat their price overall but swing hard week to week). <b>AVOID</b> = quarterbacks and running backs on the favorite (24.4% against 27.2%). Hover a verdict for the reason; the Track page scores the new and old rules side by side. The old heat-based labels are retired: <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
+<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> (from Sept 28, 3,160 priced hitters): <b>BET</b> = his team is the favorite, he bats 1-4, he costs 8¢ or more, and his team has 65%+ of the moneyline money (19.3% homered against a 15.1% price). <b>LEAN</b> = other hitters on the favorite at 8¢+ outside slots 5-6 (about +21%). <b>AVOID</b> = his team is the underdog, he costs under 8¢, or he bats 5th or 6th (9.0% against 9.9%). <b>PASS</b> = no moneyline for his game yet. <b>Touchdown verdicts</b> (from Oct 5, weeks 1-4, only what held in weeks 2, 3 and 4): <b>BET</b> = a WR or TE on the favorite with 50%+ of the moneyline money (26.3% scored against a 22.8% price). <b>LEAN</b> = other WRs and TEs priced under 15¢ (they beat their price overall but swing hard week to week). <b>AVOID</b> = quarterbacks and running backs on the favorite (24.4% against 27.2%). 🌙 In <b>primetime</b> (Thursday, Sunday night, Monday) every tight end is a <b>BET</b>: primetime games have out-scored their prices, led by tight ends. Hover a verdict for the reason; the Track page scores the new and old rules side by side. The old heat-based labels are retired: <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Result</b> fills in as games go final and stays on the page with the crowd money, so hits can be checked against where the public was. <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
 </div>
@@ -509,6 +512,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 
 TRACK_CSS = '<style>button.rm{background:#1c2430;border:1px solid #2b3440;color:#8a94a3;border-radius:6px;padding:2px 8px;cursor:pointer;font:inherit}button.rm:hover{color:#ff4d5e;border-color:#ff4d5e}</style>'
 TRACK_JS = r"""
+const isPrime = t => { if (!t) return false; const d = new Date(t), tz = { timeZone: 'America/Los_Angeles' }; const day = d.toLocaleString('en-US', { ...tz, weekday: 'short' }), hr = +d.toLocaleString('en-US', { ...tz, hour: 'numeric', hourCycle: 'h23' }); return ['Thu', 'Mon', 'Fri', 'Sat'].includes(day) || (day === 'Sun' && hr >= 17); };
 // same verdict rules as the board pages (build_site.py BOARD_JS verdict), kept in step, so the scorecard grades exactly what the boards show
 function verdict(r){
   const imp = o => { o = +o; if (!o || isNaN(o)) return null; return o < 0 ? (-o) / (-o + 100) : 100 / (o + 100); };
@@ -518,7 +522,7 @@ function verdict(r){
     else if (r.teamFav === true && px != null && sl >= 1 && sl <= 4 && tp != null && tp >= .65) v = 'BET';
     else if (r.teamFav === true && px != null) v = 'LEAN'; }
   else { const pos = (r.pos || '').slice(0, 2);
-    if (r.teamFav === true && tp != null && tp >= .5 && (pos === 'WR' || pos === 'TE')) v = 'BET';
+    if ((r.teamFav === true && tp != null && tp >= .5 && (pos === 'WR' || pos === 'TE')) || (pos === 'TE' && isPrime(r.time))) v = 'BET';
     else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID'; else if ((pos === 'WR' || pos === 'TE') && r.kalshi != null && r.kalshi < .15) v = 'LEAN'; }
   return { v };
 }
