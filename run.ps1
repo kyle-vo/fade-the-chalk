@@ -1,4 +1,4 @@
-﻿# Daily pipeline:  fetch -> model -> lock today's picks -> grade finished games -> build site -> push to GitHub Pages
+# Daily pipeline:  fetch -> model -> lock today's picks -> grade finished games -> build site -> push to GitHub Pages
 # Usage:  .\run.ps1              today's MLB slate + current NFL week
 #         .\run.ps1 2026-09-12   a specific MLB date
 #         .\run.ps1 -NoPush      build locally only
@@ -16,6 +16,7 @@ python -X utf8 lock.py
 python -X utf8 grade.py
 python -X utf8 build_site.py
 python -X utf8 taker.py
+python -X utf8 polymarket.py
 python -X utf8 lines.py
 python -X utf8 build_ml.py
 python -X utf8 build_lines.py

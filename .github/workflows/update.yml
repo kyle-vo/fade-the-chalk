@@ -63,6 +63,9 @@ jobs:
       - name: Kalshi trade tape (directional crowd money)
         continue-on-error: true
         run: python taker.py
+      - name: Polymarket money (free API)
+        run: python polymarket.py
+        continue-on-error: true
 
       - name: Spreads and totals (Pinnacle fair vs Robinhood, crowd tape)
         continue-on-error: true

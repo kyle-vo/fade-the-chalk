@@ -176,8 +176,8 @@ def nfl_rows():
 
 # ---------------- lock + grade ----------------
 PRE = ('Scheduled', 'Pre-Game', 'Warmup', 'STATUS_SCHEDULED')
-VOL_FIELDS = ('kvol', 'kvolHome', 'kvolAway', 'koiHome', 'koiAway', 'takerHome$', 'takerAway$', 'takerTrades')   # koi = open interest: contracts still held = dollars actually riding on the game, no churn
-CARRY_FIELDS = ('takerPubHome', 'takerAt', 'crowdAt', 'kalshiAsk', 'kalshiAwayAsk', 'sharpHome', 'sharpSrc', 'skewHome', 'fliffHome', 'fliffAway', 'books')
+VOL_FIELDS = ('kvol', 'kvolHome', 'kvolAway', 'koiHome', 'koiAway', 'takerHome$', 'takerAway$', 'takerTrades', 'pmHome$', 'pmAway$', 'pmTrades', 'pmVol')   # koi = open interest: contracts still held = dollars actually riding on the game, no churn
+CARRY_FIELDS = ('takerPubHome', 'takerAt', 'pmPubHome', 'pmAt', 'crowdAt', 'kalshiAsk', 'kalshiAwayAsk', 'sharpHome', 'sharpSrc', 'skewHome', 'fliffHome', 'fliffAway', 'books')
 def merge_row(old, new):
     """Refresh a pre-game row without ever losing data: volumes never go down, fields the new pull lacks are carried
     forward from the old row, and prices come from whichever pull saw more money (the later one)."""
@@ -192,6 +192,8 @@ def merge_row(old, new):
             if old.get(k) is not None: out[k] = old[k]
     th, ta = out.get('takerHome$') or 0, out.get('takerAway$') or 0
     if th + ta: out['takerPubHome'] = round(th / (th + ta), 3)
+    ph, pa = out.get('pmHome$') or 0, out.get('pmAway$') or 0
+    if ph + pa: out['pmPubHome'] = round(ph / (ph + pa), 3)
     kh, ka = out.get('kvolHome') or 0, out.get('kvolAway') or 0
     if kh + ka: out['pubHome'] = round(kh / (kh + ka), 3)
     return out
