@@ -1,48 +1,4 @@
-﻿  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Kyren Williams         LAR  RB p=0.592 fair -145 heat 79 share 0.271
-  NFL James Cook III         BUF  RB p=0.562 fair -128 heat 77 share 0.279
-  NFL Javonte Williams       DAL  RB p=0.559 fair -127 heat 69 share 0.323
-  NFL Chase Brown            CIN  RB p=0.547 fair -121 heat 63 share 0.273
-  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 06:05))
-  baseball_mlb/batter_home_runs: 18 players priced, 16 on Fliff, 0 Underdog-only (credits used this month: 87 used / 413 left on key #3)
-key #3 used this run
-snapshot 7 saved for 2026-10-10
-  Kalshi MLB 2026-10-10: 6 players, $110,078 traded
-  Kalshi MLB 2026-10-11: 7 players, $27,837 traded
-  Kalshi NFL 2026-10-11: 290 players, $2,095,130 traded
-  Kalshi NFL 2026-10-12: 24 players, $57,963 traded
-  ML 2026_wk2: 16/16 graded
-  ML 2026_wk3: 16/16 graded
-  ML 2026_wk4: 16/16 graded
-  ML 2026_wk5: 1/15 graded
-MLB 2026-10-10: kept 0 frozen, refreshed 18, late 0
-NFL 2026_wk5: kept 19 frozen, refreshed 257, late 0
-NFL 2026_wk2: 16/16 games graded
-NFL 2026_wk3: 16/16 games graded
-NFL 2026_wk4: 16/16 games graded
-NFL 2026_wk5: 1/15 games graded
-site: index + 35 day pages + 5 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL SF@SEA: $175,731 on SEA / $604,658 on SF (31,370 trades)  (partial, game not started)
-  NFL BAL@ATL: $213,870 on ATL / $148,437 on BAL (9,315 trades)  (partial, game not started)
-  NFL BUF@LAR: $41,121 on LAR / $94,870 on BUF (6,362 trades)  (partial, game not started)
-taker tape attached to 318 locked games
-  pinnacle spreads+totals baseball_mlb: 2 games, 2 credits
-  lines 2026-10-10: 1 games (1 spreads, 1 totals)
-  pinnacle spreads+totals americanfootball_nfl: 26 games, 2 credits
-  lines 2026_wk5: 13 games (13 spreads, 13 totals)
-archive.html: 5 NFL weeks, 35 MLB days
-ml.html: 26 MLB days, 5 NFL weeks, 301 graded games
-lines.html: 14 MLB days, 3 NFL weeks, 119 games
-done 12:07
-=== 2026-10-10 15:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Kyren Williams         LAR  RB p=0.596 fair -147 heat 80 share 0.271
+﻿  NFL Kyren Williams         LAR  RB p=0.596 fair -147 heat 80 share 0.271
   NFL James Cook III         BUF  RB p=0.559 fair -127 heat 77 share 0.279
   NFL Javonte Williams       DAL  RB p=0.559 fair -127 heat 69 share 0.323
   NFL Chase Brown            CIN  RB p=0.547 fair -121 heat 63 share 0.273
@@ -240,4 +196,44 @@ polymarket tape attached to 18 games
   lines 2026_wk5: 13 games (13 spreads, 13 totals)
 archive.html: 5 NFL weeks, 36 MLB days
 ml.html: 27 MLB days, 5 NFL weeks, 311 graded games
+lines.html: 15 MLB days, 3 NFL weeks, 120 games
+done 15:05
+=== 2026-10-11 18:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Bijan Robinson         ATL  RB p=0.591 fair -145 heat 56 share 0.353
+  NFL Ashton Jeanty          LV   RB p=0.560 fair -127 heat 49 share 0.325
+  NFL James Cook III         BUF  RB p=0.559 fair -127 heat 77 share 0.279
+  NFL Javonte Williams       DAL  RB p=0.559 fair -127 heat 69 share 0.323
+  NFL touchdown props: skipped, 0 credits (already pulled for the Sunday night window (Sun 17:58))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #9 used this run
+snapshot 11 saved for 2026-10-11
+  Kalshi MLB 2026-10-12: 6 players, $5,441 traded
+  Kalshi NFL 2026-10-11: 21 players, $2,963,428 traded
+  Kalshi NFL 2026-10-12: 25 players, $102,479 traded
+  Kalshi NFL 2026-10-15: 2 players, $2,069 traded
+  ML 2026_wk2: 16/16 graded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 16/16 graded
+  ML 2026_wk5: 13/15 graded
+MLB 2026-10-11: kept 18 frozen, refreshed 0, late 0
+NFL 2026_wk5: kept 252 frozen, refreshed 22, late 0
+NFL 2026_wk2: 16/16 games graded
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 16/16 games graded
+NFL 2026_wk5: 13/15 games graded
+site: index + 36 day pages + 5 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL BUF@LAR: $92,005 on LAR / $295,399 on BUF (18,792 trades)  (partial, game not started)
+taker tape attached to 319 locked games
+  NFL BUF@LAR: $26,267 on LAR / $4,336 on BUF (176 trades, $54,307 traded)  (partial, game not started)
+polymarket tape attached to 16 games
+  pinnacle spreads+totals baseball_mlb: 2 games, 2 credits
+  lines 2026-10-11: 1 games (1 spreads, 1 totals)
+  pinnacle spreads+totals americanfootball_nfl: 14 games, 2 credits
+  lines 2026_wk5: 13 games (13 spreads, 13 totals)
+archive.html: 5 NFL weeks, 36 MLB days
+ml.html: 27 MLB days, 5 NFL weeks, 314 graded games
 lines.html: 15 MLB days, 3 NFL weeks, 120 games
