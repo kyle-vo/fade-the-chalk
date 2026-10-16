@@ -142,6 +142,29 @@ def attach_team_money_nfl(rows):
         if tp is None and g.get('pubHome') is not None: tp = g['pubHome']
         if tp is not None: r['teamPub'] = round(tp if home else 1 - tp, 3)
         r['teamFav'] = (g['model'] >= .5) == home
+    # From 2026-10-16 the touchdown verdict keys off two more inputs (see the NFL verdict in BOARD_JS):
+    #   spTeam = share of the crowd's SPREAD tape $ on his team (Robinhood's main line, frozen at kickoff), spTape = that market's total tape $
+    #   gp26 / td26 / lastTD = his 2026 games played, games with a TD, and whether he scored in his last game, from graded weeks before this one only
+    lines, form = {}, {}
+    for r in rows:
+        tag = r.get('week') or r.get('date') or ''
+        if '_wk' not in tag: continue
+        if tag not in lines:
+            lf = os.path.join(BT, f'lines_{tag}.json'); lines[tag] = {str(x.get('eventId')): x for x in J(lf)} if os.path.exists(lf) else {}
+            pre, n = tag[:tag.index('_wk') + 3], int(tag[tag.index('_wk') + 3:]); fm = {}
+            for w in range(1, n):
+                rp = os.path.join(BT, f'nflres_{pre}{w}.json')
+                if not os.path.exists(rp): continue
+                for pid, g in J(rp).items():
+                    if pid.startswith('_') or not isinstance(g, dict) or g.get('played') is False: continue
+                    f = fm.setdefault(pid, {'gp': 0, 'td': 0, 'last': None}); f['gp'] += 1; f['td'] += 1 if g.get('td', 0) > 0 else 0; f['last'] = 1 if g.get('td', 0) > 0 else 0
+            form[tag] = fm
+        sp = (lines[tag].get(str(r.get('eventId'))) or {}).get('spread') or {}
+        fv, dg = sp.get('tapeFav$') or 0, sp.get('tapeDog$') or 0
+        if sp.get('fav') and fv + dg and r.get('team') in (sp.get('fav'), sp.get('dog')):
+            r['spTeam'] = round((fv if r['team'] == sp['fav'] else dg) / (fv + dg), 3); r['spTape'] = round(fv + dg)
+        f = form[tag].get(str(r.get('id')))
+        r['gp26'], r['td26'], r['lastTD'] = (f['gp'], f['td'], f['last']) if f else (0, 0, None)
 
 def attach_team_money(rows, date):
     """Inputs for the home-run verdict. The moneyline lock is frozen at first pitch, so nothing in-game leaks in.
@@ -194,7 +217,7 @@ def attach_kalshi_nfl(rows):
 for _d, _rows in days.items(): attach_odds(_rows, _d, 'MLB'); attach_kalshi(_rows, _d, 'MLB'); attach_team_money(_rows, _d)
 for _w, _rows in weeks.items(): attach_odds(_rows, today, 'NFL'); attach_kalshi_nfl(_rows); attach_team_money_nfl(_rows)
 attach_odds(board['nfl'], today, 'NFL'); attach_kalshi_nfl(board['nfl']); attach_team_money_nfl(board['nfl']); attach_odds(board['mlb'], today, 'MLB'); attach_kalshi(board['mlb'], today, 'MLB'); attach_team_money(board['mlb'], today)
-slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove', 'sportsbook', 'big', 'teamPub', 'teamFav', 'probRaw')}
+slim = lambda r: {k: r.get(k) for k in ('sport', 'id', 'name', 'team', 'game', 'time', 'prob', 'fair', 'heat', 'hit', 'actual', 'dnp', 'date', 'pos', 'slot', 'lineupPosted', 'lateLock', 'book', 'move', 'skew', 'onFliff', 'bookUsed', 'bestBook', 'bestAt', 'kalshi', 'kvol', 'kmove', 'sportsbook', 'big', 'teamPub', 'teamFav', 'probRaw', 'spTeam', 'spTape', 'gp26', 'td26', 'lastTD')}
 HISTORY = [slim(r) for rows in days.values() for r in rows] + [slim(r) for rows in weeks.values() for r in rows]
 _mlb = os.path.join(BT, 'mlboard.json'); MLH = json.load(open(_mlb, encoding='utf-8')) if os.path.exists(_mlb) else []   # written by build_ml.py
 
@@ -231,7 +254,7 @@ span.crowd{font-family:var(--mono);font-size:12px;color:var(--ink);margin-right:
 input.bet{accent-color:var(--acc);width:16px;height:16px;vertical-align:middle}
 .bar{display:inline-block;height:8px;border-radius:4px;background:#2b3440;width:60px;vertical-align:middle;position:relative;overflow:hidden}.bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#4aa3ff,#ff4d5e)}
 .v{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.4px}
-.v.FADEdog{background:#3a2a10;color:var(--warn)}.v.BETchalk{background:#123d26;color:var(--good)}.v.BET{background:#123d26;color:var(--good)}.v.LEAN{background:#12304a;color:var(--blue)}.v.AVOID{background:#4a1218;color:var(--bad)}.v.SLEEPER{background:#123d26;color:var(--good)}.v.VALUE{background:#12304a;color:var(--blue)}.v.TRAP,.v.FADE{background:#4a1218;color:var(--bad)}.v.CHALK{background:#463610;color:var(--warn)}.v.PASS,.v.DONE{background:#20262e;color:var(--mute)}.v.STRONGBET{background:#123d26;color:var(--good)}.v.BET{background:#12304a;color:var(--blue)}.v.PASSpricedin,.v.PASStooexpensive,.v.PASSnoPinnacle{background:#20262e;color:var(--mute)}
+.v.FADEdog{background:#3a2a10;color:var(--warn)}.v.BETchalk{background:#123d26;color:var(--good)}.v.BET{background:#123d26;color:var(--good)}.v.LEAN{background:#12304a;color:var(--blue)}.v.AVOID{background:#4a1218;color:var(--bad)}.v.SLEEPER{background:#123d26;color:var(--good)}.v.VALUE{background:#12304a;color:var(--blue)}.v.TRAP,.v.FADE{background:#4a1218;color:var(--bad)}.v.CHALK{background:#463610;color:var(--warn)}.v.PASS,.v.DONE{background:#20262e;color:var(--mute)}.v.STRONGBET{background:#123d26;color:var(--good)}.v.STRONGFADEdog{background:#123d26;color:var(--good)}.v.PASSwait{background:#20262e;color:var(--mute)}.v.BET{background:#12304a;color:var(--blue)}.v.PASSpricedin,.v.PASStooexpensive,.v.PASSnoPinnacle{background:#20262e;color:var(--mute)}
 .res{font-family:var(--mono);font-weight:600}.res.y{color:var(--good)}.res.n{color:var(--mute)}.res.d{color:#5b6472}
 .pos{color:var(--good)}.neg{color:var(--bad)}
 tr.det td{background:#0e1115;color:var(--mute);white-space:normal;font-size:12px;padding:8px 14px 10px}
@@ -308,15 +331,21 @@ function verdict(r){
     //   BET   = WR or TE on the favorite with 50%+ of the moneyline money: 26.3% vs 22.8% price (+26%; wk2 +9%, wk3 +69%, wk4 +14%)
     //   AVOID = quarterbacks, and running backs on the favorite: 24.4% vs 27.2% (-16%; wk2 -9%, wk3 -34%, wk4 -14%)
     //   LEAN  = other WRs/TEs priced under 15c: cheap players have beaten their price overall (+33%) but swing hard week to week (wk2 0 for 29): small stakes.
-    const tp = r.teamPub, pos = (r.pos || '').slice(0, 2), px = r.kalshi != null ? r.kalshi : implied(r.book);
-    const favBacked = r.teamFav === true && tp != null && tp >= .5;
-    // PRIMETIME, from 2026-10-06 (Thu / Sun night / Mon): more scoring than priced (26.9% vs 23.1%), led by tight ends: 40% on the favorite and 28% on the dog,
-    //   against ~18-23% prices (33 players). So every primetime TE is a BET. Small sample.
-    if ((favBacked && (pos === 'WR' || pos === 'TE')) || (pos === 'TE' && isPrime(r.time))) v = 'BET';
-    else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID';
-    else if ((pos === 'WR' || pos === 'TE') && px != null && px < .15) v = 'LEAN';
-    why = [pos === 'QB' ? 'quarterbacks have scored less than their price' : pos === 'RB' && r.teamFav ? 'running backs on the favorite have scored less than their price' : (pos === 'WR' || pos === 'TE') && px != null && px < .15 && v === 'LEAN' ? 'cheap receivers have beaten their price, but it swings week to week' : '',
-           r.teamFav === false ? 'his team is the underdog' : r.teamFav ? 'his team is the favorite' : '', tp == null ? 'no moneyline money data yet' : Math.round(tp * 100) + '% of the moneyline money on ' + r.team].filter(Boolean).join(' · ');
+    // Rebuilt 2026-10-16 on 958 priced player-games (weeks 2-6), every rule scored at Robinhood's price + 1.5c (spread + fee). Nothing beat the price as a
+    // forecast out of sample (position, primetime, implied points, player $, moneyline $ all made it worse), so the verdict only flags where the price has been
+    // wrong in the same direction every week. The market chases recent touchdowns:
+    //   BET   = no TD yet this season in 2+ games, his team has LESS of the crowd's spread $, under 35c: 23.7% scored vs 17.6% cost, +37% on 152 (wk3 +64, wk4 +26, wk5 +25)
+    //   AVOID = scored earlier this season but blanked his last game: 23.0% vs 30.4%, -34% on 165 (red every week: -29, -53, -14)
+    //   LEAN  = no TD yet in 2+ games, spread money not in yet: +13% on 40. Small.   (Form = games played and TD games from the graded weeks before this one.)
+    //   Retired: WR/TE on a crowd-backed favorite (-0.1% overall, -31% when the spread crowd was against his team) and every primetime TE (+13% on 38, 2 of 4 weeks).
+    const pos = (r.pos || '').slice(0, 2), px = r.kalshi != null ? r.kalshi : implied(r.book), sp = r.spTeam;
+    const noTD = r.gp26 >= 2 && r.td26 === 0, cold = r.td26 >= 1 && r.lastTD === 0;
+    if (noTD && sp != null && sp < .5 && px != null && px < .35) v = 'BET';
+    else if (cold) v = 'AVOID';
+    else if (noTD && sp == null) v = 'LEAN';
+    why = [noTD ? 'no TD yet in ' + r.gp26 + ' games: the market has been underpricing these' : cold ? 'scored earlier this year, blanked last game: the market has been overpricing these' : r.gp26 ? r.td26 + ' TD games in ' + r.gp26 : 'no 2026 games graded yet',
+           sp == null ? 'no spread money yet' : Math.round(sp * 100) + '% of the spread money on ' + r.team + (sp < .5 ? ' (the side the crowd is fading)' : ''),
+           noTD && px != null && px >= .35 ? 'priced 35c+: too short for this rule' : ''].filter(Boolean).join(' · ');
   } else if (edge != null) {
     if (edge >= .04 && heat < 45) v = 'SLEEPER'; else if (edge >= .03) v = 'VALUE';
     else if (e.pub !== undefined && e.pub !== '' && +e.pub >= 60 && edge < 0) v = 'FADE';
@@ -504,7 +533,7 @@ def board_page(title, sub, active, root, rows_mlb, rows_nfl, graded, tabs=True):
 <div class="legend">
 <b>Model %</b> = what the numbers say. <b>Fair</b> = the odds that % deserves. <b>Robinhood</b> = the Kalshi/Robinhood ask for his home run market, shown as American odds (a 22¢ contract = +355); hover for Fliff's price. FL = no Robinhood market, Fliff's price shown; UD = Underdog; * = best sportsbook price; hover for the best price and any line move; ▲ = shortened since the morning pull). Type over it if Fliff shows you something different. <b>Edge</b> = model % minus the book's implied %.
 <b>Heat</b> = how crowded the bet is: name recognition + hot streak + narrative, then adjusted by two live signals once odds are flowing: <b>line movement</b> (price shortened since the morning pull = money came in) and <b>book skew</b> (DraftKings / FanDuel / MGM pricing him shorter than Bovada / BetOnline = retail crowd is on him). For MLB the Public column shows <b>Kalshi</b>: the prediction-market crowd's own price for him and how many dollars they've put on it; crowd above the model, heavy volume, or a rising price all raise Heat. Typing a real public-bet % overrides all of it.<br>
-<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> (from Sept 28, 3,160 priced hitters): <b>BET</b> = his team is the favorite, he bats 1-4, he costs 8¢ or more, and his team has 65%+ of the moneyline money (19.3% homered against a 15.1% price). <b>LEAN</b> = other hitters on the favorite at 8¢+ outside slots 5-6 (about +21%). <b>AVOID</b> = his team is the underdog, he costs under 8¢, or he bats 5th or 6th (9.0% against 9.9%). <b>PASS</b> = no moneyline for his game yet. <b>Touchdown verdicts</b> (from Oct 5, weeks 1-4, only what held in weeks 2, 3 and 4): <b>BET</b> = a WR or TE on the favorite with 50%+ of the moneyline money (26.3% scored against a 22.8% price). <b>LEAN</b> = other WRs and TEs priced under 15¢ (they beat their price overall but swing hard week to week). <b>AVOID</b> = quarterbacks and running backs on the favorite (24.4% against 27.2%). 🌙 In <b>primetime</b> (Thursday, Sunday night, Monday) every tight end is a <b>BET</b>: primetime games have out-scored their prices, led by tight ends. Hover a verdict for the reason; the Track page scores the new and old rules side by side. The old heat-based labels are retired: <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
+<b>Model %</b> for home runs is recalibrated from 2026-09-19 (open a row to see the raw number it came from). <b>Home run verdicts</b> (from Sept 28, 3,160 priced hitters): <b>BET</b> = his team is the favorite, he bats 1-4, he costs 8¢ or more, and his team has 65%+ of the moneyline money (19.3% homered against a 15.1% price). <b>LEAN</b> = other hitters on the favorite at 8¢+ outside slots 5-6 (about +21%). <b>AVOID</b> = his team is the underdog, he costs under 8¢, or he bats 5th or 6th (9.0% against 9.9%). <b>PASS</b> = no moneyline for his game yet. <b>Touchdown verdicts</b> (rebuilt Oct 16 on 958 priced player-games, weeks 2-6, scored at Robinhood's price plus 1.5¢ for spread and fee). The price itself is the best forecast: nothing else (position, primetime, team total, money on the player or the moneyline) predicted better out of sample. Where the price has been wrong, it has been wrong the same way every week: <b>the market chases recent touchdowns</b>. <b>BET</b> = he has not scored yet this season in 2+ games, his team has <i>less</i> of the crowd's spread money, and he costs under 35¢ (23.7% scored against a 17.6% cost, +37% on 152 bets; green in weeks 3, 4 and 5). <b>AVOID</b> = he scored earlier this season but blanked his last game (23.0% against 30.4%, -34%, red every week). <b>LEAN</b> = no touchdown yet in 2+ games, but no spread money to read yet. Retired: WR/TE on a crowd-backed favorite (break-even) and every primetime tight end (2 of 4 weeks). Hover a verdict for the reason; the Track page scores the new and old rules side by side. The old heat-based labels are retired: <b>SLEEPER</b> = edge with low heat. <b>VALUE</b> = edge, some heat. <b>TRAP</b> = crowd on him, no edge. <b>FADE</b> = public 60%+ and negative edge. <b>CHALK</b> = hot name, no price entered.
 <b>Result</b> fills in as games go final and stays on the page with the crowd money, so hits can be checked against where the public was. <b>Bet</b> = tick to paper-bet him (stake in units, blank = 1u). It's scored on the Track page once the game is final, at the Book odds you typed, or at Fair if you typed none.
 </div>
 </div>
@@ -521,11 +550,16 @@ function verdict(r){
     if (r.teamFav === false || (px != null && px < .08) || (sl >= 5 && sl <= 6)) v = 'AVOID';
     else if (r.teamFav === true && px != null && sl >= 1 && sl <= 4 && tp != null && tp >= .65) v = 'BET';
     else if (r.teamFav === true && px != null) v = 'LEAN'; }
-  else { const pos = (r.pos || '').slice(0, 2);
-    if ((r.teamFav === true && tp != null && tp >= .5 && (pos === 'WR' || pos === 'TE')) || (pos === 'TE' && isPrime(r.time))) v = 'BET';
-    else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID'; else if ((pos === 'WR' || pos === 'TE') && r.kalshi != null && r.kalshi < .15) v = 'LEAN'; }
+  else { const px = r.kalshi != null ? r.kalshi : imp(r.book), sp = r.spTeam, noTD = r.gp26 >= 2 && r.td26 === 0, cold = r.td26 >= 1 && r.lastTD === 0;
+    if (noTD && sp != null && sp < .5 && px != null && px < .35) v = 'BET';
+    else if (cold) v = 'AVOID'; else if (noTD && sp == null) v = 'LEAN'; }
   return { v };
 }
+// the touchdown verdict used Oct 5-15, kept so the scorecard keeps comparing it with the new one
+function oldTdVerdict(r){ const pos = (r.pos || '').slice(0, 2), tp = r.teamPub; let v = 'PASS';
+  if ((r.teamFav === true && tp != null && tp >= .5 && (pos === 'WR' || pos === 'TE')) || (pos === 'TE' && isPrime(r.time))) v = 'BET';
+  else if (pos === 'QB' || (pos === 'RB' && r.teamFav === true)) v = 'AVOID'; else if ((pos === 'WR' || pos === 'TE') && r.kalshi != null && r.kalshi < .15) v = 'LEAN';
+  return v; }
 
 const H = HISTORY; let store = {};
 try { store = JSON.parse(localStorage.getItem('ftc_bets') || '{}'); } catch (e) {}
@@ -570,9 +604,11 @@ const strat = {
   'HR VERDICT BET: favorite, slot 1-4, 8c+, team 65%+ of the money': d => G.filter(r => r.date === d && verdict(r).v === 'BET'),
   'HR VERDICT LEAN: other favorites at 8c+, not slots 5-6': d => G.filter(r => r.date === d && verdict(r).v === 'LEAN'),
   'HR VERDICT AVOID: underdog, under 8c, or slot 5-6': d => G.filter(r => r.date === d && verdict(r).v === 'AVOID'),
-  'TD VERDICT BET: WR/TE on a crowd-backed favorite': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'BET'),
-  'TD VERDICT LEAN: other WR/TE under 15c': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'LEAN'),
-  'TD VERDICT AVOID: QBs, and RBs on the favorite': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'AVOID'),
+  'TD VERDICT BET: no TD yet (2+ g), spread crowd fading his team, under 35c': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'BET'),
+  'TD VERDICT LEAN: no TD yet (2+ g), no spread money yet': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'LEAN'),
+  'TD VERDICT AVOID: scored this year, blanked last game': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && verdict(r).v === 'AVOID'),
+  'OLD TD BET (Oct 5-15): WR/TE on a crowd-backed favorite, primetime TEs': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && oldTdVerdict(r) === 'BET'),
+  'OLD TD AVOID (Oct 5-15): QBs, and RBs on the favorite': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && oldTdVerdict(r) === 'AVOID'),
   'OLD HR BET: big name, public 65%+ on his team': d => G.filter(r => r.date === d && r.big && r.teamPub != null && r.teamPub >= .65),
   'OLD HR LEAN: smaller name, public 65%+ on his team': d => G.filter(r => r.date === d && !r.big && r.teamPub != null && r.teamPub >= .65),
   'OLD TD BET: public 65%+ on his team': d => d !== dates[0] ? [] : H.filter(r => r.hit != null && !r.dnp && r.sport === 'NFL' && r.teamPub != null && r.teamPub >= .65),
