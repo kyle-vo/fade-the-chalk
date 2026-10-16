@@ -1,47 +1,4 @@
-﻿  Kalshi NFL 2026-10-19: 22 players, $8,332 traded
-  ML 2026_wk3: 16/16 graded
-  ML 2026_wk4: 16/16 graded
-  ML 2026_wk5: 15/15 graded
-  ML 2026_wk6: 1/14 graded
-MLB 2026-10-15: kept 36 frozen, refreshed 0, late 0
-NFL 2026_wk6: kept 19 frozen, refreshed 252, late 0
-NFL 2026_wk3: 16/16 games graded
-NFL 2026_wk4: 16/16 games graded
-NFL 2026_wk5: 15/15 games graded
-NFL 2026_wk6: 1/14 games graded
-site: index + 40 day pages + 6 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-  NFL BUF@LV: $45,805 on LV / $65,790 on BUF (6,005 trades)  (partial, game not started)
-  NFL DAL@GB: $81,471 on GB / $73,732 on DAL (7,379 trades)  (partial, game not started)
-  NFL WSH@SF: $97,321 on SF / $19,345 on WSH (5,173 trades)  (partial, game not started)
-taker tape attached to 339 locked games
-  NFL BUF@LV: $4,704 on LV / $1,497 on BUF (87 trades, $17,093 traded)  (partial, game not started)
-  NFL DAL@GB: $4,098 on GB / $11,764 on DAL (60 trades, $32,735 traded)  (partial, game not started)
-  NFL WSH@SF: $225 on SF / $85 on WSH (37 trades, $653 traded)  (partial, game not started)
-polymarket tape attached to 18 games
-  pinnacle spreads+totals americanfootball_nfl: 25 games, 2 credits
-  lines 2026_wk6: 12 games (12 spreads, 12 totals)
-  lines 2026-10-15: graded 1
-  lines 2026_wk6: graded 1
-archive.html: 6 NFL weeks, 40 MLB days
-ml.html: 31 MLB days, 6 NFL weeks, 324 graded games
-lines.html: 19 MLB days, 4 NFL weeks, 138 games
-done 20:41
-=== 2026-10-15 21:07 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Kyren Williams         LAR  RB p=0.632 fair -172 heat 83 share 0.272
-  NFL Derrick Henry          BAL  RB p=0.631 fair -171 heat 81 share 0.394
-  NFL James Cook III         BUF  RB p=0.628 fair -169 heat 86 share 0.296
-  NFL Javonte Williams       DAL  RB p=0.601 fair -151 heat 77 share 0.308
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #10 used this run
-snapshot 10 saved for 2026-10-15
-  Kalshi MLB 2026-10-16: 6 players, $6,400 traded
-  Kalshi NFL 2026-10-18: 257 players, $652,938 traded
-  Kalshi NFL 2026-10-19: 22 players, $8,984 traded
+﻿  Kalshi NFL 2026-10-19: 22 players, $8,984 traded
   ML 2026_wk3: 16/16 graded
   ML 2026_wk4: 16/16 graded
   ML 2026_wk5: 15/15 graded
@@ -232,6 +189,49 @@ taker tape attached to 340 locked games
   NFL BUF@LV: $4,707 on LV / $1,509 on BUF (91 trades, $17,117 traded)  (partial, game not started)
   NFL DAL@GB: $4,465 on GB / $18,514 on DAL (69 trades, $47,502 traded)  (partial, game not started)
   NFL WSH@SF: $534 on SF / $85 on WSH (43 trades, $1,049 traded)  (partial, game not started)
+polymarket tape attached to 19 games
+  pinnacle spreads+totals baseball_mlb: 1 games, 2 credits
+  lines 2026-10-16: 1 games (1 spreads, 1 totals)
+  pinnacle spreads+totals americanfootball_nfl: 24 games, 2 credits
+  lines 2026_wk6: 12 games (12 spreads, 12 totals)
+archive.html: 6 NFL weeks, 41 MLB days
+ml.html: 32 MLB days, 6 NFL weeks, 324 graded games
+lines.html: 20 MLB days, 4 NFL weeks, 139 games
+done 09:06
+=== 2026-10-16 12:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL James Cook III         BUF  RB p=0.628 fair -169 heat 86 share 0.296
+  NFL Derrick Henry          BAL  RB p=0.627 fair -168 heat 80 share 0.394
+  NFL Kenneth Walker III     KC   RB p=0.627 fair -168 heat 48 share 0.35
+  NFL Javonte Williams       DAL  RB p=0.601 fair -151 heat 77 share 0.308
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 18 players priced, 16 on Fliff, 0 Underdog-only (credits used this month: 137 used / 363 left on key #5)
+key #5 used this run
+snapshot 7 saved for 2026-10-16
+  Kalshi MLB 2026-10-16: 6 players, $83,010 traded
+  Kalshi NFL 2026-10-18: 266 players, $955,134 traded
+  Kalshi NFL 2026-10-19: 22 players, $65,093 traded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 16/16 graded
+  ML 2026_wk5: 15/15 graded
+  ML 2026_wk6: 1/14 graded
+MLB 2026-10-16: kept 0 frozen, refreshed 18, late 0
+NFL 2026_wk6: kept 19 frozen, refreshed 246, late 0
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 16/16 games graded
+NFL 2026_wk5: 15/15 games graded
+NFL 2026_wk6: 1/14 games graded
+site: index + 41 day pages + 6 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL BUF@LV: $64,770 on LV / $75,287 on BUF (7,120 trades)  (partial, game not started)
+  NFL DAL@GB: $107,458 on GB / $97,389 on DAL (9,078 trades)  (partial, game not started)
+  NFL WSH@SF: $112,115 on SF / $24,195 on WSH (6,014 trades)  (partial, game not started)
+taker tape attached to 340 locked games
+  NFL BUF@LV: $4,707 on LV / $1,559 on BUF (92 trades, $17,193 traded)  (partial, game not started)
+  NFL DAL@GB: $4,487 on GB / $19,396 on DAL (74 trades, $49,343 traded)  (partial, game not started)
+  NFL WSH@SF: $539 on SF / $85 on WSH (44 trades, $1,055 traded)  (partial, game not started)
 polymarket tape attached to 19 games
   pinnacle spreads+totals baseball_mlb: 1 games, 2 credits
   lines 2026-10-16: 1 games (1 spreads, 1 totals)
