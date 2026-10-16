@@ -1,47 +1,4 @@
-﻿  pinnacle spreads+totals americanfootball_nfl: 28 games, 2 credits
-  lines 2026_wk6: 12 games (12 spreads, 12 totals)
-archive.html: 6 NFL weeks, 39 MLB days
-ml.html: 30 MLB days, 6 NFL weeks, 321 graded games
-lines.html: 18 MLB days, 4 NFL weeks, 136 games
-done 21:06
-=== 2026-10-15 20:39 ===
-git : Updating files:  43% (43/99)
-At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
-+ git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -A ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (Updating files:  43% (43/99):String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
-Updating files:  44% (44/99)
-Updating files:  45% (45/99)
-Updating files:  46% (46/99)
-Updating files:  47% (47/99)
-Updating files:  48% (48/99)
-Updating files:  49% (49/99)
-Updating files:  50% (50/99)
-Updating files:  51% (51/99)
-Updating files:  52% (52/99)
-Updating files:  53% (53/99)
-Updating files:  54% (54/99)
-Updating files:  55% (55/99)
-Updating files:  56% (56/99)
-Updating files:  57% (57/99)
-Updating files:  58% (58/99)
-Updating files:  59% (59/99)
-Updating files:  60% (60/99)
-Updating files:  61% (61/99)
-Updating files:  62% (62/99)
-Updating files:  63% (63/99)
-Updating files:  64% (64/99)
-Updating files:  65% (65/99)
-Updating files:  66% (66/99)
-Updating files:  67% (67/99)
-Updating files:  68% (68/99)
-Updating files:  69% (69/99)
-Updating files:  70% (70/99)
-Updating files:  71% (71/99)
-Updating files:  72% (72/99)
-Updating files:  73% (73/99)
+﻿Updating files:  73% (73/99)
 Updating files:  74% (74/99)
 Updating files:  75% (75/99)
 Updating files:  76% (76/99)
@@ -231,6 +188,49 @@ site: index + 41 day pages + 6 nfl pages + track -> C:\Users\Kyle\OneDrive\Deskt
 taker tape attached to 340 locked games
   NFL BUF@LV: $4,704 on LV / $1,500 on BUF (88 trades, $17,098 traded)  (partial, game not started)
   NFL DAL@GB: $4,102 on GB / $11,767 on DAL (62 trades, $32,747 traded)  (partial, game not started)
+  NFL WSH@SF: $517 on SF / $85 on WSH (41 trades, $1,027 traded)  (partial, game not started)
+polymarket tape attached to 19 games
+  pinnacle spreads+totals baseball_mlb: 1 games, 2 credits
+  lines 2026-10-16: 1 games (1 spreads, 1 totals)
+  pinnacle spreads+totals americanfootball_nfl: 24 games, 2 credits
+  lines 2026_wk6: 12 games (12 spreads, 12 totals)
+archive.html: 6 NFL weeks, 41 MLB days
+ml.html: 32 MLB days, 6 NFL weeks, 324 graded games
+lines.html: 20 MLB days, 4 NFL weeks, 139 games
+done 03:06
+=== 2026-10-16 06:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Derrick Henry          BAL  RB p=0.631 fair -171 heat 81 share 0.394
+  NFL James Cook III         BUF  RB p=0.628 fair -169 heat 86 share 0.296
+  NFL Kenneth Walker III     KC   RB p=0.627 fair -168 heat 48 share 0.35
+  NFL Javonte Williams       DAL  RB p=0.601 fair -151 heat 77 share 0.308
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 17 players priced, 16 on Fliff, 0 Underdog-only (credits used this month: 131 used / 369 left on key #3)
+key #3 used this run
+snapshot 4 saved for 2026-10-16
+  Kalshi MLB 2026-10-16: 6 players, $35,412 traded
+  Kalshi NFL 2026-10-18: 267 players, $716,570 traded
+  Kalshi NFL 2026-10-19: 22 players, $12,860 traded
+  ML 2026_wk3: 16/16 graded
+  ML 2026_wk4: 16/16 graded
+  ML 2026_wk5: 15/15 graded
+  ML 2026_wk6: 1/14 graded
+MLB 2026-10-16: kept 0 frozen, refreshed 18, late 0
+NFL 2026_wk6: kept 19 frozen, refreshed 252, late 0
+NFL 2026_wk3: 16/16 games graded
+NFL 2026_wk4: 16/16 games graded
+NFL 2026_wk5: 15/15 games graded
+NFL 2026_wk6: 1/14 games graded
+site: index + 41 day pages + 6 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+  NFL BUF@LV: $51,726 on LV / $70,791 on BUF (6,627 trades)  (partial, game not started)
+  NFL DAL@GB: $94,104 on GB / $82,363 on DAL (8,217 trades)  (partial, game not started)
+  NFL WSH@SF: $102,595 on SF / $22,173 on WSH (5,648 trades)  (partial, game not started)
+taker tape attached to 340 locked games
+  NFL BUF@LV: $4,707 on LV / $1,500 on BUF (89 trades, $17,107 traded)  (partial, game not started)
+  NFL DAL@GB: $4,104 on GB / $11,767 on DAL (63 trades, $32,752 traded)  (partial, game not started)
   NFL WSH@SF: $517 on SF / $85 on WSH (41 trades, $1,027 traded)  (partial, game not started)
 polymarket tape attached to 19 games
   pinnacle spreads+totals baseball_mlb: 1 games, 2 credits
