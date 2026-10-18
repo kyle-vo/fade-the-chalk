@@ -73,13 +73,14 @@ function render(){
   const list = rows.filter(x => (!gsel.value || x.r.away + ' @ ' + x.r.home === gsel.value) && (!hidefinal || !finished(x)) && (!hidestart || (x.hit == null && x.r.finalHome == null && new Date(x.r.time).getTime() > Date.now())) && (!hide || x.v !== 'PASS') && (kind === 'all' || x.kind === kind)).sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
   document.querySelectorAll('table.lt thead th').forEach(th => th.textContent = th.dataset.l + (th.dataset.k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''));
   const tbS = $('#tblS tbody'), tbT = $('#tblT tbody'); tbS.innerHTML = ''; tbT.innerHTML = '';
-  let g = 0, w = 0, u = 0, take = 0, gave = 0, nS = 0, nT = 0;
-  for (const x of list) { const r = x.r; take += x.take || 0; gave += x.gave || 0; if (x.hit != null && x.ask && !x.v.startsWith('PASS')) { g++; w += x.hit; u += x.hit ? (1 / x.ask - 1) : -1; }   // record counts plays only: we never take both sides
+  let g = 0, w = 0, u = 0, tg = 0, tw = 0, take = 0, gave = 0, nS = 0, nT = 0;
+  // record = the spread plays actually bet: one side per game, never both (-2.5 and +2.5), and never a PASS. Totals are not bet, so they get their own tile.
+  for (const x of list) { const r = x.r; take += x.take || 0; gave += x.gave || 0; if (x.hit != null && x.ask && !x.v.startsWith('PASS')) { if (x.kind === 'spread') { g++; w += x.hit; u += x.hit ? (1 / x.ask - 1) : -1; } else { tg++; tw += x.hit; } }
     const tr = document.createElement('tr'); tr.className = 'row';
     tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}</span></td><td><span class="nm">${x.side}</span>${x.shift ? `<br><span class="tm" title="Pinnacle's line is ${x.pinLine}; Robinhood only lists half points, so this is the nearest strike and Pinnacle's fair price is nudged for the half point">Pinnacle ${x.pinLine}~</span>` : ''}</td>
       <td class="num">${cents(x.ask)}</td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
       <td class="num" title="share of the crowd's taker dollars on this side (trade tape)"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${x.tape ? money(Math.round(x.own)) : '—'}</td><td class="num">${money(x.tape)}</td><td class="num">${money(x.vol)}</td>
-      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td><td>${x.hit == null ? '<span class="res n">—</span>' : x.hit ? '<span class="res y">✓ ' + (x.kind === 'spread' ? 'covered' : 'hit') + '</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>
+      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td><td>${x.hit == null ? '<span class="res n">—</span>' : x.v.startsWith('PASS') ? '<span class="res d" title="not a bet: the other side was the play">no bet</span>' : x.hit ? '<span class="res y">✓ ' + (x.kind === 'spread' ? 'covered' : 'hit') + '</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>
       <td class="num neg">${x.take == null ? '' : money(Math.round(x.take))}</td><td class="num pos">${x.gave == null ? '' : money(Math.round(x.gave))}</td>`;
     if (x.kind === 'spread') { tbS.appendChild(tr); nS++; } else { tbT.appendChild(tr); nT++; } }
   const empty = '<tr><td colspan="13" class="tm" style="text-align:center;padding:16px">nothing matches the filters</td></tr>';
@@ -87,7 +88,7 @@ function render(){
   $('#secS').hidden = kind === 'total'; $('#secT').hidden = kind === 'spread';
   $('#cntS').textContent = nS + ' sides'; $('#cntT').textContent = nT + ' sides';
   const games = new Set(list.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size;
-  $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>plays graded<b>${g}</b></div><div>record<b>${w}-${g - w}</b></div><div>units, 1u each play<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '') + (take + gave ? `<div>book take<b class="neg">${money(Math.round(take))}</b></div><div>book gave<b class="pos">${money(Math.round(gave))}</b></div>` : '');
+  $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>spread plays graded<b>${g}</b></div><div>spread record<b>${w}-${g - w}</b></div><div>units, 1u each play<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '') + (tg ? `<div>totals LEAN (not bet)<b>${tw}-${tg - tw}</b></div>` : '') + (take + gave ? `<div>book take<b class="neg">${money(Math.round(take))}</b></div><div>book gave<b class="pos">${money(Math.round(gave))}</b></div>` : '');
 }
 function setTab(t){ tab = t; history.replaceState(null, '', '#' + t); if (window.navSport) navSport(t, t === 'mlb' ? day : week); render(); }
 window.onNavSport = t => setTab(t);
