@@ -1,7 +1,7 @@
 """One navigation bar for every page: pick the sport once (MLB / NFL), then the page (props, moneyline, spreads & totals), then the slate.
 The sport choice rides in the URL hash (#mlb / #nfl) and in localStorage, so moving between pages keeps it.
 
-page   : 'props' | 'ml' | 'lines' | 'track' | 'archive'
+page   : 'props' | 'ml' | 'lines' | 'fantasy' | 'track' | 'archive'
 root   : '' or '../' (day and week pages live one folder down)
 slates : {'mlb': [(value, label, href)], 'nfl': [...]}; href '' means the page switches in place through window.onNavSlate(sport, value)
 cur    : {'mlb': value, 'nfl': value}, the slate this page shows first for each sport
@@ -29,7 +29,7 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 
 JS = r"""<script>(function(){
 const NAV = __NAV__;
-const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html' };
+const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
 if (!sp) { try { sp = localStorage.getItem('ftc_sport'); } catch (e) {} }
@@ -44,6 +44,7 @@ window.navSport = function(s, cur){
   document.querySelectorAll('nav.nb .sp a').forEach(a => a.classList.toggle('on', a.dataset.sp === s));
   document.querySelectorAll('nav.nb .pg a').forEach(a => { a.href = link(a.dataset.pg, s); });
   const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
+  const fz = document.querySelector('nav.nb .pg a[data-pg=fantasy]'); if (fz) fz.hidden = s !== 'nfl';   // NFL only
   const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
   const opts = (NAV.slates || {})[s] || [];
   if (sel) { sel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join(''); const c = cur || (NAV.cur || {})[s]; if (c != null) sel.value = c; box.hidden = !opts.length; }
@@ -80,7 +81,7 @@ def navbar(page, root='', slates=None, cur=None, fixed=None):
     slate = '' if not slates else '<label class="sl">slate <select></select></label>'
     return (CSS + '<nav class="nb">'
             '<div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a></div>'
-            f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a></div>'
+            f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a><a data-pg="fantasy" href="{root}fantasy.html"{on("fantasy")}>Fantasy &amp; Yards</a></div>'
             f'{slate}'
             f'<div class="aux"><a href="{root}track.html"{on("track")}>Track</a><a href="{root}archive.html"{on("archive")}>Archive</a>'
             '<span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" '

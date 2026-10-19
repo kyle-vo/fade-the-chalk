@@ -697,3 +697,7 @@ for w, rows in weeks.items():
 W('track.html', track_page())
 open(os.path.join(SITE, '.nojekyll'), 'w').close()
 print(f"site: index + {len(days)} day pages + {len(weeks)} nfl pages + track -> {SITE}")
+# NFL fantasy start/sit + yardage projections (its own page, built from the same backtest files); never allowed to break the main site build
+try:
+    import build_fantasy  # noqa: F401  (builds docs/fantasy.html on import)
+except Exception as e: print(f"fantasy.html failed: {type(e).__name__} {e}")
