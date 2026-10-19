@@ -40,7 +40,11 @@ def find_event(lad, home, away, sp):
     """event whose ticker ends with the two team codes (Kalshi uses its own codes: match on both being present after the date)"""
     for ev, ms in lad.items():
         tail = ev.split('-', 1)[1]; tail = re.sub(r'^\d\d[A-Z]{3}\d\d\d*', '', tail)
-        if tail == canon(away, sp) + canon(home, sp) or tail == canon(home, sp) + canon(away, sp): return ev, ms
+        # Kalshi writes its own codes (WAS, JAC, ...) and the board uses ours (WSH, JAX, ...): compare in board codes on both sides
+        splits = [(tail[:i], tail[i:]) for i in (2, 3, 4) if 2 <= i <= len(tail) - 2]
+        for a, b in splits:
+            pair = {canon(a, sp), canon(b, sp)}
+            if pair == {canon(away, sp), canon(home, sp)}: return ev, ms
     return None, []
 
 def tape(ticker, max_ts):
