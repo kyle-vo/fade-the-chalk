@@ -1,7 +1,7 @@
 """One navigation bar for every page: pick the sport once (MLB / NFL), then the page (props, moneyline, spreads & totals), then the slate.
 The sport choice rides in the URL hash (#mlb / #nfl) and in localStorage, so moving between pages keeps it.
 
-page   : 'props' | 'ml' | 'lines' | 'fantasy' | 'track' | 'archive'
+page   : 'props' | 'ml' | 'lines' | 'fantasy' | 'nba' | 'track' | 'archive'
 root   : '' or '../' (day and week pages live one folder down)
 slates : {'mlb': [(value, label, href)], 'nfl': [...]}; href '' means the page switches in place through window.onNavSlate(sport, value)
 cur    : {'mlb': value, 'nfl': value}, the slate this page shows first for each sport
@@ -15,7 +15,7 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .nb .sp{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .nb .sp a{padding:6px 16px;border-radius:999px;color:var(--mute);font-weight:800;letter-spacing:1px;font-size:12px;cursor:pointer;text-decoration:none;user-select:none}
 .nb .sp a:hover{color:var(--ink)}
-.nb .sp a.on[data-sp=mlb]{background:#18293d;color:#8cc2ff}.nb .sp a.on[data-sp=nfl]{background:#153325;color:#86e8ad}
+.nb .sp a.on[data-sp=mlb]{background:#18293d;color:#8cc2ff}.nb .sp a.on[data-sp=nfl]{background:#153325;color:#86e8ad}.nb .sp a.on[data-sp=nba]{background:#3a2410;color:#ffb36b}
 .nb .pg,.nb .aux{display:flex;flex-wrap:wrap;gap:2px 18px}
 .nb .pg a,.nb .aux a{color:var(--mute);text-decoration:none;padding:7px 0;border-bottom:2px solid transparent;font-weight:600;white-space:nowrap}
 .nb .pg a:hover,.nb .aux a:hover{color:var(--ink)}
@@ -33,7 +33,7 @@ const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
 if (!sp) { try { sp = localStorage.getItem('ftc_sport'); } catch (e) {} }
-if (sp !== 'mlb' && sp !== 'nfl') sp = 'mlb';
+if (sp !== 'mlb' && sp !== 'nfl' && !(sp === 'nba' && NAV.fixed === 'nba')) sp = 'mlb';   // NBA lives on its own page
 window.NAV_SPORT = sp;
 const link = (pg, s) => NAV.root + PAGES[pg] + '#' + s;
 // the latest slate that has its own page (not the today board): used when the today board has nothing for a sport, e.g. an MLB off day
@@ -45,14 +45,16 @@ window.navSport = function(s, cur){
   document.querySelectorAll('nav.nb .pg a').forEach(a => { a.href = link(a.dataset.pg, s); });
   const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
   const fz = document.querySelector('nav.nb .pg a[data-pg=fantasy]'); if (fz) fz.hidden = s !== 'nfl';   // NFL only
+  const pgs = document.querySelector('nav.nb .pg'); if (pgs) pgs.hidden = s === 'nba';                   // the NBA page holds all three markets itself
   const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
   const opts = (NAV.slates || {})[s] || [];
   if (sel) { sel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join(''); const c = cur || (NAV.cur || {})[s]; if (c != null) sel.value = c; box.hidden = !opts.length; }
 };
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('nav.nb .sp a').forEach(a => a.addEventListener('click', ev => {
+  document.querySelectorAll('nav.nb .sp a:not([data-sp=nba])').forEach(a => a.addEventListener('click', ev => {
     ev.preventDefault(); const s = a.dataset.sp;
     if (NAV.page === 'track' || NAV.page === 'archive') { navSport(s); return; }
+    if (NAV.page === 'nba') { location.href = NAV.root + 'index.html#' + s; return; }
     if (window.onNavSport && window.onNavSport(s) !== false) return;
     const t = link(NAV.page, s);
     location.href = (samePage(t) && window.navFallback(s)) || t;   // same page with nothing for that sport: go to its latest slate instead of only changing the hash
@@ -80,7 +82,7 @@ def navbar(page, root='', slates=None, cur=None, fixed=None):
     cfg = json.dumps({'page': page, 'root': root, 'slates': slates or {}, 'cur': cur or {}, 'fixed': fixed, 'built': built}).replace('</', '<\\/')
     slate = '' if not slates else '<label class="sl">slate <select></select></label>'
     return (CSS + '<nav class="nb">'
-            '<div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a></div>'
+            f'<div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="{root}nba.html">NBA</a></div>'
             f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a><a data-pg="fantasy" href="{root}fantasy.html"{on("fantasy")}>Fantasy &amp; Yards</a></div>'
             f'{slate}'
             f'<div class="aux"><a href="{root}track.html"{on("track")}>Track</a><a href="{root}archive.html"{on("archive")}>Archive</a>'
