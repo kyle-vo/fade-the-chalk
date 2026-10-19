@@ -55,7 +55,9 @@ def stats_nfl():
     """Full box-score lines for every finished game on an NFL lock (yards, receptions, targets, carries, passing), so yardage and fantasy
     projections can be graded the way touchdowns are. Writes backtest/nflstats_<week>.json = {eventId: {playerId: {team, pos-agnostic stats}}}.
     Separate file and separate pass, so a change in ESPN's layout here can never break the touchdown grading above. Backfills every locked week once."""
-    num = lambda v: float(v) if isinstance(v, str) and v.replace('.', '', 1).replace('-', '', 1).isdigit() else v
+    def num(v):                                                              # '88' -> 88.0, '-3' -> -3.0; '20/30' and '3-10' (sacks-yards) stay text
+        try: return float(v)
+        except (TypeError, ValueError): return v
     for lock in sorted(glob.glob(os.path.join(BT, 'nfl_*.json'))):
         wk = os.path.basename(lock)[4:-5]; path = os.path.join(BT, f'nflstats_{wk}.json')
         out = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
