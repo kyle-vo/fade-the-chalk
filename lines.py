@@ -90,7 +90,7 @@ def devig(a, b): pa, pb = implied(a), implied(b); s = pa + pb; return pa / s, pb
 HALF_PT = {('NFL', 'spread'): 0.025, ('NFL', 'total'): 0.02, ('MLB', 'spread'): 0.06, ('MLB', 'total'): 0.04}
 def pick_strike(ms, side_code, line, sport, kind):
     """the ladder market for this side at Pinnacle's line; if Kalshi has no market there, the nearest strike with the most money, plus how far it moved"""
-    cands = [m for m in ms if side_code is None or m['ticker'].rsplit('-', 1)[-1].rstrip('0123456789') == side_code]
+    cands = [m for m in ms if side_code is None or canon(m['ticker'].rsplit('-', 1)[-1].rstrip('0123456789'), sport) == side_code]   # Kalshi's code (WAS) vs ours (WSH)
     exact = [m for m in cands if abs(f(m.get('floor_strike')) - line) < 0.01]
     if exact: return exact[0], 0.0
     near = [m for m in cands if abs(f(m.get('floor_strike')) - line) <= 0.51]
@@ -195,3 +195,6 @@ if __name__ == '__main__':
         rows = merge(old, new); json.dump(rows, open(lf, 'w', encoding='utf-8'))
         print(f"  lines {tag}: {len(rows)} games ({sum(1 for r in rows if 'spread' in r)} spreads, {sum(1 for r in rows if 'total' in r)} totals)")
     grade()
+    try:                                                                        # NBA board (moneyline + spread + total in one file per day): same step, same keys
+        import nba; nba.run()
+    except Exception as e: print(f"  nba failed: {type(e).__name__} {e}")

@@ -701,3 +701,6 @@ print(f"site: index + {len(days)} day pages + {len(weeks)} nfl pages + track -> 
 try:
     import build_fantasy  # noqa: F401  (builds docs/fantasy.html on import)
 except Exception as e: print(f"fantasy.html failed: {type(e).__name__} {e}")
+try:
+    import build_nba  # noqa: F401  (builds docs/nba.html on import)
+except Exception as e: print(f"nba.html failed: {type(e).__name__} {e}")
