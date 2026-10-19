@@ -51,5 +51,33 @@ def grade_nfl():
         json.dump(res, open(res_path, 'w', encoding='utf-8'))
         print(f"NFL {wk}: {len(res.get('_games', []))}/{len(evs)} games graded")
 
+def stats_nfl():
+    """Full box-score lines for every finished game on an NFL lock (yards, receptions, targets, carries, passing), so yardage and fantasy
+    projections can be graded the way touchdowns are. Writes backtest/nflstats_<week>.json = {eventId: {playerId: {team, pos-agnostic stats}}}.
+    Separate file and separate pass, so a change in ESPN's layout here can never break the touchdown grading above. Backfills every locked week once."""
+    num = lambda v: float(v) if isinstance(v, str) and v.replace('.', '', 1).replace('-', '', 1).isdigit() else v
+    for lock in sorted(glob.glob(os.path.join(BT, 'nfl_*.json'))):
+        wk = os.path.basename(lock)[4:-5]; path = os.path.join(BT, f'nflstats_{wk}.json')
+        out = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
+        evs = {r['eventId'] for r in json.load(open(lock, encoding='utf-8'))}; new = 0
+        for ev in sorted(evs - set(out)):
+            try:
+                sm = get("https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary", event=ev)
+                if sm.get('header', {}).get('competitions', [{}])[0].get('status', {}).get('type', {}).get('completed') is not True: continue
+                game = {}
+                for team in sm.get('boxscore', {}).get('players', []):
+                    ab = team.get('team', {}).get('abbreviation')
+                    for cat in team.get('statistics', []):
+                        keys = cat.get('keys') or cat.get('labels') or []
+                        for a in cat.get('athletes', []):
+                            p = game.setdefault(a['athlete']['id'], {'name': a['athlete'].get('displayName'), 'team': ab})
+                            for k, v in zip(keys, a.get('stats', [])): p[cat['name'] + '.' + k] = num(v)
+                out[ev] = game; new += 1
+            except Exception as e: print(f"  stats {wk} {ev}: {type(e).__name__} {e}")
+        if new: json.dump(out, open(path, 'w', encoding='utf-8'))
+        print(f"NFL stats {wk}: {len(out)}/{len(evs)} games ({new} new)")
+
 if __name__ == '__main__':
     grade_mlb(); grade_nfl()
+    try: stats_nfl()
+    except Exception as e: print(f"NFL stats failed: {type(e).__name__} {e}")
