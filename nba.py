@@ -64,6 +64,17 @@ def strike(ms, side, line, kind):
     if not near: return None, 0.0
     m = max(near, key=lambda m: f(m.get('volume_fp'))); return m, f(m.get('floor_strike')) - line
 
+def main_line(ms):
+    """Kalshi's own main line: the strike priced closest to a coin flip (ties go to the busier market)"""
+    return min(ms, key=lambda m: (abs(f(m.get('yes_ask_dollars')) - 0.5), -f(m.get('volume_fp'))))
+
+def kalshi(m, ms, cut, yes, no):
+    """ask for each side, volume and the taker-tape split for one strike; YES = fav/over, NO = dog/under"""
+    ya, yb = f(m.get('yes_ask_dollars')), f(m.get('yes_bid_dollars')); y, n, k = L.tape(m['ticker'], cut)
+    cap = lambda w: w[0].upper() + w[1:]
+    return {'ticker': m['ticker'], yes + 'Ask': round(ya, 3) or None, no + 'Ask': round(1 - yb, 3) if yb else None, 'vol': round(f(m.get('volume_fp'))),
+            'ladderVol': round(sum(f(x.get('volume_fp')) for x in ms)), 'tape' + cap(yes) + '$': round(y), 'tape' + cap(no) + '$': round(n), 'tapeTrades': k}
+
 def build_row(g, lad_ml, lad_s, lad_t, pin, now):
     start = datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00')); cut = min(start, now).timestamp()
     row = {k: g[k] for k in ('eventId', 'date', 'time', 'state', 'home', 'away', 'homeName', 'awayName')}; row['at'] = now.isoformat(timespec='minutes')
@@ -98,11 +109,12 @@ def build_row(g, lad_ml, lad_s, lad_t, pin, now):
             m, shift = strike(ms, fav, line, 'spread')
             if m:
                 if shift: fair_fav -= shift * 2 * L.HALF_PT[('NBA', 'spread')]; d.update({'line': line + shift, 'shift': shift, 'pinFavFair': round(fair_fav, 4), 'pinDogFair': round(1 - fair_fav, 4)})
-                ya, yb = f(m.get('yes_ask_dollars')), f(m.get('yes_bid_dollars'))
-                y, no, k = L.tape(m['ticker'], cut)
-                d.update({'ticker': m['ticker'], 'favAsk': round(ya, 3) or None, 'dogAsk': round(1 - yb, 3) if yb else None, 'vol': round(f(m.get('volume_fp'))), 'ladderVol': round(sum(f(x.get('volume_fp')) for x in ms)),
-                          'tapeFav$': round(y), 'tapeDog$': round(no), 'tapeTrades': k})
+                d.update(kalshi(m, ms, cut, 'fav', 'dog'))
         row['spread'] = d
+    elif ms:                                                       # Pinnacle is only pulled inside 8h of tip: until then show Kalshi's own main line
+        m = main_line(ms); fav = canon(m['ticker'].rsplit('-', 1)[-1].rstrip('0123456789'))
+        if fav in (g['home'], g['away']):
+            row['spread'] = {'line': f(m.get('floor_strike')), 'shift': 0.0, 'fav': fav, 'dog': g['away'] if fav == g['home'] else g['home'], 'kalshiOnly': True} | kalshi(m, ms, cut, 'fav', 'dog')
     # ---- total ----
     ev, ms = L.find_event(lad_t, g['home'], g['away'], 'NBA')
     if pk.get('total'):
@@ -112,11 +124,10 @@ def build_row(g, lad_ml, lad_s, lad_t, pin, now):
             m, shift = strike(ms, None, line, 'total')
             if m:
                 if shift: fo -= shift * 2 * L.HALF_PT[('NBA', 'total')]; d.update({'line': line + shift, 'shift': shift, 'pinOverFair': round(fo, 4), 'pinUnderFair': round(1 - fo, 4)})
-                ya, yb = f(m.get('yes_ask_dollars')), f(m.get('yes_bid_dollars'))
-                y, no, k = L.tape(m['ticker'], cut)
-                d.update({'ticker': m['ticker'], 'overAsk': round(ya, 3) or None, 'underAsk': round(1 - yb, 3) if yb else None, 'vol': round(f(m.get('volume_fp'))), 'ladderVol': round(sum(f(x.get('volume_fp')) for x in ms)),
-                          'tapeOver$': round(y), 'tapeUnder$': round(no), 'tapeTrades': k})
+                d.update(kalshi(m, ms, cut, 'over', 'under'))
         row['total'] = d
+    elif ms:
+        m = main_line(ms); row['total'] = {'line': f(m.get('floor_strike')), 'shift': 0.0, 'kalshiOnly': True} | kalshi(m, ms, cut, 'over', 'under')
     return row
 
 def merge(old, new):
@@ -126,8 +137,10 @@ def merge(old, new):
         o, n = old.get(k) or {}, new.get(k) or {}
         if o and not n: out[k] = o; continue
         if o and n:
+            if o.get('line') != n.get('line') or (n.get('ticker') and o.get('ticker') != n.get('ticker')): out[k] = n; continue   # line moved: old strike's numbers are stale
             same_line = o.get('ticker') == n.get('ticker')
             m = dict(o, **{kk: vv for kk, vv in n.items() if vv is not None})
+            if not n.get('kalshiOnly'): m.pop('kalshiOnly', None)
             if same_line:
                 for t in ('tapeHome$', 'tapeAway$', 'tapeFav$', 'tapeDog$', 'tapeOver$', 'tapeUnder$', 'tapeTrades', 'vol', 'ladderVol'):
                     if (o.get(t) or 0) > (n.get(t) or 0): m[t] = o[t]
