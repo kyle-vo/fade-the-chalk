@@ -1,0 +1,174 @@
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fade The Chalk</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"><style>:root{--bg:#0b0d10;--panel:#14181e;--line:#232a33;--ink:#e6e9ee;--mute:#8a94a3;--acc:#ffb020;--good:#2fd47a;--bad:#ff4d5e;--warn:#ffb020;--blue:#4aa3ff;--font:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;--disp:"Barlow Condensed","Arial Narrow",Impact,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}body{background:var(--bg);color:var(--ink);font-family:var(--font);margin:0;padding:0 0 60px;font-size:14px}
+header{padding:18px 26px 12px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
+h1{margin:0;font-family:var(--disp);font-size:34px;font-weight:800;letter-spacing:1.5px;line-height:1}h1 span{color:var(--acc)}h1 a{color:inherit;text-decoration:none}
+.sub{color:var(--mute);font-size:13px}
+
+.tabs{display:flex;gap:6px;padding:14px 26px 0}
+.tab{font-family:var(--disp);font-size:17px;letter-spacing:.6px;text-transform:uppercase;padding:8px 16px;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:var(--panel);color:var(--mute);cursor:pointer;font-weight:600}
+.tab.on{color:var(--ink);background:#1b2129;border-color:#2f3944}
+.panel{margin:0 26px;border:1px solid var(--line);background:var(--panel);border-radius:0 10px 10px 10px;padding:14px}
+.panel.top{border-radius:10px;margin-top:14px}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px;font-size:13px}
+.ctl input[type=text],.ctl input[type=number],.ctl select{background:#0e1115;border:1px solid var(--line);color:var(--ink);padding:6px 8px;border-radius:6px;font:inherit}
+.ctl label{color:var(--mute)}.ctl select{background:#0e1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:inherit;max-width:320px}
+textarea{width:100%;background:#0e1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px;font:12px var(--mono);min-height:64px}
+details.top5{margin-bottom:14px}.top5 h2{margin:0 0 8px;font-size:15px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.card{background:#0e1115;border:1px solid var(--line);border-radius:8px;padding:10px 12px;position:relative}.card .rk{position:absolute;top:8px;right:10px;color:var(--mute);font:600 11px var(--mono)}.card .nm{font-weight:700;font-size:14px}.card .tm{display:block;margin-top:2px}.card .st{display:flex;gap:10px;margin-top:8px;font:12px var(--mono);font-variant-numeric:tabular-nums}.card .st b{display:block;font-size:14px;color:var(--ink)}.card .st span{color:var(--mute)}.card .why{margin-top:8px;font-size:12px;color:var(--mute)}.card.hit{border-color:#2fd47a}.card.miss{border-color:#3a2a2e}.paste{margin-bottom:12px;font-size:13px;color:var(--mute)}details.paste summary{cursor:pointer;color:var(--ink);font-weight:600}
+.top3 .card.pick1{box-shadow:inset 3px 0 0 var(--acc)}.top3 .rk{color:var(--ink)}.top3 .card.pick1 .rk{color:var(--acc)}
+button{background:#1b2129;border:1px solid #2f3944;color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}button:hover{border-color:var(--acc)}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:1000px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.6px;position:sticky;top:0;background:#1b2129;text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);color:var(--mute);font-weight:600;cursor:pointer;white-space:nowrap}
+th.on{color:var(--acc)}th.r{text-align:right}
+td{padding:7px 8px;border-bottom:1px solid #1a2028;vertical-align:middle;white-space:nowrap}
+tr.row:hover td{background:#181e26}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}th.num{text-align:right}td.num .bar{margin-right:6px}th{vertical-align:bottom}
+.nm{font-weight:700}.tm{color:var(--mute);font-size:12px}
+input.odds,input.pub,input.stk{width:60px;background:#0e1115;border:1px solid var(--line);color:var(--ink);padding:4px 6px;border-radius:5px;font:12px var(--mono);text-align:right}input.stk{width:44px}
+span.crowd{font-family:var(--mono);font-size:12px;color:var(--ink);margin-right:6px;white-space:nowrap}span.crowd b{color:var(--acc);font-weight:600}input.pub{width:42px}
+input.bet{accent-color:var(--acc);width:16px;height:16px;vertical-align:middle}
+.bar{display:inline-block;height:8px;border-radius:4px;background:#2b3440;width:60px;vertical-align:middle;position:relative;overflow:hidden}.bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#4aa3ff,#ff4d5e)}
+.v{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.4px}
+.v.FADEdog{background:#3a2a10;color:var(--warn)}.v.BETchalk{background:#123d26;color:var(--good)}.v.BET{background:#123d26;color:var(--good)}.v.LEAN{background:#12304a;color:var(--blue)}.v.AVOID{background:#4a1218;color:var(--bad)}.v.SLEEPER{background:#123d26;color:var(--good)}.v.VALUE{background:#12304a;color:var(--blue)}.v.TRAP,.v.FADE{background:#4a1218;color:var(--bad)}.v.CHALK{background:#463610;color:var(--warn)}.v.PASS,.v.DONE{background:#20262e;color:var(--mute)}.v.STRONGBET{background:#123d26;color:var(--good)}.v.STRONGFADEdog{background:#123d26;color:var(--good)}.v.PASSwait{background:#20262e;color:var(--mute)}.v.BET{background:#12304a;color:var(--blue)}.v.PASSpricedin,.v.PASStooexpensive,.v.PASSnoPinnacle{background:#20262e;color:var(--mute)}
+.res{font-family:var(--mono);font-weight:600}.res.y{color:var(--good)}.res.n{color:var(--mute)}.res.d{color:#5b6472}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+tr.det td{background:#0e1115;color:var(--mute);white-space:normal;font-size:12px;padding:8px 14px 10px}
+tr.det .f{display:inline-block;margin:2px 10px 2px 0;font-family:var(--mono)}
+.legend{font-size:12px;color:var(--mute);margin:10px 0 0;line-height:1.7;max-width:110ch}.legend b{color:var(--ink)}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.kpi div{background:#0e1115;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--mute);min-width:96px}.kpi b{display:block;font-size:22px;color:var(--ink);font-family:var(--disp);font-weight:800;letter-spacing:.5px}.kpi b.pos{color:var(--good)}.kpi b.neg{color:var(--bad)}
+h2{font-family:var(--disp);font-size:22px;letter-spacing:.8px;text-transform:uppercase;margin:22px 0 10px;color:var(--ink)}h2 small{font-family:var(--font);font-size:12px;color:var(--mute);text-transform:none;letter-spacing:0;margin-left:10px;font-weight:400}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.mini table{min-width:0}
+svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px solid var(--line);border-radius:8px}
+.note{font-size:12px;color:var(--mute);line-height:1.6;max-width:90ch}
+.empty{padding:22px;color:var(--mute);text-align:center;border:1px dashed var(--line);border-radius:8px}
+@media(max-width:700px){header,nav,.tabs,.panel{padding-left:10px;padding-right:10px}.panel{margin-left:6px;margin-right:6px}}
+</style><header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">NBA · moneyline, spread, total · Robinhood vs Pinnacle · crowd money by side · built 2026-10-19T16:56</div></header><style>
+nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px 26px;border-bottom:1px solid var(--line);background:#0e1115;font-size:14px;position:sticky;top:0;z-index:5}
+.nb .sp{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.nb .sp a{padding:6px 16px;border-radius:999px;color:var(--mute);font-weight:800;letter-spacing:1px;font-size:12px;cursor:pointer;text-decoration:none;user-select:none}
+.nb .sp a:hover{color:var(--ink)}
+.nb .sp a.on[data-sp=mlb]{background:#18293d;color:#8cc2ff}.nb .sp a.on[data-sp=nfl]{background:#153325;color:#86e8ad}.nb .sp a.on[data-sp=nba]{background:#3a2410;color:#ffb36b}
+.nb .pg,.nb .aux{display:flex;flex-wrap:wrap;gap:2px 18px}
+.nb .pg a,.nb .aux a{color:var(--mute);text-decoration:none;padding:7px 0;border-bottom:2px solid transparent;font-weight:600;white-space:nowrap}
+.nb .pg a:hover,.nb .aux a:hover{color:var(--ink)}
+.nb .pg a.on,.nb .aux a.on{color:var(--ink);border-bottom-color:var(--acc)}
+.nb .sl{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+.nb .sl select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:600 13px var(--font);text-transform:none;letter-spacing:0;cursor:pointer}
+.nb .aux{margin-left:auto}.nb .aux .upd{color:var(--mute);font-size:12px;align-self:center;white-space:nowrap}.nb .aux .upd.old{color:var(--warn)}.nb .aux a.rr{color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:5px 10px}.nb .aux a.rr:hover{border-color:var(--acc)}
+.panel.top{margin-top:16px}
+@media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
+</style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="nba.html">NBA</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a><a data-pg="fantasy" href="fantasy.html">Fantasy &amp; Yards</a></div><label class="sl">slate <select></select></label><div class="aux"><a href="track.html">Track</a><a href="archive.html">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
+const NAV = {"page": "nba", "root": "", "slates": {"mlb": [], "nfl": [], "nba": [["2026-10-20", "Tue Oct 20", ""]]}, "cur": {"nba": "2026-10-20"}, "fixed": "nba", "built": "2026-10-19T23:56:53+00:00"};
+const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html' };
+const h = (location.hash || '').slice(1).split(':')[0];
+let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
+if (!sp) { try { sp = localStorage.getItem('ftc_sport'); } catch (e) {} }
+if (sp !== 'mlb' && sp !== 'nfl' && !(sp === 'nba' && NAV.fixed === 'nba')) sp = 'mlb';   // NBA lives on its own page
+window.NAV_SPORT = sp;
+const link = (pg, s) => NAV.root + PAGES[pg] + '#' + s;
+// the latest slate that has its own page (not the today board): used when the today board has nothing for a sport, e.g. an MLB off day
+window.navFallback = s => { const o = ((NAV.slates || {})[s] || []).find(x => x[2] && !/(^|\/)index\.html/.test(x[2])); return o ? o[2] : null; };
+const samePage = href => { const a = document.createElement('a'); a.href = href; return a.pathname === location.pathname || (/\/$/.test(location.pathname) && /\/index\.html$/.test(a.pathname) && a.pathname.replace(/index\.html$/, '') === location.pathname); };
+window.navSport = function(s, cur){
+  sp = s; window.NAV_SPORT = s; window.__navSet = true; try { localStorage.setItem('ftc_sport', s); } catch (e) {}
+  document.querySelectorAll('nav.nb .sp a').forEach(a => a.classList.toggle('on', a.dataset.sp === s));
+  document.querySelectorAll('nav.nb .pg a').forEach(a => { a.href = link(a.dataset.pg, s); });
+  const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
+  const fz = document.querySelector('nav.nb .pg a[data-pg=fantasy]'); if (fz) fz.hidden = s !== 'nfl';   // NFL only
+  const pgs = document.querySelector('nav.nb .pg'); if (pgs) pgs.hidden = s === 'nba';                   // the NBA page holds all three markets itself
+  const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
+  const opts = (NAV.slates || {})[s] || [];
+  if (sel) { sel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join(''); const c = cur || (NAV.cur || {})[s]; if (c != null) sel.value = c; box.hidden = !opts.length; }
+};
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('nav.nb .sp a:not([data-sp=nba])').forEach(a => a.addEventListener('click', ev => {
+    ev.preventDefault(); const s = a.dataset.sp;
+    if (NAV.page === 'track' || NAV.page === 'archive') { navSport(s); return; }
+    if (NAV.page === 'nba') { location.href = NAV.root + 'index.html#' + s; return; }
+    if (window.onNavSport && window.onNavSport(s) !== false) return;
+    const t = link(NAV.page, s);
+    location.href = (samePage(t) && window.navFallback(s)) || t;   // same page with nothing for that sport: go to its latest slate instead of only changing the hash
+  }));
+  const sel = document.querySelector('nav.nb .sl select');
+  if (sel) sel.addEventListener('change', () => {
+    const o = ((NAV.slates || {})[sp] || []).find(x => x[0] === sel.value); if (!o) return;
+    if (o[2]) location.href = o[2]; else if (window.onNavSlate) window.onNavSlate(sp, o[0]);
+  });
+  if (!window.__navSet) navSport(sp);
+  // last updated: build time of this page, as a clock time and how long ago; turns amber past 4 hours (a missed scheduled run)
+  const upd = document.getElementById('navupd');
+  if (upd && NAV.built) { const t = new Date(NAV.built);
+    const tick = () => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)), ago = m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min ago' : Math.floor(m / 1440) + ' d ago';
+      upd.textContent = 'updated ' + t.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ' · ' + ago; upd.title = t.toString(); upd.classList.toggle('old', m > 240); };
+    tick(); setInterval(tick, 60000); }
+});
+})();</script>
+<style>h2.mk{margin:16px 0 8px}</style><div class="panel top">
+<div class="kpi" id="kpi"></div>
+<div class="ctl"><label><input type="checkbox" id="hidepass"> show only LEAN / VALUE</label></div>
+<h2 class="mk">Moneyline</h2><div class="wrap"><table class="lt" id="tM"></table></div>
+<h2 class="mk">Spread</h2><div class="wrap"><table class="lt" id="tS"></table></div>
+<h2 class="mk">Total</h2><div class="wrap"><table class="lt" id="tT"></table></div>
+<div class="legend"><b>New board, nothing proven yet.</b> Each row is one side of a market. <b>Robinhood ask</b> = what a $1 contract on that side costs (Robinhood's NBA contracts are Kalshi's), with the American odds. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line. <b>Edge</b> = fair minus ask, in points. <b>Crowd share</b> = the share of the crowd's taker dollars on that side (each pre-game trade credited to the side the bettor actually backed), frozen at tip-off.
+<b>LEAN · untested</b> on a spread = the side with <i>less</i> of the crowd's money once $25k+ is in: the rule that has worked on NFL spreads (29 of 42 covered), tried here on basketball. <b>VALUE · untested</b> on a moneyline = Robinhood selling a team 3+ points under Pinnacle's fair price. Neither has an NBA record yet: the scorecard below grades them from the first game, next to every-favorite and every-underdog baselines, and real rules get set once there are a few weeks of games. Small stakes until then.</div>
+<h2 style="margin-top:18px">Scorecard <small>every graded game</small></h2><div id="score"></div>
+</div>
+<script>const DAYS = {"2026-10-20":[{"eventId":"401909088","date":"2026-10-20","time":"2026-10-20T19:00Z","state":"STATUS_SCHEDULED","home":"DET","away":"BOS","homeName":"Detroit Pistons","awayName":"Boston Celtics","at":"2026-10-19T23:56+00:00","ml":{"homeAsk":0.48,"awayAsk":0.53,"tapeHome$":27312,"tapeAway$":37038,"tapeTrades":4279,"vol":124083}},{"eventId":"401909089","date":"2026-10-20","time":"2026-10-20T23:00Z","state":"STATUS_SCHEDULED","home":"NY","away":"PHI","homeName":"New York Knicks","awayName":"Philadelphia 76ers","at":"2026-10-19T23:56+00:00","ml":{"homeAsk":0.63,"awayAsk":0.38,"tapeHome$":92522,"tapeAway$":79002,"tapeTrades":7642,"vol":350226}},{"eventId":"401909090","date":"2026-10-20","time":"2026-10-21T01:30Z","state":"STATUS_SCHEDULED","home":"SA","away":"OKC","homeName":"San Antonio Spurs","awayName":"Oklahoma City Thunder","at":"2026-10-19T23:56+00:00","ml":{"homeAsk":0.54,"awayAsk":0.47,"tapeHome$":21374,"tapeAway$":16458,"tapeTrades":2913,"vol":73715}}]}; const CUR = "2026-10-20";
+const $ = s => document.querySelector(s); let day = CUR;
+window.onNavSlate = (sp, v) => { day = v; render(); };
+const cents = p => p == null ? '—' : Math.round(p * 100) + '¢';
+const amer = p => { if (!p || p <= 0 || p >= 1) return ''; return p >= .5 ? '−' + Math.round(100 * p / (1 - p)) : '+' + Math.round(100 * (1 - p) / p); };
+const pct = p => p == null ? '—' : Math.round(p * 100) + '%';
+const money = v => v == null ? '—' : '$' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1000 ? Math.round(v / 1000) + 'k' : Math.round(v));
+const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+// one row per market side. crowd = share of the taker $ on this side; edge = Pinnacle fair minus Robinhood ask, in points
+function sides(r){
+  const out = [], m = r.ml, s = r.spread, t = r.total;
+  if (m && (m.homeAsk || m.pinHome != null)) { const tot = (m['tapeHome$'] || 0) + (m['tapeAway$'] || 0);
+    for (const [k, team, ask, fair, own] of [['home', r.home, m.homeAsk, m.pinHome, m['tapeHome$']], ['away', r.away, m.awayAsk, m.pinAway, m['tapeAway$']]])
+      out.push({ r, kind: 'ml', side: team + ' ML', ask, fair, own: own || 0, tape: tot, crowd: tot ? (own || 0) / tot : null, hit: r.final ? ((r.homeWin === 1) === (k === 'home') ? 1 : 0) : null, fav: fair != null ? fair >= .5 : (ask || 0) >= .5 }); }
+  if (s && s.fav) { const tot = (s['tapeFav$'] || 0) + (s['tapeDog$'] || 0);
+    out.push({ r, kind: 'spread', side: s.fav + ' −' + s.line, ask: s.favAsk, fair: s.pinFavFair, own: s['tapeFav$'] || 0, tape: tot, crowd: tot ? (s['tapeFav$'] || 0) / tot : null, hit: s.favCovered ?? null, fav: true });
+    out.push({ r, kind: 'spread', side: s.dog + ' +' + s.line, ask: s.dogAsk, fair: s.pinDogFair, own: s['tapeDog$'] || 0, tape: tot, crowd: tot ? (s['tapeDog$'] || 0) / tot : null, hit: s.favCovered == null ? null : 1 - s.favCovered, fav: false }); }
+  if (t && t.line != null) { const tot = (t['tapeOver$'] || 0) + (t['tapeUnder$'] || 0);
+    out.push({ r, kind: 'total', side: 'Over ' + t.line, ask: t.overAsk, fair: t.pinOverFair, own: t['tapeOver$'] || 0, tape: tot, crowd: tot ? (t['tapeOver$'] || 0) / tot : null, hit: t.over ?? null });
+    out.push({ r, kind: 'total', side: 'Under ' + t.line, ask: t.underAsk, fair: t.pinUnderFair, own: t['tapeUnder$'] || 0, tape: tot, crowd: tot ? (t['tapeUnder$'] || 0) / tot : null, hit: t.over == null ? null : 1 - t.over }); }
+  for (const x of out) { x.edge = (x.ask != null && x.fair != null) ? (x.fair - x.ask) * 100 : null;
+    // UNTESTED in the NBA. Spread LEAN = the NFL rule (less of the crowd's money, once $25k+ is in). Moneyline VALUE = Robinhood 3+ points under Pinnacle.
+    x.v = 'PASS';
+    if (x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5) x.v = 'LEAN';
+    if (x.kind === 'ml' && x.edge != null && x.edge >= 3) x.v = 'VALUE'; }
+  return out;
+}
+const COLS = '<tr><th>Game</th><th>Side</th><th class="num">Robinhood ask</th><th class="num">Pinnacle fair</th><th class="num">Edge</th><th class="num">Crowd share</th><th class="num">$ on side</th><th class="num">Tape $</th><th>Verdict</th><th>Result</th></tr>';
+function rowHtml(x){ const r = x.r;
+  const res = x.hit == null ? (r.final ? '<span class="res d">push</span>' : '<span class="res n">—</span>') : x.v === 'PASS' ? `<span class="res d">${x.hit ? 'won' : 'lost'} (no bet)</span>` : x.hit ? '<span class="res y">✓</span>' : '<span class="res n">✗</span>';
+  return `<tr><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}${r.final ? ' · ' + r.finalAway + '-' + r.finalHome : ''}</span></td><td class="nm">${x.side}</td>
+  <td class="num">${cents(x.ask)} <span class="tm">${amer(x.ask)}</span></td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
+  <td class="num"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${x.tape ? money(x.own) : '—'}</td><td class="num">${money(x.tape)}</td>
+  <td><span class="v ${x.v === 'LEAN' ? 'LEAN' : x.v === 'VALUE' ? 'BET' : 'PASS'}" title="${x.v === 'PASS' ? '' : 'untested in the NBA: tracked on the scorecard below'}">${x.v}${x.v !== 'PASS' ? ' · untested' : ''}</span></td><td>${res}</td></tr>`; }
+function render(){
+  const rows = (DAYS[day] || []).slice().sort((a, b) => a.time < b.time ? -1 : 1).flatMap(sides);
+  const hide = $('#hidepass').checked, list = rows.filter(x => !hide || x.v !== 'PASS');
+  for (const [k, id] of [['ml', '#tM'], ['spread', '#tS'], ['total', '#tT']]) { const xs = list.filter(x => x.kind === k);
+    $(id).innerHTML = COLS + (xs.map(rowHtml).join('') || '<tr><td colspan="10" class="tm" style="text-align:center;padding:14px">nothing yet: Robinhood and Pinnacle post NBA lines the day before</td></tr>'); }
+  const g = DAYS[day] || []; $('#kpi').innerHTML = `<div>games<b>${g.length}</b></div><div>final<b>${g.filter(r => r.final).length}</b></div><div>spread LEANs<b>${rows.filter(x => x.v === 'LEAN').length}</b></div><div>moneyline VALUE<b>${rows.filter(x => x.v === 'VALUE').length}</b></div>`;
+}
+$('#hidepass').addEventListener('input', render);
+// ---- scorecard: every graded side across every day ----
+const G = Object.values(DAYS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
+const strat = {
+  'Spread LEAN (untested): less of the crowd $, $25k+': G.filter(x => x.kind === 'spread' && x.v === 'LEAN'),
+  'Spread: side with MORE of the crowd $': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd >= 0.5),
+  'Spread: every favorite': G.filter(x => x.kind === 'spread' && x.fav), 'Spread: every underdog': G.filter(x => x.kind === 'spread' && !x.fav),
+  'Moneyline VALUE (untested): Robinhood 3+ pts under Pinnacle': G.filter(x => x.kind === 'ml' && x.v === 'VALUE'),
+  'Moneyline: team with less of the crowd $': G.filter(x => x.kind === 'ml' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
+  'Moneyline: every favorite': G.filter(x => x.kind === 'ml' && x.fav), 'Moneyline: every underdog': G.filter(x => x.kind === 'ml' && !x.fav),
+  'Total: the crowd side': G.filter(x => x.kind === 'total' && x.crowd != null && x.tape >= 10000 && x.crowd > 0.5), 'Total: every over': G.filter(x => x.kind === 'total' && x.side.startsWith('Over')),
+};
+$('#score').innerHTML = '<div class="wrap"><table class="lt"><thead><tr><th>Strategy (1u each at the Robinhood ask)</th><th class="num">Bets</th><th class="num">Record</th><th class="num">Units</th><th class="num">ROI</th></tr></thead><tbody>' +
+  Object.entries(strat).map(([n, b]) => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.ask - 1 : -1), 0);
+    return `<tr><td class="nm">${n}</td><td class="num">${b.length}</td><td class="num">${w}-${b.length - w}</td><td class="num ${u >= 0 ? 'pos' : 'neg'}">${b.length ? (u >= 0 ? '+' : '') + u.toFixed(1) + 'u' : '—'}</td><td class="num">${b.length ? Math.round(u / b.length * 100) + '%' : '—'}</td></tr>`; }).join('') + '</tbody></table></div>';
+render();
+</script>

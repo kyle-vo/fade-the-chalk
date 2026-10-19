@@ -48,7 +48,7 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .nb .sp{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .nb .sp a{padding:6px 16px;border-radius:999px;color:var(--mute);font-weight:800;letter-spacing:1px;font-size:12px;cursor:pointer;text-decoration:none;user-select:none}
 .nb .sp a:hover{color:var(--ink)}
-.nb .sp a.on[data-sp=mlb]{background:#18293d;color:#8cc2ff}.nb .sp a.on[data-sp=nfl]{background:#153325;color:#86e8ad}
+.nb .sp a.on[data-sp=mlb]{background:#18293d;color:#8cc2ff}.nb .sp a.on[data-sp=nfl]{background:#153325;color:#86e8ad}.nb .sp a.on[data-sp=nba]{background:#3a2410;color:#ffb36b}
 .nb .pg,.nb .aux{display:flex;flex-wrap:wrap;gap:2px 18px}
 .nb .pg a,.nb .aux a{color:var(--mute);text-decoration:none;padding:7px 0;border-bottom:2px solid transparent;font-weight:600;white-space:nowrap}
 .nb .pg a:hover,.nb .aux a:hover{color:var(--ink)}
@@ -58,13 +58,13 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .nb .aux{margin-left:auto}.nb .aux .upd{color:var(--mute);font-size:12px;align-self:center;white-space:nowrap}.nb .aux .upd.old{color:var(--warn)}.nb .aux a.rr{color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:5px 10px}.nb .aux a.rr:hover{border-color:var(--acc)}
 .panel.top{margin-top:16px}
 @media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
-</style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a><a data-pg="fantasy" href="fantasy.html">Fantasy &amp; Yards</a></div><div class="aux"><a href="track.html">Track</a><a href="archive.html" class="on">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
-const NAV = {"page": "archive", "root": "", "slates": {}, "cur": {"mlb": "2026-10-19", "nfl": "2026_wk6"}, "fixed": null, "built": "2026-10-19T23:50:17+00:00"};
+</style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="nba.html">NBA</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a><a data-pg="fantasy" href="fantasy.html">Fantasy &amp; Yards</a></div><div class="aux"><a href="track.html">Track</a><a href="archive.html" class="on">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
+const NAV = {"page": "archive", "root": "", "slates": {}, "cur": {"mlb": "2026-10-19", "nfl": "2026_wk6"}, "fixed": null, "built": "2026-10-19T23:56:50+00:00"};
 const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
 if (!sp) { try { sp = localStorage.getItem('ftc_sport'); } catch (e) {} }
-if (sp !== 'mlb' && sp !== 'nfl') sp = 'mlb';
+if (sp !== 'mlb' && sp !== 'nfl' && !(sp === 'nba' && NAV.fixed === 'nba')) sp = 'mlb';   // NBA lives on its own page
 window.NAV_SPORT = sp;
 const link = (pg, s) => NAV.root + PAGES[pg] + '#' + s;
 // the latest slate that has its own page (not the today board): used when the today board has nothing for a sport, e.g. an MLB off day
@@ -76,14 +76,16 @@ window.navSport = function(s, cur){
   document.querySelectorAll('nav.nb .pg a').forEach(a => { a.href = link(a.dataset.pg, s); });
   const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
   const fz = document.querySelector('nav.nb .pg a[data-pg=fantasy]'); if (fz) fz.hidden = s !== 'nfl';   // NFL only
+  const pgs = document.querySelector('nav.nb .pg'); if (pgs) pgs.hidden = s === 'nba';                   // the NBA page holds all three markets itself
   const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
   const opts = (NAV.slates || {})[s] || [];
   if (sel) { sel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join(''); const c = cur || (NAV.cur || {})[s]; if (c != null) sel.value = c; box.hidden = !opts.length; }
 };
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('nav.nb .sp a').forEach(a => a.addEventListener('click', ev => {
+  document.querySelectorAll('nav.nb .sp a:not([data-sp=nba])').forEach(a => a.addEventListener('click', ev => {
     ev.preventDefault(); const s = a.dataset.sp;
     if (NAV.page === 'track' || NAV.page === 'archive') { navSport(s); return; }
+    if (NAV.page === 'nba') { location.href = NAV.root + 'index.html#' + s; return; }
     if (window.onNavSport && window.onNavSport(s) !== false) return;
     const t = link(NAV.page, s);
     location.href = (samePage(t) && window.navFallback(s)) || t;   // same page with nothing for that sport: go to its latest slate instead of only changing the hash
