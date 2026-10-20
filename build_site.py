@@ -704,3 +704,6 @@ except Exception as e: print(f"fantasy.html failed: {type(e).__name__} {e}")
 try:
     import build_nba  # noqa: F401  (builds docs/nba.html on import)
 except Exception as e: print(f"nba.html failed: {type(e).__name__} {e}")
+try:
+    import build_ev  # noqa: F401  (builds docs/ev.html on import)
+except Exception as e: print(f"ev.html failed: {type(e).__name__} {e}")
