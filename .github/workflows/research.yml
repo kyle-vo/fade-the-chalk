@@ -1,0 +1,42 @@
+name: Research (one-off data pulls)
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'research.py job to run (props | nba_hist)'
+        required: true
+        default: 'props'
+      arg:
+        description: 'job argument (e.g. NFL event code like 26OCT19WASSF)'
+        required: false
+        default: ''
+
+concurrency:
+  group: research-${{ inputs.job }}
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      TZ: America/Los_Angeles
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - name: Run research job
+        run: python research.py "${{ inputs.job }}" "${{ inputs.arg }}"
+      - name: Commit results
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add -A research backtest
+          git diff --staged --quiet || (git commit -m "Research: ${{ inputs.job }} ${{ inputs.arg }}" && for i in 1 2 3; do git pull --no-rebase --no-edit -X ours origin main && git push && break; sleep 5; done)
