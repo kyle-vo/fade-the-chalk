@@ -8,7 +8,7 @@ import lines as L
 import nba
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, 'research'); os.makedirs(OUT, exist_ok=True)
 f = L.f
-T0 = time.time()
+T0 = time.time(); TRADE_ERR = {}
 
 def _trades(path, ticker, max_ts, split):
     """taker $ on YES / NO, trade count and the last YES price (newest first from max_ts back); with split, trades after it are counted apart as 'live'"""
@@ -37,7 +37,9 @@ def trades(ticker, max_ts=None, split=None):
     """markets settled before Kalshi's historical cutoff only answer on /historical/trades: try the live path, then the archive"""
     for path in ('/markets/trades', '/historical/trades'):
         try: r = _trades(path, ticker, max_ts, split)
-        except Exception as e: r = None
+        except Exception as e:
+            r = None
+            if not TRADE_ERR.get(path): TRADE_ERR[path] = 1; print(f"  trades {path} {ticker}: {type(e).__name__} {str(e)[:90]}")
         if r and (r['trades'] or r.get('live', {}).get('trades')): return r | {'path': path}
     return {'yes$': 0, 'no$': 0, 'trades': 0, 'lastYes': None}
 
@@ -85,7 +87,7 @@ def props(code):
         print(f"  {r['series']:<18} {(r['title'] or '')[:60]:<60} {r.get('yes') or '':<28} vol {r['volume']:>9,.0f}  pre $Y {pre.get('yes$', 0):>8,} $N {pre.get('no$', 0):>8,}  {r.get('result') or ''}")
 
 # ---------------------------------------------------------------- nba_hist: last season, for the backtest
-SEASON = ('2025-10-21', '2026-06-25')
+SEASON = ('2025-10-01', '2026-10-18')                                # 2025 preseason through last season's Finals and this month's preseason
 def events(series):
     """every settled event in the series with its markets, live path then historical archive"""
     out = {}
@@ -103,14 +105,15 @@ def events(series):
             if not cur or not d.get('events'): break
         # historical events may come without nested markets: fill from /historical/markets
         print(f"  {series} after {path}: {len(out)} events")
-    if not out or all(not v for v in out.values()):
+    if True:                                                          # older seasons sit only in Kalshi's archive: always merge it in
         cur = None
         while True:
             p = {'series_ticker': series, 'limit': 1000}
             if cur: p['cursor'] = cur
             try: d = L.kget('/historical/markets', **p)
             except Exception as e: print(f"  /historical/markets {series}: {type(e).__name__} {str(e)[:80]}"); break
-            for m in d.get('markets', []): out.setdefault(m['event_ticker'], []).append(m)
+            for m in d.get('markets', []):
+                if m['ticker'] not in {x['ticker'] for x in out.get(m['event_ticker'], [])}: out.setdefault(m['event_ticker'], []).append(m)
             cur = d.get('cursor')
             if not cur or not d.get('markets'): break
         print(f"  {series} after /historical/markets: {len(out)} events")
@@ -134,7 +137,7 @@ def espn_day(date):
 
 def nba_hist():
     path = os.path.join(OUT, 'nba_hist_2025.json')
-    done = {r['eventId']: r for r in json.load(open(path, encoding='utf-8'))} if os.path.exists(path) else {}
+    done = {r['eventId']: r for r in json.load(open(path, encoding='utf-8')) if r.get('ml')} if os.path.exists(path) else {}   # unmatched rows get another try
     lad = {s: events(s) for s in ('KXNBAGAME', 'KXNBASPREAD', 'KXNBATOTAL')}
     bydate = {s: {} for s in lad}
     for s, evs in lad.items():
