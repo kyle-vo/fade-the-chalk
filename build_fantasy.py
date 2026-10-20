@@ -149,6 +149,44 @@ for t in sorted(proj, key=wn):
                   'maeRec': round(mae('recYds', [x for x in done if x['avg']['recYds'] >= 15]) or 0, 1), 'maeRush': round(mae('rushYds', [x for x in done if x['pos'] == 'RB' and x['avg']['rushYds'] >= 20]) or 0, 1),
                   'boom': beat(tag('BOOM')), 'bust': beat(tag('BUST')), 'rest': beat([x for x in sk if not ({'BOOM', 'BUST'} & set(x['tags']))])})
 
+# ---- prop bets: Kalshi's main yardage lines vs the one prop rule that held (props_rules.py), graded from the box scores ----
+import props_rules as PR
+norm = lambda n: re.sub(r'[^a-z]', '', (n or '').lower().replace(' jr.', '').replace(' jr', '').replace(' sr.', '').replace(' iii', '').replace(' ii', ''))
+kfee = lambda p: 0.07 * p * (1 - p)
+def props_week(t):
+    """weeks with history use the price at kickoff (research/, +1c slippage); this week uses the live ask (backtest/nflprops_<week>.json)"""
+    hp, lp = os.path.join(HERE, 'research', f'nflprops_{t}.json'), os.path.join(BT, f'nflprops_{t}.json')
+    hist = os.path.exists(hp); src = J(hp) if hist else (J(lp) if os.path.exists(lp) else {})
+    if not src: return []
+    who = {norm(r['name']): r for r in locks.get(t, [])}
+    mf = os.path.join(BT, f'ml_{t}.json'); ml = {str(g['eventId']): g for g in J(mf)} if os.path.exists(mf) else {}
+    act = {norm(g['name']): g for (w, pid), g in games.items() if w == t}
+    out = []
+    for ev, g in src.items():
+        if hist:
+            ms = [dict(m, name=(m.get('title') or '').split(':')[0].strip()) for m in g['markets'] if m.get('pxKick') is not None and 'Protected' not in (m.get('title') or '')]
+            mid = lambda m: m['pxKick']
+        else:
+            ms = g['markets']; mid = lambda m: (m['ask'] + m['bid']) / 2 if m.get('ask') and m.get('bid') else None
+        for m in PR.main_lines(ms, mid):
+            r = who.get(norm(m['name']))
+            if not r: continue
+            pos = (r.get('pos') or '')[:2]; gm = ml.get(str(r['eventId'])) or {}; k = gm.get('kalshi')
+            winP = None if k is None else (k if gm.get('home') == r['team'] else 1 - k)
+            v, side = PR.verdict(pos, m['series'], winP)
+            if not side: continue
+            px = mid(m)
+            if hist: cost = (px if side == 'OVER' else 1 - px) + 0.01
+            else: cost = m['ask'] if side == 'OVER' else (1 - m['bid'] if m.get('bid') else None)
+            if not cost: continue
+            a = act.get(norm(m['name'])); val = a[PR.STAT[m['series']]] if a else None
+            out.append({'name': m['name'], 'team': r['team'], 'opp': r['opp'], 'pos': pos, 'game': r['game'], 'time': r['time'], 'stat': PR.LABEL[m['series']],
+                        'line': float(m['strike']), 'side': side, 'price': round(cost, 3), 'cost': round(min(0.99, cost + kfee(cost)), 3), 'winP': None if winP is None else round(winP, 3),
+                        'v': v or 'PASS', 'actual': val, 'hit': None if val is None else int((val > float(m['strike'])) == (side == 'OVER')), 'hist': hist})
+    return sorted(out, key=lambda x: (x['v'] != 'BET', x['time'], x['name']))
+props = {t: props_week(t) for t in weeks}
+props = {t: v for t, v in props.items() if v}
+
 def page():
     from navbar import navbar, week_label
     ws = sorted(proj, key=wn, reverse=True)
@@ -160,13 +198,18 @@ def page():
 td.act{{color:var(--mute)}}</style>
 <div class="panel top">
 <div class="kpi" id="kpi"></div>
+<h2 style="margin:10px 0 6px">Prop bets <small>Kalshi / Robinhood main lines</small></h2>
+<div class="wrap"><table class="lt" id="props"></table></div>
+<div class="legend"><b>The prop rule.</b> Main line = the strike priced nearest 50¢. <b>BET</b> = a player on the <b>underdog</b> (his team under 45% to win on Kalshi), with one of: <b>RB rushing yards UNDER</b>, <b>QB rushing yards UNDER</b>, <b>TE receiving yards UNDER</b>, <b>QB passing yards OVER</b>. That made <b>+11.8% on 358 bets</b> at the price at kickoff plus the fee, and it was positive in all 6 weeks (+3, +17, +21, +12, +4, +13%). It was found on weeks 1-4 and held on weeks 5-6, which weren't used to find it. The same four props on favorites were break-even, so they show as PASS. Edges are single digits per bet: it pays over many bets, not on one. <b>Not a bet:</b> first-TD and 2+ TD props (they lost 35-47% every week), overs in general (−9%), and our own projections vs the line (they lost at every threshold). For anytime TDs, use the BET / AVOID calls on the main board.</div>
+<div id="propScore"></div>
+<h2 style="margin:16px 0 6px">Start / sit</h2>
 <div class="pt" id="posTabs"><button data-p="ALL">All</button><button data-p="QB">QB</button><button data-p="RB">RB</button><button data-p="WR">WR</button><button data-p="TE">TE</button><button data-p="RISING">Waiver risers</button></div>
 <div class="ctl"><label>scoring <select id="scoring"><option value="half">half-PPR</option><option value="ppr">PPR</option><option value="std">standard</option></select></label><label>search <input id="q" placeholder="player or team"></label><label><input type="checkbox" id="hidestart"> hide started games</label></div>
 <div class="wrap"><table id="tbl" class="lt"><thead><tr><th data-k="rank">#</th><th data-k="name">Player</th><th data-k="game">Game</th><th class="num" data-k="pts">Proj pts</th><th class="num" data-k="avgPts">2026 avg</th><th data-k="v">Start / sit</th><th class="num" data-k="rec">Rec</th><th class="num" data-k="recYds">Rec yds</th><th class="num" data-k="rushYds">Rush yds</th><th class="num" data-k="passYds">Pass yds</th><th class="num" data-k="oppF">Matchup</th><th class="num" data-k="spTeam">Spread $ on team</th><th class="num" data-k="opps2">Touches+tgts L2</th><th>Your line</th><th class="num" data-k="actPts">Actual</th></tr></thead><tbody></tbody></table></div>
-<div class="legend"><b>How to read it.</b> <b>Proj pts</b> = projected fantasy points. It starts from his 2026 average, pulled toward the middle (early-season games are noisy), then nudged by what has held every week so far: players on the team with <i>less</i> of the crowd's spread money have beaten their average by about 2 points more than players on the crowd's team (running backs: about 12 more rushing yards); when the crowd's totals money is on the <b>under</b>, players have come in about 2 points and 8 receiving yards short; and the <b>Matchup</b> number is what the opponent has allowed to his position per game against the league (1.20 = 20% more, a soft matchup; 0.80 = a tough one). <b>START / FLEX / SIT</b> = his projected rank at the position (QB top 12, RB top 24 start / 36 flex, WR 30 / 42, TE 12 / 18). <b>BOOM</b> / <b>BUST</b> read only this week's situation (the money, the totals crowd, the matchup, the team total) against a normal week for the same player, so stars aren't tagged just for being stars. <b>BUST</b> = the situation puts him 1+ point below his normal: those players fell about 2.2 points short of it in every week so far (the most reliable tag here; usually the crowd's money is on his team and on the under). <b>BOOM</b> = 0.5+ above his normal: +1.3 on average, but only 2 of 4 weeks clearly positive, so a lean. <b>RISING</b> = his targets + carries over the last 2 games are 30%+ above his season rate: a waiver flag, not proven yet (only 37 players so far, about break-even). <b>Your line</b>: type the yardage line from your book (receiving yards for WR/TE, rushing for RB, passing for QB) and the page shows the chance of the over from the projection and how far real outcomes spread around it (about ±25 yards receiving/rushing, ±55 passing). It calls a lean only at 60%+. Yards are noisy: treat these as tilts, not locks. Spread money moves until kickoff, so recheck close to the game. Finished weeks show the actual line and the scorecard below shows how each week's projections did (every week projected only from the weeks before it).</div>
+<div class="legend"><b>How to read it.</b> <b>Proj pts</b> = projected fantasy points. It starts from his 2026 average, pulled toward the middle (early-season games are noisy), then nudged by what has held every week so far: players on the team with <i>less</i> of the crowd's spread money have beaten their average by about 2 points more than players on the crowd's team (running backs: about 12 more rushing yards); when the crowd's totals money is on the <b>under</b>, players have come in about 2 points and 8 receiving yards short; and the <b>Matchup</b> number is what the opponent has allowed to his position per game against the league (1.20 = 20% more, a soft matchup; 0.80 = a tough one). <b>START / FLEX / SIT</b> = his projected rank at the position (QB top 12, RB top 24 start / 36 flex, WR 30 / 42, TE 12 / 18). <b>BOOM</b> / <b>BUST</b> read only this week's situation (the money, the totals crowd, the matchup, the team total) against a normal week for the same player, so stars aren't tagged just for being stars. <b>BUST</b> = the situation puts him 1+ point below his normal: those players fell about 2.2 points short of it in every week so far (the most reliable tag here; usually the crowd's money is on his team and on the under). <b>BOOM</b> = 0.5+ above his normal: +1.3 on average, but only 2 of 4 weeks clearly positive, so a lean. <b>RISING</b> = his targets + carries over the last 2 games are 30%+ above his season rate: a waiver flag, not proven yet (only 37 players so far, about break-even). <b>Your line</b>: type the yardage line from your book (receiving yards for WR/TE, rushing for RB, passing for QB) and the page shows the chance of the over from the projection and how far real outcomes spread around it (about ±25 yards receiving/rushing, ±55 passing). It calls a lean only at 60%+. These are for fantasy, <b>not betting</b>: checked against Kalshi's real lines for weeks 3-4, betting wherever the projection disagreed with the price lost money. For yardage bets, use the Prop bets table above. Spread money moves until kickoff, so recheck close to the game. Finished weeks show the actual line and the scorecard below shows how each week's projections did (every week projected only from the weeks before it).</div>
 <h2 style="margin-top:18px">How the projections did</h2><div class="wrap"><table class="lt"><thead><tr><th>Week</th><th class="num">Players</th><th class="num">Avg miss, pts</th><th class="num">…using his plain average</th><th class="num">Rec yds miss</th><th class="num">Rush yds miss</th><th class="num">BOOM vs his normal</th><th class="num">BUST vs his normal</th><th class="num">Others vs his normal</th></tr></thead><tbody id="chk"></tbody></table></div>
 </div>
-<script>const PROJ = {jd(proj)}; const CUR = {jd(cur)}; const CHECK = {jd(check)};{JS}</script>"""
+<script>const PROJ = {jd(proj)}; const CUR = {jd(cur)}; const CHECK = {jd(check)}; const PROPS = {jd(props)};{JS}</script>"""
 
 JS = r"""
 const $ = s => document.querySelector(s); let week = CUR, pos = 'ALL', sortKey = 'pts', sortDir = -1;
@@ -186,7 +229,25 @@ function leanCell(x){ const [k, lab, sd] = statFor(x), key = week + '|' + x.id, 
     out += pOver >= 0.6 ? ` <span class="lean o">OVER ${Math.round(pOver * 100)}%</span>` : pOver <= 0.4 ? ` <span class="lean u">UNDER ${Math.round((1 - pOver) * 100)}%</span>` : ` <span class="tm">${Math.round(pOver * 100)}% over</span>`;
     if (x.act) out += ` <span class="tm">${x.act[k] > +L ? '✓ over' : '✓ under'}</span>`; }
   return out; }
+function renderProps(){
+  const xs = PROPS[week] || [], hide = $('#hidestart').checked;
+  const list = xs.filter(x => x.v === 'BET' || !hide).filter(x => !hide || x.hist || new Date(x.time).getTime() > Date.now());
+  const head = '<tr><th>Player</th><th>Game</th><th>Prop</th><th class="num">Price</th><th class="num">Team win %</th><th>Verdict</th><th class="num">Actual</th></tr>';
+  $('#props').innerHTML = head + (list.map(x => `<tr><td><span class="nm">${x.name}</span> <span class="tm">${x.pos} · ${x.team}</span></td><td class="tm">${x.game}<br>${when(x.time)}</td>
+    <td class="nm">${x.side} ${x.line} ${x.stat}</td><td class="num">${Math.round(x.price * 100)}¢</td><td class="num ${x.winP != null && x.winP < .45 ? 'pos' : ''}">${x.winP == null ? '—' : Math.round(x.winP * 100) + '%'}</td>
+    <td><span class="v ${x.v === 'BET' ? 'BET' : 'PASS'}">${x.v}</span>${x.v === 'PASS' ? ' <span class="tm">team not the underdog</span>' : ''}</td>
+    <td class="num">${x.actual == null ? '—' : x.actual + (x.v === 'BET' ? (x.hit ? ' <span class="res y">✓</span>' : ' <span class="res n">✗</span>') : ' <span class="tm">' + (x.hit ? 'won' : 'lost') + ' (no bet)</span>')}</td></tr>`).join('') ||
+    '<tr><td colspan="7" class="tm" style="text-align:center;padding:14px">no Kalshi prop lines yet for this week: they post a few days before each game</td></tr>');
+  // scorecard: every graded BET, by week
+  const wks = Object.keys(PROPS).sort((a, b) => +a.split('wk')[1] - +b.split('wk')[1]);
+  const rec = b => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.cost - 1 : -1), 0); return b.length ? `${w}-${b.length - w} · <span class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(1)}u (${Math.round(u / b.length * 100)}%)</span>` : '—'; };
+  const g = k => wks.flatMap(w => PROPS[w]).filter(x => x.hit != null && k(x));
+  $('#propScore').innerHTML = '<div class="wrap"><table class="lt"><thead><tr><th>Prop scorecard (1u per bet at the price + fee)</th>' + wks.map(w => `<th class="num">Wk ${w.split('wk')[1]}</th>`).join('') + '<th class="num">All</th></tr></thead><tbody>' +
+    [['BET (underdog)', x => x.v === 'BET'], ['same props, team not the underdog (no bet)', x => x.v !== 'BET']].map(([n, k]) =>
+      `<tr><td class="nm">${n}</td>` + wks.map(w => `<td class="num">${rec(PROPS[w].filter(x => x.hit != null && k(x)))}</td>`).join('') + `<td class="num">${rec(g(k))}</td></tr>`).join('') + '</tbody></table></div>';
+}
 function render(){
+  renderProps();
   const rows = (PROJ[week] || []).filter(x => (pos === 'ALL' || (pos === 'RISING' ? x.tags.includes('RISING') : x.pos === pos)) && (!$('#hidestart').checked || new Date(x.time).getTime() > Date.now()));
   const q = ($('#q').value || '').toLowerCase(); const list = rows.filter(x => !q || (x.name + ' ' + x.team + ' ' + x.opp).toLowerCase().includes(q));
   const val = x => ({ rank: x.rank, name: x.name, game: x.time, pts: pts(x), avgPts: avgPts(x), v: x.v, rec: x.rec, recYds: x.recYds, rushYds: x.rushYds, passYds: x.passYds, oppF: x.oppF, spTeam: x.spTeam ?? -1, opps2: x.opps2, actPts: x.act ? pts(x, true) : -99 })[sortKey];
