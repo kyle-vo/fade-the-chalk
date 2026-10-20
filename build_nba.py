@@ -26,6 +26,7 @@ for d in days:
         for side in ('home', 'away'):
             prev = [m for t, m in _log.get(r[side], []) if t < r['time']]
             r[side + 'Last'] = prev[-1] if prev else None
+            r[side + 'Margin'] = round(sum(prev) / len(prev), 1) if prev else None; r[side + 'Gp'] = len(prev)   # season point differential per game so far
 _pt = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-7)).date().isoformat()
 cur = _pt if _pt in days else (min([d for d in order if d >= _pt], default=None) or (order[0] if order else None))
 
@@ -57,11 +58,26 @@ function sides(r){
     x.v = 'PASS';
     if (x.kind === 'spread' && x.blow) x.v = oppLast != null && oppLast > 0 ? 'STRONG BET' : 'BET';
     if (x.kind === 'ml' && x.blow) x.v = 'LEAN';
+    // the better team (season point differential 4+ per game above its opponent's, 5+ games each) priced as the UNDERDOG: last season
+    // +39% on the moneyline and +22% on the spread, both halves of the season, stronger as the gap grows, but only ~57 games a season
+    const myM = home ? r.homeMargin : r.awayMargin, opM = home ? r.awayMargin : r.homeMargin, gpOk = Math.min(r.homeGp || 0, r.awayGp || 0) >= 5;
+    x.under = x.team && gpOk && myM != null && opM != null && myM - opM >= 4 && !x.fav && (x.kind === 'ml' || x.kind === 'spread');
+    if (x.under && x.v === 'PASS') x.v = 'LEAN';
     if (x.kind === 'total' && x.side.startsWith('Under') && r.total && r.total.line < 220) x.v = 'LEAN';
-    x.why = x.blow ? `${x.team} won its last game by ${last}` + (x.v === 'STRONG BET' ? ', and its opponent won its last too' : '') : (x.v === 'LEAN' && x.kind === 'total' ? 'total under 220' : ''); }
+    x.why = [x.blow ? `${x.team} won its last game by ${last}` + (x.v === 'STRONG BET' ? ', and its opponent won its last too' : '') : '',
+             x.under ? `the better team (${myM >= 0 ? '+' : ''}${myM} vs ${opM >= 0 ? '+' : ''}${opM} per game) priced as the underdog` : '',
+             x.v === 'LEAN' && x.kind === 'total' ? 'total under 220' : ''].filter(Boolean).join(' · '); }
   return out;
 }
-const COLS = '<tr><th>Game</th><th>Side</th><th class="num">Robinhood ask</th><th class="num">Pinnacle fair</th><th class="num">Edge</th><th class="num">Crowd share</th><th class="num">$ on side</th><th class="num">Tape $</th><th>Verdict</th><th>Result</th></tr>';
+// click a header to sort every table by it; click again to flip ascending / descending
+let sortKey = 'game', sortDir = 1;
+const HEAD = [['game', 'Game', ''], ['side', 'Side', ''], ['ask', 'Robinhood ask', 'num'], ['fair', 'Pinnacle fair', 'num'], ['edge', 'Edge', 'num'], ['crowd', 'Crowd share', 'num'], ['own', '$ on side', 'num'], ['tape', 'Tape $', 'num'], ['v', 'Verdict', ''], ['hit', 'Result', '']];
+const VRANK = { 'STRONG BET': 4, 'BET': 3, 'LEAN': 2, 'PASS': 0 };
+const sval = x => ({ game: x.r.time + x.r.away, side: x.side, ask: x.ask, fair: x.fair, edge: x.edge, crowd: x.crowd, own: x.tape ? x.own : null, tape: x.tape || null, v: VRANK[x.v] ?? 0, hit: x.hit })[sortKey];
+const cmp = (a, b) => { const A = sval(a), B = sval(b); if (A == null && B == null) return 0; if (A == null) return 1; if (B == null) return -1; return (A > B ? 1 : A < B ? -1 : 0) * sortDir; };
+const COLS = () => '<tr>' + HEAD.map(([k, l, c]) => `<th class="${c}" data-k="${k}" style="cursor:pointer">${l}${k === sortKey ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '</tr>';
+document.addEventListener('click', e => { const th = e.target.closest('th[data-k]'); if (!th || !th.closest('#tM,#tS,#tT')) return;
+  const k = th.dataset.k; if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = (k === 'game' || k === 'side') ? 1 : -1; } render(); });
 function rowHtml(x){ const r = x.r;
   const res = x.hit == null ? (r.final ? '<span class="res d">push</span>' : '<span class="res n">—</span>') : x.v === 'PASS' ? `<span class="res d">${x.hit ? 'won' : 'lost'} (no bet)</span>` : x.hit ? '<span class="res y">✓</span>' : '<span class="res n">✗</span>';
   return `<tr><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}${r.final ? ' · ' + r.finalAway + '-' + r.finalHome : ''}</span></td><td class="nm">${x.side}</td>
@@ -71,17 +87,19 @@ function rowHtml(x){ const r = x.r;
 function render(){
   const rows = (DAYS[day] || []).slice().sort((a, b) => a.time < b.time ? -1 : 1).flatMap(sides);
   const hide = $('#hidepass').checked, list = rows.filter(x => !hide || x.v !== 'PASS');
-  for (const [k, id] of [['ml', '#tM'], ['spread', '#tS'], ['total', '#tT']]) { const xs = list.filter(x => x.kind === k);
-    $(id).innerHTML = COLS + (xs.map(rowHtml).join('') || '<tr><td colspan="10" class="tm" style="text-align:center;padding:14px">nothing yet: Robinhood and Pinnacle post NBA lines the day before</td></tr>'); }
-  const g = DAYS[day] || []; $('#kpi').innerHTML = `<div>games<b>${g.length}</b></div><div>final<b>${g.filter(r => r.final).length}</b></div><div>spread bets<b>${rows.filter(x => x.kind === 'spread' && x.v !== 'PASS').length}</b></div><div>leans<b>${rows.filter(x => x.v === 'LEAN').length}</b></div>`;
+  for (const [k, id] of [['ml', '#tM'], ['spread', '#tS'], ['total', '#tT']]) { const xs = list.filter(x => x.kind === k).sort(cmp);
+    $(id).innerHTML = COLS() + (xs.map(rowHtml).join('') || '<tr><td colspan="10" class="tm" style="text-align:center;padding:14px">nothing yet: Robinhood and Pinnacle post NBA lines the day before</td></tr>'); }
+  const g = DAYS[day] || []; $('#kpi').innerHTML = `<div>games<b>${g.length}</b></div><div>final<b>${g.filter(r => r.final).length}</b></div><div>spread bets<b>${rows.filter(x => x.kind === 'spread' && x.v.endsWith('BET')).length}</b></div><div>leans<b>${rows.filter(x => x.v === 'LEAN').length}</b></div>`;
 }
 $('#hidepass').addEventListener('input', render);
 // ---- scorecard: every graded side across every day ----
 const G = Object.values(DAYS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
 const strat = {
-  'Spread BET: team that won its last game by 20+': G.filter(x => x.kind === 'spread' && x.v !== 'PASS'),
+  'Spread BET: team that won its last game by 20+': G.filter(x => x.kind === 'spread' && x.blow),
   '   of which STRONG (opponent also won its last)': G.filter(x => x.kind === 'spread' && x.v === 'STRONG BET'),
-  'Moneyline LEAN: same blowout team': G.filter(x => x.kind === 'ml' && x.v === 'LEAN'),
+  'Moneyline LEAN: same blowout team': G.filter(x => x.kind === 'ml' && x.blow),
+  'LEAN: better team (season margin +4/game) priced as underdog, moneyline': G.filter(x => x.kind === 'ml' && x.under),
+  'LEAN: same, spread': G.filter(x => x.kind === 'spread' && x.under),
   'Total LEAN: under when the total is below 220': G.filter(x => x.kind === 'total' && x.v === 'LEAN'),
   'Spread: side with LESS of the crowd $ (NFL rule, break-even last season)': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
   'Spread: side with MORE of the crowd $': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd >= 0.5),
@@ -111,7 +129,7 @@ def page():
 <b>Rules, tested on all of last season</b> (1,086 regular-season games, Kalshi's price at tip plus the fee):
 <b>BET</b> on a spread = the team that <i>won its last game by 20+</i>. It covered 58% (+14%), and held in both halves of the season (+10% Oct-Jan, +18% Feb-Apr) and across favorites, underdogs, home and road. The market prices in a letdown after a blowout that doesn't come.
 <b>STRONG BET</b> = the same, when its opponent also won its last game (+23%, about 125 games).
-<b>LEAN</b> on a moneyline = the same team (+8%; the spread pays better). <b>LEAN</b> on a total = the under when the total is below 220 (+18%, only 74 games).
+<b>LEAN</b> on a moneyline = the same team (+8%; the spread pays better). <b>LEAN</b> on a moneyline or spread also = <i>the better team priced as the underdog</i>: its season point differential is 4+ points a game better than its opponent's (5+ games each), yet it's the underdog. Last season: +39% on the moneyline, +22% on the spread, both halves of the season, and stronger as the gap grew, but only about 57 games all season, so it's a LEAN. <b>LEAN</b> on a total = the under when the total is below 220 (+18%, only 74 games).
 What did <i>not</i> work last season: fading the crowd's spread money (the NFL rule, +0.6% on 1,128 games), the crowd's moneyline money, back-to-backs, win streaks, home/road. The rule needs each team's previous game, so it starts with each team's second game. Regular season only: in the playoffs it was flat.</div>
 <h2 style="margin-top:18px">Scorecard <small>every graded game</small></h2><div id="score"></div>
 </div>

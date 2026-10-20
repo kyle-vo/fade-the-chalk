@@ -2,7 +2,7 @@
 For each game: Robinhood (Kalshi) ask on both sides, Pinnacle's de-vigged fair price at the same line, and the crowd's directional money from
 Kalshi's trade tape (each trade credited to the side the taker backed), all frozen at tip-off. Graded from ESPN final scores.
 Writes backtest/nba_<date>.json. Rendered by build_nba.py. No model and no backtest yet: the page tracks every read from game one.
-Run from lines.py (same workflow step), so it shares that step's Odds API keys; Pinnacle is pulled at most every 90 minutes (3 credits)."""
+Run from lines.py (same workflow step), so it shares that step's Odds API keys; Pinnacle is pulled from 24h before tip, at most every 90 minutes (3 credits a pull)."""
 import os, json, glob, datetime, time, requests
 import lines as L
 HERE = os.path.dirname(os.path.abspath(__file__)); BT = os.path.join(HERE, 'backtest'); DATA = os.path.join(HERE, 'data')
@@ -28,12 +28,13 @@ def espn_games(date):
                     'scoreHome': f(h.get('score')), 'scoreAway': f(a.get('score'))})
     return out
 
-def pinnacle(need):
-    """Pinnacle moneyline, spread and total for every NBA game, cached 90 minutes (3 credits a pull)"""
-    cf = os.path.join(DATA, 'nba_pinnacle.json')
+def pinnacle(need, max_age=90):
+    """Pinnacle moneyline, spread and total for every NBA game (3 credits a pull), cached max_age minutes.
+    The cache lives in backtest/ (committed): data/ is git-ignored, so a cache there was wiped every run and never limited anything."""
+    cf = os.path.join(BT, 'nba_pinnacle_cache.json')
     if os.path.exists(cf):
         c = J(cf)
-        if time.time() - c.get('at', 0) < 90 * 60 or not need: return c['games']
+        if time.time() - c.get('at', 0) < max_age * 60 or not need: return c['games']
     if not need or not L.KEYS: return J(cf)['games'] if os.path.exists(cf) else {}
     ki = (datetime.datetime.now().timetuple().tm_yday * 24 + datetime.datetime.now().hour) % len(L.KEYS)
     for a in range(len(L.KEYS)):
@@ -111,7 +112,7 @@ def build_row(g, lad_ml, lad_s, lad_t, pin, now):
                 if shift: fair_fav -= shift * 2 * L.HALF_PT[('NBA', 'spread')]; d.update({'line': line + shift, 'shift': shift, 'pinFavFair': round(fair_fav, 4), 'pinDogFair': round(1 - fair_fav, 4)})
                 d.update(kalshi(m, ms, cut, 'fav', 'dog'))
         row['spread'] = d
-    elif ms:                                                       # Pinnacle is only pulled inside 8h of tip: until then show Kalshi's own main line
+    elif ms:                                                       # no Pinnacle line yet (pulled from 24h before tip): show Kalshi's own main line
         m = main_line(ms); fav = canon(m['ticker'].rsplit('-', 1)[-1].rstrip('0123456789'))
         if fav in (g['home'], g['away']):
             row['spread'] = {'line': f(m.get('floor_strike')), 'shift': 0.0, 'fav': fav, 'dog': g['away'] if fav == g['home'] else g['home'], 'kalshiOnly': True} | kalshi(m, ms, cut, 'fav', 'dog')
@@ -166,8 +167,9 @@ def run():
     games = {d: espn_games(d) for d in dates}
     upcoming = [g for d in dates[1:] for g in games[d] if g['state'] in PRE]
     if not upcoming and not any(os.path.exists(os.path.join(BT, f'nba_{d}.json')) for d in dates): print("  nba: no games"); return
-    soon = any(datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00')) - now < datetime.timedelta(hours=8) for g in upcoming)
-    pin = pinnacle(need=soon)
+    left = [datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00')) - now for g in upcoming]
+    # Pinnacle from 24h before the first tip: every 90 minutes inside 8h, every 4 hours before that (about 30 credits a game day)
+    pin = pinnacle(need=any(x < datetime.timedelta(hours=24) for x in left), max_age=90 if any(x < datetime.timedelta(hours=8) for x in left) else 240)
     lad_ml, lad_s, lad_t = (L.ladder(s) for s in ('KXNBAGAME', 'KXNBASPREAD', 'KXNBATOTAL')) if upcoming else ({}, {}, {})
     for d in dates:
         path = os.path.join(BT, f'nba_{d}.json'); old = {r['eventId']: r for r in J(path)} if os.path.exists(path) else {}
