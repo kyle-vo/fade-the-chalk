@@ -198,3 +198,6 @@ if __name__ == '__main__':
     try:                                                                        # NBA board (moneyline + spread + total in one file per day): same step, same keys
         import nba; nba.run()
     except Exception as e: print(f"  nba failed: {type(e).__name__} {e}")
+    try:
+        import nflprops; nflprops.run()
+    except Exception as e: print(f"  nflprops failed: {type(e).__name__} {e}")
