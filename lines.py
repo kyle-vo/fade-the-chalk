@@ -201,3 +201,6 @@ if __name__ == '__main__':
     try:
         import nflprops; nflprops.run()
     except Exception as e: print(f"  nflprops failed: {type(e).__name__} {e}")
+    try:                                                                        # +EV vs Pinnacle across every board above: last, so it sees fresh prices
+        import ev; ev.run()
+    except Exception as e: print(f"  ev failed: {type(e).__name__} {e}")
