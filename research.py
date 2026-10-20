@@ -188,9 +188,67 @@ def nba_hist():
     have = lambda k: sum(1 for r in done.values() if r.get(k))
     print(f"nba_hist: {len(done)} games ({new} new), with ML {have('ml')}, spread {have('spread')}, total {have('total')}; stopped at {day}")
 
+# ---------------------------------------------------------------- props_hist: every NFL player-prop market for the season so far
+PROP_SERIES = ('KXNFLTD', 'KXNFLFIRSTTD', 'KXNFLREC', 'KXNFLRECYDS', 'KXNFLRSHYDS', 'KXNFLPASSYDS')
+def markets_of(params):
+    """all markets for a query, live path then the historical archive, de-duplicated by ticker"""
+    out = {}
+    for path in ('/markets', '/historical/markets'):
+        cur = None
+        while True:
+            p = dict(params, limit=1000)
+            if cur: p['cursor'] = cur
+            try: d = L.kget(path, **p)
+            except Exception as e: break
+            for m in d.get('markets', []): out.setdefault(m['ticker'], m)
+            cur = d.get('cursor')
+            if not cur or not d.get('markets'): break
+    return list(out.values())
+
+def props_hist():
+    """For each 2026 NFL game already played: every TD / receptions / yards market with its last price before kickoff, the crowd's taker $
+    before kickoff and the settlement. One file per week, resumable: research/nflprops_<week>.json"""
+    from concurrent.futures import ThreadPoolExecutor
+    games = {}
+    for path in sorted(os.listdir(os.path.join(HERE, 'backtest'))):
+        mm = re.match(r'^nfl_(2026_wk\d+)\.json$', path)
+        if not mm: continue
+        for r in json.load(open(os.path.join(HERE, 'backtest', path), encoding='utf-8')):
+            away, home = re.split(r' @ | VS ', r['game'], maxsplit=1)
+            games.setdefault(r['eventId'], {'week': mm.group(1), 'eventId': r['eventId'], 'home': home, 'away': away, 'time': r['time']})
+    now = time.time()
+    games = {k: g for k, g in games.items() if datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00')).timestamp() < now - 4 * 3600}
+    gm = markets_of({'series_ticker': 'KXNFLGAME'}); lad = {}
+    for m in gm: lad.setdefault(m['event_ticker'], []).append(m)
+    print(f"props_hist: {len(games)} finished games, {len(lad)} KXNFLGAME events on Kalshi")
+    for wk in sorted({g['week'] for g in games.values()}):
+        path = os.path.join(OUT, f'nflprops_{wk}.json')
+        have = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
+        for g in [g for g in games.values() if g['week'] == wk and g['eventId'] not in have]:
+            if time.time() - T0 > 80 * 60: break
+            kick = datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00'))
+            et = (kick - datetime.timedelta(hours=4)).strftime('%y%b%d').upper()
+            sub = {ev: ms for ev, ms in lad.items() if ev.split('-')[1].startswith(et)}
+            ev, _ = L.find_event(sub, g['home'], g['away'], 'NFL')
+            if not ev: print(f"  {wk} {g['away']}@{g['home']}: no Kalshi event ({et})"); continue
+            code = ev.split('-', 1)[1]
+            ms = [m for s in PROP_SERIES for m in markets_of({'event_ticker': f'{s}-{code}'})]
+            ms = [m for m in ms if f(m.get('volume_fp') or m.get('volume')) >= 50]
+            def one(m):
+                t = trades(m['ticker'], max_ts=kick.timestamp())
+                return {'ticker': m['ticker'], 'series': m['ticker'].split('-')[0], 'title': m.get('title'), 'strike': m.get('floor_strike'),
+                        'volume': f(m.get('volume_fp') or m.get('volume')), 'result': m.get('result'), 'pxKick': t.get('lastYes'),
+                        'yes$': t['yes$'], 'no$': t['no$'], 'trades': t['trades']}
+            with ThreadPoolExecutor(8) as ex: rows = list(ex.map(one, ms))
+            have[g['eventId']] = {'code': code, 'home': g['home'], 'away': g['away'], 'time': g['time'], 'markets': rows}
+            json.dump(have, open(path, 'w', encoding='utf-8'))
+            print(f"  {wk} {code}: {len(rows)} markets, {sum(1 for r in rows if r['pxKick'] is not None)} priced ({time.time() - T0:.0f}s)")
+        print(f"{wk}: {len(have)} games saved")
+
 if __name__ == '__main__':
     job = sys.argv[1] if len(sys.argv) > 1 else ''
     arg = sys.argv[2] if len(sys.argv) > 2 else ''
     if job == 'props': props(arg or '26OCT19WASSF')
     elif job == 'nba_hist': nba_hist()
+    elif job == 'props_hist': props_hist()
     else: print("unknown job", job)
