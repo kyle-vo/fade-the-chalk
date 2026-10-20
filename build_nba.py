@@ -12,7 +12,7 @@ jd = lambda o: json.dumps(o, separators=(',', ':')).replace('</', '<' + chr(92) 
 src = open(os.path.join(HERE, 'build_site.py'), encoding='utf-8').read()
 CSS = re.search(r'CSS = r"""(.*?)"""', src, re.S).group(1); FONTS = re.search(r"FONTS = '(.*?)'", src).group(1)
 
-days = {os.path.basename(p)[4:-5]: J(p) for p in sorted(glob.glob(os.path.join(BT, 'nba_*.json')))}
+days = {os.path.basename(p)[4:-5]: J(p) for p in sorted(glob.glob(os.path.join(BT, 'nba_20*.json')))}   # dated files only (not nba_pinnacle_cache.json)
 days = {d: rows for d, rows in days.items() if rows}
 order = sorted(days, reverse=True)
 # each team's previous final (margin, from our own graded days): the blowout rule needs it at board time
