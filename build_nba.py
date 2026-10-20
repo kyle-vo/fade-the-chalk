@@ -104,8 +104,31 @@ function render(){
   const picks = games.flatMap(g => g.picks).sort((a, b) => VRANK[b.v] - VRANK[a.v] || (a.r.time < b.r.time ? -1 : 1));
   $('#picks').innerHTML = picks.length ? picks.map(x => `<div class="pk">${chip(x.v)} <b>${pickText(x)}</b> <span class="tm">${cents(x.ask)} ${amer(x.ask)}</span> ${resMark(x)}<div class="tm">${x.r.away} @ ${x.r.home} · ${when(x.r.time)}</div><div class="why">${x.why}</div></div>`).join('')
     : '<div class="tm" style="padding:8px 2px">No picks today. Both rules need each team\'s earlier games this season, so most early-season days are quiet. That is the rules working, not missing.</div>';
+  renderSpreads();
   $('#kpi').innerHTML = `<div>games<b>${games.length}</b></div><div>bets<b>${picks.filter(x => x.v.endsWith('BET')).length}</b></div><div>leans<b>${picks.filter(x => x.v === 'LEAN').length}</b></div><div>final<b>${games.filter(g => g.r.final).length}</b></div>`;
 }
+// ---- Spreads tab: both sides of every spread, with the crowd's money on each ----
+let spKey = 'game', spDir = 1;
+const SPHEAD = [['game', 'Game', ''], ['side', 'Side', ''], ['ask', 'Robinhood ask', 'num'], ['fair', 'Pinnacle fair', 'num'], ['edge', 'Edge', 'num'], ['crowd', 'Crowd share', 'num'], ['own', '$ on side', 'num'], ['tape', 'Total $', 'num'], ['v', 'Verdict', ''], ['hit', 'Result', '']];
+const spVal = x => ({ game: x.r.time + x.r.away + (x.fav ? 0 : 1), side: x.side, ask: x.ask, fair: x.fair, edge: x.edge, crowd: x.crowd, own: x.tape ? x.own : null, tape: x.tape || null, v: VRANK[x.v] ?? 0, hit: x.hit })[spKey];
+const spCmp = (a, b) => { const A = spVal(a), B = spVal(b); if (A == null && B == null) return 0; if (A == null) return 1; if (B == null) return -1; return (A > B ? 1 : A < B ? -1 : 0) * spDir; };
+document.addEventListener('click', e => { const th = e.target.closest('th[data-s]'); if (!th) return;
+  const k = th.dataset.s; if (k === spKey) spDir = -spDir; else { spKey = k; spDir = (k === 'game' || k === 'side') ? 1 : -1; } renderSpreads(); });
+function renderSpreads(){
+  const hide = $('#hidepass').checked;
+  const xs = (DAYS[day] || []).flatMap(sides).filter(x => x.kind === 'spread' && (!hide || x.v !== 'PASS')).sort(spCmp);
+  $('#tSp').innerHTML = '<tr>' + SPHEAD.map(([k, l, c]) => `<th class="${c}" data-s="${k}" style="cursor:pointer">${l}${k === spKey ? (spDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '</tr>' +
+    (xs.map(x => { const r = x.r, res = x.hit == null ? (r.final ? '<span class="res d">push</span>' : '<span class="tm">—</span>') : x.v === 'PASS' ? `<span class="res d">${x.hit ? 'covered' : 'missed'} (no bet)</span>` : x.hit ? '<span class="res y">✓</span>' : '<span class="res n">✗</span>';
+      return `<tr class="${x.v !== 'PASS' ? 'haspick' : ''}${x.fav ? ' fv' : ''}"><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}${r.final ? ' · ' + r.finalAway + '-' + r.finalHome : ''}</span></td><td class="nm">${x.side}</td>
+      <td class="num">${odds(x.ask)}</td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
+      <td class="num"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${x.tape ? money(x.own) : '—'}</td><td class="num">${money(x.tape)}</td>
+      <td>${chip(x.v)}${x.why ? '<br><span class="why">' + x.why + '</span>' : ''}</td><td>${res}</td></tr>`; }).join('') ||
+     '<tr><td colspan="10" class="tm" style="text-align:center;padding:14px">no spreads yet: Robinhood posts NBA lines the day before</td></tr>');
+}
+let tab = 'board';
+document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => { tab = b.dataset.t;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  $('#vBoard').style.display = tab === 'board' ? '' : 'none'; $('#vSpread').style.display = tab === 'spread' ? '' : 'none'; }));
 $('#hidepass').addEventListener('input', render);
 // ---- scorecard: every graded side across every day ----
 const G = Object.values(DAYS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
@@ -138,12 +161,17 @@ def page():
 #picks{{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;margin:6px 0 14px}}
 .pk{{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px;line-height:1.5}}
 .why{{font-size:12px;color:var(--mute)}}
-#tG td{{vertical-align:top;line-height:1.45}} #tG tr.haspick td{{background:rgba(46,160,90,.06)}}
+#tG td{{vertical-align:top;line-height:1.45}} #tG tr.haspick td,#tSp tr.haspick td{{background:rgba(46,160,90,.06)}}
+#tSp tr.fv td{{border-top:2px solid var(--line)}}
+.pt{{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}}.pt button{{background:var(--panel);color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 16px;font:700 13px var(--font);cursor:pointer}}.pt button.on{{color:var(--ink);border-color:var(--acc)}}
 .split{{display:inline-block;width:110px;height:7px;border-radius:4px;background:var(--blue);overflow:hidden;vertical-align:middle}}.split i{{display:block;height:100%;background:var(--acc)}}</style><div class="panel top">
 <div class="kpi" id="kpi"></div>
 <h2 class="mk">Today's picks</h2><div id="picks"></div>
-<div class="ctl"><label><input type="checkbox" id="hidepass"> show only games with a pick</label> <span class="tm">click a column to sort</span></div>
-<div class="wrap"><table class="lt" id="tG"></table></div>
+<div class="pt" id="tabs"><button data-t="board" class="on">Games</button><button data-t="spread">Spreads</button></div>
+<div class="ctl"><label><input type="checkbox" id="hidepass"> show only picks</label> <span class="tm">click a column to sort, again to flip</span></div>
+<div id="vBoard"><div class="wrap"><table class="lt" id="tG"></table></div></div>
+<div id="vSpread" style="display:none"><div class="wrap"><table class="lt" id="tSp"></table></div>
+<div class="legend">Both sides of every spread. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line; <b>Edge</b> = fair minus ask, in points. <b>Crowd share</b> / <b>$ on side</b> = how much of the crowd's taker money (each pre-game trade credited to the side the bettor backed) is on that side, frozen at tip-off. Crowd money alone was break-even on NBA spreads last season, so it's information, not a pick.</div></div>
 <div class="legend">One row per game. <b>Moneyline</b> = what a $1 Robinhood contract on each team costs (Robinhood's NBA contracts are Kalshi's), with the American odds, and Pinnacle's de-vigged fair chance under it. <b>Spread</b> = the favorite's line and price, the underdog's under it. <b>Crowd $</b> = how the crowd's taker dollars split on the moneyline (left bar = away team), frozen at tip-off.
 <b>Rules, tested on all of last season</b> (1,086 regular-season games, Kalshi's price at tip plus the fee):
 <b>BET</b> on a spread = the team that <i>won its last game by 20+</i>. It covered 58% (+14%), and held in both halves of the season (+10% Oct-Jan, +18% Feb-Apr) and across favorites, underdogs, home and road. The market prices in a letdown after a blowout that doesn't come.
