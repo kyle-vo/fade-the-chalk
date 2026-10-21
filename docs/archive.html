@@ -57,9 +57,10 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .nb .sl select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:600 13px var(--font);text-transform:none;letter-spacing:0;cursor:pointer}
 .nb .aux{margin-left:auto}.nb .aux .upd{color:var(--mute);font-size:12px;align-self:center;white-space:nowrap}.nb .aux .upd.old{color:var(--warn)}.nb .aux a.rr{color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:5px 10px}.nb .aux a.rr:hover{border-color:var(--acc)}
 .panel.top{margin-top:16px}
+.nb [hidden]{display:none!important}
 @media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
 </style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="nba.html">NBA</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a><a data-pg="fantasy" href="fantasy.html">Fantasy &amp; Yards</a></div><div class="aux"><a href="ev.html" title="every price you can bet vs Pinnacle's fair line">+EV</a><a href="track.html">Track</a><a href="archive.html" class="on">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
-const NAV = {"page": "archive", "root": "", "slates": {}, "cur": {"mlb": "2026-10-19", "nfl": "2026_wk7"}, "fixed": null, "built": "2026-10-21T04:31:45+00:00"};
+const NAV = {"page": "archive", "root": "", "slates": {}, "cur": {"mlb": "2026-10-19", "nfl": "2026_wk7"}, "fixed": null, "built": "2026-10-21T06:42:09+00:00"};
 const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
@@ -73,10 +74,10 @@ const samePage = href => { const a = document.createElement('a'); a.href = href;
 window.navSport = function(s, cur){
   sp = s; window.NAV_SPORT = s; window.__navSet = true; try { localStorage.setItem('ftc_sport', s); } catch (e) {}
   document.querySelectorAll('nav.nb .sp a').forEach(a => a.classList.toggle('on', a.dataset.sp === s));
-  document.querySelectorAll('nav.nb .pg a').forEach(a => { a.href = link(a.dataset.pg, s); });
+  document.querySelectorAll('nav.nb .pg a[data-pg]').forEach(a => { a.href = link(a.dataset.pg, s); });
   const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
   const fz = document.querySelector('nav.nb .pg a[data-pg=fantasy]'); if (fz) fz.hidden = s !== 'nfl';   // NFL only
-  const pgs = document.querySelector('nav.nb .pg'); if (pgs) pgs.hidden = s === 'nba';                   // the NBA page holds all three markets itself
+  const pgs = document.querySelector('nav.nb .pg:not(.nbatabs)'); if (pgs) pgs.hidden = s === 'nba';     // MLB/NFL page links; the NBA page has its own tabs
   const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
   const opts = (NAV.slates || {})[s] || [];
   if (sel) { sel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join(''); const c = cur || (NAV.cur || {})[s]; if (c != null) sel.value = c; box.hidden = !opts.length; }
