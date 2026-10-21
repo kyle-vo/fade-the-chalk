@@ -245,10 +245,30 @@ def props_hist():
             print(f"  {wk} {code}: {len(rows)} markets, {sum(1 for r in rows if r['pxKick'] is not None)} priced ({time.time() - T0:.0f}s)")
         print(f"{wk}: {len(have)} games saved")
 
+# ---------------------------------------------------------------- books: which bookmaker keys The Odds API serves (for FliffJam's target list)
+def books():
+    """one moneyline pull per region for NFL and NBA (about 1 credit each): every bookmaker key returned, with how many games it prices.
+    Answers which exchanges / apps (Kalshi, Polymarket, Novig, ProphetX, ...) can be FliffJam targets. -> research/odds_api_books.json"""
+    out = {}
+    for sport in ('americanfootball_nfl', 'basketball_nba'):
+        for region in ('us', 'us2', 'us_ex', 'us_dfs', 'eu'):
+            r = None
+            for k in L.KEYS:
+                r = L.S.get(f"https://api.the-odds-api.com/v4/sports/{sport}/odds", params={'apiKey': k, 'regions': region, 'markets': 'h2h', 'oddsFormat': 'american'}, timeout=40)
+                if r.status_code not in (401, 402, 429): break
+            if r is None or r.status_code != 200: print(f"  {sport} {region}: HTTP {getattr(r, 'status_code', None)} {getattr(r, 'text', '')[:80]}"); continue
+            c = {}
+            for g in r.json():
+                for b in g.get('bookmakers', []): c[b['key']] = c.get(b['key'], 0) + 1
+            out[f'{sport}|{region}'] = c
+            print(f"  {sport} {region}: {c}  (credits left {r.headers.get('x-requests-remaining')})")
+    json.dump(out, open(os.path.join(OUT, 'odds_api_books.json'), 'w', encoding='utf-8'), indent=1)
+
 if __name__ == '__main__':
     job = sys.argv[1] if len(sys.argv) > 1 else ''
     arg = sys.argv[2] if len(sys.argv) > 2 else ''
     if job == 'props': props(arg or '26OCT19WASSF')
     elif job == 'nba_hist': nba_hist()
     elif job == 'props_hist': props_hist()
+    elif job == 'books': books()
     else: print("unknown job", job)

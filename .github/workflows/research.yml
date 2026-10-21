@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: 'research.py job to run (props | nba_hist)'
+        description: 'research.py job to run (props | nba_hist | props_hist | books)'
         required: true
         default: 'props'
       arg:
@@ -33,6 +33,8 @@ jobs:
           python-version: '3.11'
       - run: pip install requests
       - name: Run research job
+        env:
+          ODDS_API_KEYS: ${{ secrets.ODDS_API_KEYS }}
         run: python research.py "${{ inputs.job }}" "${{ inputs.arg }}"
       - name: Commit results
         run: |
