@@ -80,11 +80,16 @@ function game(r){
   const picks = xs.filter(x => x.v !== 'PASS').sort((a, b) => VRANK[b.v] - VRANK[a.v]);
   const tot = (m['tapeHome$'] || 0) + (m['tapeAway$'] || 0), awaySh = tot ? (m['tapeAway$'] || 0) / tot : null;
   const favP = Math.max(m.homeAsk || 0, m.awayAsk || 0) || null;
-  return { r, xs, picks, tot, awaySh, favP, best: picks.length ? VRANK[picks[0].v] : 0 };
+  // what the book kept and paid out: once final, the crowd's money on the losing side vs the winning side (trade tape, frozen at tip)
+  let took = null, paid = null;
+  if (r.final && tot && r.homeWin != null) { const hw = r.homeWin === 1; took = (hw ? m['tapeAway$'] : m['tapeHome$']) || 0; paid = (hw ? m['tapeHome$'] : m['tapeAway$']) || 0; }
+  const st = (s['tapeFav$'] || 0) + (s['tapeDog$'] || 0); let spTook = null, spPaid = null;
+  if (s.favCovered != null && st) { spTook = (s.favCovered ? s['tapeDog$'] : s['tapeFav$']) || 0; spPaid = (s.favCovered ? s['tapeFav$'] : s['tapeDog$']) || 0; }
+  return { r, xs, picks, tot, awaySh, favP, took, paid, spTook, spPaid, best: picks.length ? VRANK[picks[0].v] : 0 };
 }
 let sortKey = 'time', sortDir = 1;
-const HEAD = [['time', 'Game'], ['ml', 'Moneyline <span class="tm">Robinhood · Pinnacle fair</span>'], ['spread', 'Spread'], ['total', 'Total'], ['crowd', 'Crowd $ on the moneyline'], ['pick', 'Our pick'], ['res', 'Result']];
-const sval = g => ({ time: g.r.time + g.r.away, ml: g.favP, spread: (g.r.spread || {}).line, total: (g.r.total || {}).line, crowd: g.tot || null, pick: g.best, res: g.r.final ? 1 : 0 })[sortKey];
+const HEAD = [['time', 'Game'], ['ml', 'Moneyline <span class="tm">Robinhood · Pinnacle fair</span>'], ['spread', 'Spread'], ['total', 'Total'], ['crowd', 'Crowd $ on the moneyline'], ['book', 'Book took / paid'], ['pick', 'Our pick'], ['res', 'Result']];
+const sval = g => ({ time: g.r.time + g.r.away, ml: g.favP, spread: (g.r.spread || {}).line, total: (g.r.total || {}).line, crowd: g.tot || null, book: g.took == null ? null : g.took - g.paid, pick: g.best, res: g.r.final ? 1 : 0 })[sortKey];
 const cmp = (a, b) => { const A = sval(a), B = sval(b); if (A == null && B == null) return 0; if (A == null) return 1; if (B == null) return -1; return (A > B ? 1 : A < B ? -1 : 0) * sortDir; };
 document.addEventListener('click', e => { const th = e.target.closest('th[data-k]'); if (!th || !th.closest('#tG')) return;
   const k = th.dataset.k; if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'time' ? 1 : -1; } render(); });
@@ -95,22 +100,27 @@ function rowHtml(g){ const r = g.r, m = r.ml || {}, s = r.spread || {}, t = r.to
   const crowd = g.awaySh == null ? '<span class="tm">—</span>' : `<span class="split"><i style="width:${Math.round(g.awaySh * 100)}%"></i></span><br><span class="tm">${r.away} ${Math.round(g.awaySh * 100)}% · ${r.home} ${100 - Math.round(g.awaySh * 100)}% · ${money(g.tot)}</span>`;
   const pick = g.picks.length ? g.picks.map(x => `${chip(x.v)} <b>${pickText(x)}</b> <span class="tm">${cents(x.ask)}</span> ${resMark(x)}<br><span class="why">${x.why}</span>`).join('<br>') : '<span class="tm">no bet</span>';
   const res = r.final ? `<b>${r.finalAway}-${r.finalHome}</b>` : '<span class="tm">—</span>';
-  return `<tr class="${g.picks.length ? 'haspick' : ''}"><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}</span></td><td>${mlCell}</td><td>${spCell}</td><td>${toCell}</td><td>${crowd}</td><td>${pick}</td><td>${res}</td></tr>`; }
+  const book = g.took == null && g.spTook == null ? `<span class="tm">${r.final ? '—' : 'after the game'}</span>` :
+    (g.took != null ? `<span class="tm">ML</span> <span class="pos" title="crowd money on the losing team">took ${money(g.took)}</span> · <span class="neg" title="crowd money on the winning team">paid ${money(g.paid)}</span>` : '') +
+    (g.spTook != null ? `<br><span class="tm">spread</span> <span class="pos">took ${money(g.spTook)}</span> · <span class="neg">paid ${money(g.spPaid)}</span>` : '');
+  return `<tr class="${g.picks.length ? 'haspick' : ''}"><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}</span></td><td>${mlCell}</td><td>${spCell}</td><td>${toCell}</td><td>${crowd}</td><td>${book}</td><td>${pick}</td><td>${res}</td></tr>`; }
 function render(){
   const games = (DAYS[day] || []).map(game);
   const hide = $('#hidepass').checked, list = games.filter(g => !hide || g.picks.length).sort(cmp);
   $('#tG').innerHTML = '<tr>' + HEAD.map(([k, l]) => `<th data-k="${k}" style="cursor:pointer">${l}${k === sortKey ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '</tr>' +
-    (list.map(rowHtml).join('') || `<tr><td colspan="7" class="tm" style="text-align:center;padding:14px">${hide ? 'no picks on this day' : 'nothing yet: Robinhood posts NBA lines the day before'}</td></tr>`);
+    (list.map(rowHtml).join('') || `<tr><td colspan="8" class="tm" style="text-align:center;padding:14px">${hide ? 'no picks on this day' : 'nothing yet: Robinhood posts NBA lines the day before'}</td></tr>`);
   const picks = games.flatMap(g => g.picks).sort((a, b) => VRANK[b.v] - VRANK[a.v] || (a.r.time < b.r.time ? -1 : 1));
   $('#picks').innerHTML = picks.length ? picks.map(x => `<div class="pk">${chip(x.v)} <b>${pickText(x)}</b> <span class="tm">${cents(x.ask)} ${amer(x.ask)}</span> ${resMark(x)}<div class="tm">${x.r.away} @ ${x.r.home} · ${when(x.r.time)}</div><div class="why">${x.why}</div></div>`).join('')
     : '<div class="tm" style="padding:8px 2px">No picks today. Both rules need each team\'s earlier games this season, so most early-season days are quiet. That is the rules working, not missing.</div>';
   renderSpreads();
-  $('#kpi').innerHTML = `<div>games<b>${games.length}</b></div><div>bets<b>${picks.filter(x => x.v.endsWith('BET')).length}</b></div><div>leans<b>${picks.filter(x => x.v === 'LEAN').length}</b></div><div>final<b>${games.filter(g => g.r.final).length}</b></div>`;
+  const tk = games.reduce((a, g) => a + (g.took || 0) + (g.spTook || 0), 0), pd = games.reduce((a, g) => a + (g.paid || 0) + (g.spPaid || 0), 0), anyF = games.some(g => g.took != null || g.spTook != null);
+  $('#kpi').innerHTML = `<div>games<b>${games.length}</b></div><div>bets<b>${picks.filter(x => x.v.endsWith('BET')).length}</b></div><div>leans<b>${picks.filter(x => x.v === 'LEAN').length}</b></div><div>final<b>${games.filter(g => g.r.final).length}</b></div>` +
+    (anyF ? `<div title="crowd money on losing sides (moneyline + spread) on finished games">book took<b class="pos">${money(tk)}</b></div><div title="crowd money on winning sides">book paid<b class="neg">${money(pd)}</b></div>` : '');
 }
 // ---- Spreads tab: both sides of every spread, with the crowd's money on each ----
 let spKey = 'game', spDir = 1;
-const SPHEAD = [['game', 'Game', ''], ['side', 'Side', ''], ['ask', 'Robinhood ask', 'num'], ['fair', 'Pinnacle fair', 'num'], ['edge', 'Edge', 'num'], ['crowd', 'Crowd share', 'num'], ['own', '$ on side', 'num'], ['tape', 'Total $', 'num'], ['v', 'Verdict', ''], ['hit', 'Result', '']];
-const spVal = x => ({ game: x.r.time + x.r.away + (x.fav ? 0 : 1), side: x.side, ask: x.ask, fair: x.fair, edge: x.edge, crowd: x.crowd, own: x.tape ? x.own : null, tape: x.tape || null, v: VRANK[x.v] ?? 0, hit: x.hit })[spKey];
+const SPHEAD = [['game', 'Game', ''], ['side', 'Side', ''], ['ask', 'Robinhood ask', 'num'], ['fair', 'Pinnacle fair', 'num'], ['edge', 'Edge', 'num'], ['crowd', 'Crowd share', 'num'], ['own', '$ on side', 'num'], ['tape', 'Total $', 'num'], ['book', 'Book', 'num'], ['v', 'Verdict', ''], ['hit', 'Result', '']];
+const spVal = x => ({ game: x.r.time + x.r.away + (x.fav ? 0 : 1), side: x.side, ask: x.ask, fair: x.fair, edge: x.edge, crowd: x.crowd, own: x.tape ? x.own : null, tape: x.tape || null, book: x.hit == null || !x.tape ? null : (x.hit ? -x.own : x.own), v: VRANK[x.v] ?? 0, hit: x.hit })[spKey];
 const spCmp = (a, b) => { const A = spVal(a), B = spVal(b); if (A == null && B == null) return 0; if (A == null) return 1; if (B == null) return -1; return (A > B ? 1 : A < B ? -1 : 0) * spDir; };
 document.addEventListener('click', e => { const th = e.target.closest('th[data-s]'); if (!th) return;
   const k = th.dataset.s; if (k === spKey) spDir = -spDir; else { spKey = k; spDir = (k === 'game' || k === 'side') ? 1 : -1; } renderSpreads(); });
@@ -122,13 +132,17 @@ function renderSpreads(){
       return `<tr class="${x.v !== 'PASS' ? 'haspick' : ''}${x.fav ? ' fv' : ''}"><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}${r.final ? ' · ' + r.finalAway + '-' + r.finalHome : ''}</span></td><td class="nm">${x.side}</td>
       <td class="num">${odds(x.ask)}</td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
       <td class="num"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${x.tape ? money(x.own) : '—'}</td><td class="num">${money(x.tape)}</td>
+      <td class="num">${x.hit == null || !x.tape ? '<span class="tm">—</span>' : x.hit ? `<span class="neg" title="the book paid the crowd on this side">paid ${money(x.own)}</span>` : `<span class="pos" title="the book kept the crowd's money on this side">took ${money(x.own)}</span>`}</td>
       <td>${chip(x.v)}${x.why ? '<br><span class="why">' + x.why + '</span>' : ''}</td><td>${res}</td></tr>`; }).join('') ||
-     '<tr><td colspan="10" class="tm" style="text-align:center;padding:14px">no spreads yet: Robinhood posts NBA lines the day before</td></tr>');
+     '<tr><td colspan="11" class="tm" style="text-align:center;padding:14px">no spreads yet: Robinhood posts NBA lines the day before</td></tr>');
 }
-let tab = 'board';
-document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => { tab = b.dataset.t;
-  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
-  $('#vBoard').style.display = tab === 'board' ? '' : 'none'; $('#vSpread').style.display = tab === 'spread' ? '' : 'none'; }));
+// tabs live in the nav bar (Games / Spreads / Scorecard); the hash keeps the tab on reload
+let tab = ['board', 'spread', 'score'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'board';
+function showTab(t){ tab = t; document.querySelectorAll('nav.nb .pg a[data-nt]').forEach(a => a.classList.toggle('on', a.dataset.nt === t));
+  $('#vBoard').style.display = t === 'board' ? '' : 'none'; $('#vSpread').style.display = t === 'spread' ? '' : 'none'; $('#vScore').style.display = t === 'score' ? '' : 'none';
+  $('#dayview').style.display = t === 'score' ? 'none' : ''; }
+document.querySelectorAll('nav.nb .pg a[data-nt]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); history.replaceState(null, '', '#' + a.dataset.nt); showTab(a.dataset.nt); }));
+showTab(tab);
 $('#hidepass').addEventListener('input', render);
 // ---- scorecard: every graded side across every day ----
 const G = Object.values(DAYS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
@@ -147,9 +161,18 @@ const strat = {
   'Moneyline: every favorite': G.filter(x => x.kind === 'ml' && x.fav), 'Moneyline: every underdog': G.filter(x => x.kind === 'ml' && !x.fav),
   'Total: the crowd side': G.filter(x => x.kind === 'total' && x.crowd != null && x.tape >= 10000 && x.crowd > 0.5), 'Total: every over': G.filter(x => x.kind === 'total' && x.side.startsWith('Over')),
 };
-$('#score').innerHTML = '<div class="wrap"><table class="lt"><thead><tr><th>Strategy (1u each at the Robinhood ask)</th><th class="num">Bets</th><th class="num">Record</th><th class="num">Units</th><th class="num">ROI</th></tr></thead><tbody>' +
-  Object.entries(strat).map(([n, b]) => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.ask - 1 : -1), 0);
-    return `<tr><td class="nm">${n}</td><td class="num">${b.length}</td><td class="num">${w}-${b.length - w}</td><td class="num ${u >= 0 ? 'pos' : 'neg'}">${b.length ? (u >= 0 ? '+' : '') + u.toFixed(1) + 'u' : '—'}</td><td class="num">${b.length ? Math.round(u / b.length * 100) + '%' : '—'}</td></tr>`; }).join('') + '</tbody></table></div>';
+const SC = Object.entries(strat).map(([n, b], i) => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.ask - 1 : -1), 0);
+  return { i, n, bets: b.length, w, l: b.length - w, units: b.length ? u : null, roi: b.length ? u / b.length : null, win: b.length ? w / b.length : null }; });
+let scKey = 'i', scDir = 1;
+const SCHEAD = [['n', 'Strategy (1u each at the Robinhood ask)', ''], ['bets', 'Bets', 'num'], ['win', 'Record', 'num'], ['units', 'Units', 'num'], ['roi', 'ROI', 'num']];
+function renderScore(){
+  const rows = SC.slice().sort((a, b) => { const A = a[scKey], B = b[scKey]; if (A == null && B == null) return a.i - b.i; if (A == null) return 1; if (B == null) return -1; return (A > B ? 1 : A < B ? -1 : 0) * scDir || a.i - b.i; });
+  $('#score').innerHTML = '<div class="wrap"><table class="lt" id="tSc"><thead><tr>' + SCHEAD.map(([k, l, c]) => `<th class="${c}" data-c="${k}" style="cursor:pointer">${l}${k === scKey ? (scDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '</tr></thead><tbody>' +
+    rows.map(x => `<tr><td class="nm">${x.n}</td><td class="num">${x.bets}</td><td class="num">${x.w}-${x.l}</td><td class="num ${x.units == null ? '' : x.units >= 0 ? 'pos' : 'neg'}">${x.units == null ? '—' : (x.units >= 0 ? '+' : '') + x.units.toFixed(1) + 'u'}</td><td class="num">${x.roi == null ? '—' : Math.round(x.roi * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
+}
+document.addEventListener('click', e => { const th = e.target.closest('#tSc th[data-c]'); if (!th) return; const k = th.dataset.c;
+  if (k === scKey) scDir = -scDir; else { scKey = k; scDir = k === 'n' ? 1 : -1; } renderScore(); });
+renderScore();
 render();
 """
 
@@ -165,20 +188,21 @@ def page():
 #tSp tr.fv td{{border-top:2px solid var(--line)}}
 .pt{{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}}.pt button{{background:var(--panel);color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 16px;font:700 13px var(--font);cursor:pointer}}.pt button.on{{color:var(--ink);border-color:var(--acc)}}
 .split{{display:inline-block;width:110px;height:7px;border-radius:4px;background:var(--blue);overflow:hidden;vertical-align:middle}}.split i{{display:block;height:100%;background:var(--acc)}}</style><div class="panel top">
-<div class="kpi" id="kpi"></div>
+<div id="dayview"><div class="kpi" id="kpi"></div>
 <h2 class="mk">Today's picks</h2><div id="picks"></div>
-<div class="pt" id="tabs"><button data-t="board" class="on">Games</button><button data-t="spread">Spreads</button></div>
-<div class="ctl"><label><input type="checkbox" id="hidepass"> show only picks</label> <span class="tm">click a column to sort, again to flip</span></div>
-<div id="vBoard"><div class="wrap"><table class="lt" id="tG"></table></div></div>
+<div class="ctl"><label><input type="checkbox" id="hidepass"> show only picks</label> <span class="tm">click a column to sort, again to flip</span></div></div>
+<div id="vBoard"><div class="wrap"><table class="lt" id="tG"></table></div>
+<div class="legend">One row per game. <b>Moneyline</b> = what a $1 Robinhood contract on each team costs (Robinhood's NBA contracts are Kalshi's), with the American odds, and Pinnacle's de-vigged fair chance under it. <b>Spread</b> = the favorite's line and price, the underdog's under it. <b>Crowd $</b> = how the crowd's taker dollars split on the moneyline (left bar = away team), frozen at tip-off. <b>Book took / paid</b> = once the game is final, the crowd's money on the losing side (the book kept it) and on the winning side (the book paid it out), for the moneyline and the spread.</div>
+</div>
 <div id="vSpread" style="display:none"><div class="wrap"><table class="lt" id="tSp"></table></div>
 <div class="legend">Both sides of every spread. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line; <b>Edge</b> = fair minus ask, in points. <b>Crowd share</b> / <b>$ on side</b> = how much of the crowd's taker money (each pre-game trade credited to the side the bettor backed) is on that side, frozen at tip-off. Crowd money alone was break-even on NBA spreads last season, so it's information, not a pick.</div></div>
-<div class="legend">One row per game. <b>Moneyline</b> = what a $1 Robinhood contract on each team costs (Robinhood's NBA contracts are Kalshi's), with the American odds, and Pinnacle's de-vigged fair chance under it. <b>Spread</b> = the favorite's line and price, the underdog's under it. <b>Crowd $</b> = how the crowd's taker dollars split on the moneyline (left bar = away team), frozen at tip-off.
-<b>Rules, tested on all of last season</b> (1,086 regular-season games, Kalshi's price at tip plus the fee):
+<div id="vScore" style="display:none"><h2 style="margin:4px 0 8px">Scorecard <small>every graded NBA game · click a column to sort</small></h2><div id="score"></div>
+<div class="legend"><b>Rules, tested on all of last season</b> (1,086 regular-season games, Kalshi's price at tip plus the fee):
 <b>BET</b> on a spread = the team that <i>won its last game by 20+</i>. It covered 58% (+14%), and held in both halves of the season (+10% Oct-Jan, +18% Feb-Apr) and across favorites, underdogs, home and road. The market prices in a letdown after a blowout that doesn't come.
 <b>STRONG BET</b> = the same, when its opponent also won its last game (+23%, about 125 games).
 <b>LEAN</b> on a moneyline = the same team (+8%; the spread pays better). <b>LEAN</b> on a moneyline or spread also = <i>the better team priced as the underdog</i>: its season point differential is 4+ points a game better than its opponent's (5+ games each), yet it's the underdog. Last season: +39% on the moneyline, +22% on the spread, both halves of the season, and stronger as the gap grew, but only about 57 games all season, so it's a LEAN. <b>LEAN</b> on a total = the under when the total is below 220 (+18%, only 74 games).
 What did <i>not</i> work last season: fading the crowd's spread money (the NFL rule, +0.6% on 1,128 games), the crowd's moneyline money, back-to-backs, win streaks, home/road. The rule needs each team's previous game, so it starts with each team's second game. Regular season only: in the playoffs it was flat.</div>
-<h2 style="margin-top:18px">Scorecard <small>every graded game</small></h2><div id="score"></div>
+</div>
 </div>
 <script>const DAYS = {jd(days)}; const CUR = {jd(cur)};{JS}</script>"""
 

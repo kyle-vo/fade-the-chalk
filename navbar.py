@@ -24,6 +24,7 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .nb .sl select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:600 13px var(--font);text-transform:none;letter-spacing:0;cursor:pointer}
 .nb .aux{margin-left:auto}.nb .aux .upd{color:var(--mute);font-size:12px;align-self:center;white-space:nowrap}.nb .aux .upd.old{color:var(--warn)}.nb .aux a.rr{color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:5px 10px}.nb .aux a.rr:hover{border-color:var(--acc)}
 .panel.top{margin-top:16px}
+.nb [hidden]{display:none!important}
 @media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
 </style>"""
 
@@ -42,10 +43,10 @@ const samePage = href => { const a = document.createElement('a'); a.href = href;
 window.navSport = function(s, cur){
   sp = s; window.NAV_SPORT = s; window.__navSet = true; try { localStorage.setItem('ftc_sport', s); } catch (e) {}
   document.querySelectorAll('nav.nb .sp a').forEach(a => a.classList.toggle('on', a.dataset.sp === s));
-  document.querySelectorAll('nav.nb .pg a').forEach(a => { a.href = link(a.dataset.pg, s); });
+  document.querySelectorAll('nav.nb .pg a[data-pg]').forEach(a => { a.href = link(a.dataset.pg, s); });
   const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
   const fz = document.querySelector('nav.nb .pg a[data-pg=fantasy]'); if (fz) fz.hidden = s !== 'nfl';   // NFL only
-  const pgs = document.querySelector('nav.nb .pg'); if (pgs) pgs.hidden = s === 'nba';                   // the NBA page holds all three markets itself
+  const pgs = document.querySelector('nav.nb .pg:not(.nbatabs)'); if (pgs) pgs.hidden = s === 'nba';     // MLB/NFL page links; the NBA page has its own tabs
   const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
   const opts = (NAV.slates || {})[s] || [];
   if (sel) { sel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join(''); const c = cur || (NAV.cur || {})[s]; if (c != null) sel.value = c; box.hidden = !opts.length; }
@@ -83,7 +84,8 @@ def navbar(page, root='', slates=None, cur=None, fixed=None):
     slate = '' if not slates else '<label class="sl">slate <select></select></label>'
     return (CSS + '<nav class="nb">'
             f'<div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="{root}nba.html">NBA</a></div>'
-            f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a><a data-pg="fantasy" href="{root}fantasy.html"{on("fantasy")}>Fantasy &amp; Yards</a></div>'
+            + ('<div class="pg nbatabs"><a data-nt="board" href="#board" class="on">Games</a><a data-nt="spread" href="#spread">Spreads</a><a data-nt="score" href="#score">Scorecard</a></div>' if fixed == 'nba' else
+               f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a><a data-pg="fantasy" href="{root}fantasy.html"{on("fantasy")}>Fantasy &amp; Yards</a></div>') +
             f'{slate}'
             f'<div class="aux"><a href="{root}ev.html"{on("ev")} title="every price you can bet vs Pinnacle\'s fair line">+EV</a><a href="{root}track.html"{on("track")}>Track</a><a href="{root}archive.html"{on("archive")}>Archive</a>'
             '<span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" '
