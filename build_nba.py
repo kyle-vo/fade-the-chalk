@@ -82,11 +82,14 @@ function game(r){
   const favP = Math.max(m.homeAsk || 0, m.awayAsk || 0) || null;
   // what the book kept and paid out: once final, the crowd's money on the losing side vs the winning side (trade tape, frozen at tip)
   let took = null, paid = null;
-  if (r.final && tot && r.homeWin != null) { const hw = r.homeWin === 1; took = (hw ? m['tapeAway$'] : m['tapeHome$']) || 0; paid = (hw ? m['tapeHome$'] : m['tapeAway$']) || 0; }
+  // winners are paid their PROFIT, not their stake: stake x (1 - price) / price at the winning side's price ($102k on a 61¢ / -156 favorite wins ~$65k)
+  const prof = (stake, p) => p && p > 0 && p < 1 ? stake * (1 - p) / p : stake;
+  let mlWinStake = null, spWinStake = null;
+  if (r.final && tot && r.homeWin != null) { const hw = r.homeWin === 1; took = (hw ? m['tapeAway$'] : m['tapeHome$']) || 0; mlWinStake = (hw ? m['tapeHome$'] : m['tapeAway$']) || 0; paid = prof(mlWinStake, hw ? m.homeAsk : m.awayAsk); }
   const st = (s['tapeFav$'] || 0) + (s['tapeDog$'] || 0); let spTook = null, spPaid = null;
-  if (s.favCovered != null && st) { spTook = (s.favCovered ? s['tapeDog$'] : s['tapeFav$']) || 0; spPaid = (s.favCovered ? s['tapeFav$'] : s['tapeDog$']) || 0; }
+  if (s.favCovered != null && st) { spTook = (s.favCovered ? s['tapeDog$'] : s['tapeFav$']) || 0; spWinStake = (s.favCovered ? s['tapeFav$'] : s['tapeDog$']) || 0; spPaid = prof(spWinStake, s.favCovered ? s.favAsk : s.dogAsk); }
   const favSh = st ? (s['tapeFav$'] || 0) / st : null;
-  return { r, xs, picks, tot, awaySh, favP, took, paid, spTook, spPaid, st, favSh, best: picks.length ? VRANK[picks[0].v] : 0 };
+  return { r, xs, picks, tot, awaySh, favP, took, paid, spTook, spPaid, mlWinStake, spWinStake, st, favSh, best: picks.length ? VRANK[picks[0].v] : 0 };
 }
 let sortKey = 'time', sortDir = 1;
 const HEAD = [['time', 'Game'], ['ml', 'Moneyline <span class="tm">Robinhood · Pinnacle fair</span>'], ['spread', 'Spread'], ['total', 'Total'], ['spcrowd', 'Crowd $ on the spread'], ['crowd', 'Crowd $ on the moneyline'], ['book', 'Book took / paid'], ['pick', 'Our pick'], ['res', 'Result']];
@@ -105,8 +108,8 @@ function rowHtml(g){ const r = g.r, m = r.ml || {}, s = r.spread || {}, t = r.to
   const pick = g.picks.length ? g.picks.map(x => `${chip(x.v)} <b>${pickText(x)}</b> <span class="tm">${cents(x.ask)}</span> ${resMark(x)}<br><span class="why">${x.why}</span>`).join('<br>') : '<span class="tm">no bet</span>';
   const res = r.final ? `<b>${r.finalAway}-${r.finalHome}</b>` : '<span class="tm">—</span>';
   const book = g.took == null && g.spTook == null ? `<span class="tm">${r.final ? '—' : 'after the game'}</span>` :
-    (g.took != null ? `<span class="tm">ML</span> <span class="pos" title="crowd money on the losing team">took ${money(g.took)}</span> · <span class="neg" title="crowd money on the winning team">paid ${money(g.paid)}</span>` : '') +
-    (g.spTook != null ? `<br><span class="tm">spread</span> <span class="pos">took ${money(g.spTook)}</span> · <span class="neg">paid ${money(g.spPaid)}</span>` : '');
+    (g.took != null ? `<span class="tm">ML</span> <span class="pos" title="crowd money on the losing team">took ${money(g.took)}</span> · <span class="neg" title="the winners staked ${money(g.mlWinStake)} and were paid this profit at their price">paid ${money(g.paid)}</span> = <b class="${g.took - g.paid >= 0 ? 'pos' : 'neg'}">${g.took - g.paid >= 0 ? '+' : '−'}${money(Math.abs(g.took - g.paid))}</b>` : '') +
+    (g.spTook != null ? `<br><span class="tm">spread</span> <span class="pos">took ${money(g.spTook)}</span> · <span class="neg" title="the winners staked ${money(g.spWinStake)}">paid ${money(g.spPaid)}</span> = <b class="${g.spTook - g.spPaid >= 0 ? 'pos' : 'neg'}">${g.spTook - g.spPaid >= 0 ? '+' : '−'}${money(Math.abs(g.spTook - g.spPaid))}</b>` : '');
   return `<tr class="${g.picks.length ? 'haspick' : ''}"><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}</span></td><td>${mlCell}</td><td>${spCell}</td><td>${toCell}</td><td>${spCrowd}</td><td>${crowd}</td><td>${book}</td><td>${pick}</td><td>${res}</td></tr>`; }
 function render(){
   const games = (DAYS[day] || []).map(game);
@@ -119,7 +122,7 @@ function render(){
   renderSpreads();
   const tk = games.reduce((a, g) => a + (g.took || 0) + (g.spTook || 0), 0), pd = games.reduce((a, g) => a + (g.paid || 0) + (g.spPaid || 0), 0), anyF = games.some(g => g.took != null || g.spTook != null);
   $('#kpi').innerHTML = `<div>games<b>${games.length}</b></div><div>bets<b>${picks.filter(x => x.v.endsWith('BET')).length}</b></div><div>leans<b>${picks.filter(x => x.v === 'LEAN').length}</b></div><div>final<b>${games.filter(g => g.r.final).length}</b></div>` +
-    (anyF ? `<div title="crowd money on losing sides (moneyline + spread) on finished games">book took<b class="pos">${money(tk)}</b></div><div title="crowd money on winning sides">book paid<b class="neg">${money(pd)}</b></div>` : '');
+    (anyF ? `<div title="crowd money on losing sides (moneyline + spread) on finished games">book took<b class="pos">${money(tk)}</b></div><div title="profit paid to the winning sides at their prices">book paid<b class="neg">${money(pd)}</b></div><div title="took minus paid">book net<b class="${tk - pd >= 0 ? 'pos' : 'neg'}">${tk - pd >= 0 ? '+' : '−'}${money(Math.abs(tk - pd))}</b></div>` : '');
 }
 // ---- Spreads tab: both sides of every spread, with the crowd's money on each ----
 let spKey = 'game', spDir = 1;
@@ -136,7 +139,7 @@ function renderSpreads(){
       return `<tr class="${x.v !== 'PASS' ? 'haspick' : ''}${x.fav ? ' fv' : ''}"><td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}${r.final ? ' · ' + r.finalAway + '-' + r.finalHome : ''}</span></td><td class="nm">${x.side}</td>
       <td class="num">${odds(x.ask)}</td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
       <td class="num"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}</td><td class="num">${x.tape ? money(x.own) : '—'}</td><td class="num">${money(x.tape)}</td>
-      <td class="num">${x.hit == null || !x.tape ? '<span class="tm">—</span>' : x.hit ? `<span class="neg" title="the book paid the crowd on this side">paid ${money(x.own)}</span>` : `<span class="pos" title="the book kept the crowd's money on this side">took ${money(x.own)}</span>`}</td>
+      <td class="num">${x.hit == null || !x.tape ? '<span class="tm">—</span>' : x.hit ? `<span class="neg" title="the crowd staked ${money(x.own)} on this side and was paid its profit at ${cents(x.ask)}">paid ${money(x.ask ? x.own * (1 - x.ask) / x.ask : x.own)}</span>` : `<span class="pos" title="the book kept the crowd's money on this side">took ${money(x.own)}</span>`}</td>
       <td>${chip(x.v)}${x.why ? '<br><span class="why">' + x.why + '</span>' : ''}</td><td>${res}</td></tr>`; }).join('') ||
      '<tr><td colspan="11" class="tm" style="text-align:center;padding:14px">no spreads yet: Robinhood posts NBA lines the day before</td></tr>');
 }
@@ -197,7 +200,7 @@ def page():
 <h2 class="mk">Today's picks</h2><div id="picks"></div>
 <div class="ctl"><label><input type="checkbox" id="hidepass"> show only picks</label> <span class="tm">click a column to sort, again to flip</span></div></div>
 <div id="vBoard"><div class="wrap"><table class="lt" id="tG"></table></div>
-<div class="legend">One row per game. <b>Moneyline</b> = what a $1 Robinhood contract on each team costs (Robinhood's NBA contracts are Kalshi's), with the American odds, and Pinnacle's de-vigged fair chance under it. <b>Spread</b> = the favorite's line and price, the underdog's under it. <b>Crowd $ on the spread</b> = how the crowd's taker dollars split between the favorite and the underdog at Kalshi's main line (left bar = favorite), with the dollars on each; "crowd heavy" marks 65%+ on one side once $25k+ is in. <b>Crowd $ on the moneyline</b> = the same for who wins (left bar = away team). Both frozen at tip-off. Each pre-game trade is credited to the side the bettor actually backed. <b>Book took / paid</b> = once the game is final, the crowd's money on the losing side (the book kept it) and on the winning side (the book paid it out), for the moneyline and the spread.</div>
+<div class="legend">One row per game. <b>Moneyline</b> = what a $1 Robinhood contract on each team costs (Robinhood's NBA contracts are Kalshi's), with the American odds, and Pinnacle's de-vigged fair chance under it. <b>Spread</b> = the favorite's line and price, the underdog's under it. <b>Crowd $ on the spread</b> = how the crowd's taker dollars split between the favorite and the underdog at Kalshi's main line (left bar = favorite), with the dollars on each; "crowd heavy" marks 65%+ on one side once $25k+ is in. <b>Crowd $ on the moneyline</b> = the same for who wins (left bar = away team). Both frozen at tip-off. Each pre-game trade is credited to the side the bettor actually backed. <b>Book took / paid</b> = once the game is final: <i>took</i> = the crowd's money on the losing side (all of it is lost); <i>paid</i> = the profit the winning side was paid at its price (the dollars on the winner x (1 - price) / price, so $102k on a 61¢ / −156 favorite is paid about $65k, not $102k); then the book's net. Robinhood/Kalshi is an exchange, so the 'book' is really the other side of each trade; the math is the same.</div>
 </div>
 <div id="vSpread" style="display:none"><div class="wrap"><table class="lt" id="tSp"></table></div>
 <div class="legend">Both sides of every spread. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line; <b>Edge</b> = fair minus ask, in points. <b>Crowd share</b> / <b>$ on side</b> = how much of the crowd's taker money (each pre-game trade credited to the side the bettor backed) is on that side, frozen at tip-off. Crowd money alone was break-even on NBA spreads last season, so it's information, not a pick.</div></div>
