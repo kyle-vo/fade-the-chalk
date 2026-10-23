@@ -199,6 +199,7 @@ td.act{{color:var(--mute)}}</style>
 <div class="panel top">
 <div class="kpi" id="kpi"></div>
 <h2 style="margin:10px 0 6px">Prop bets <small>Kalshi / Robinhood main lines</small></h2>
+<div class="ctl"><label>unit size $ <input type="number" id="unit" min="1" step="1" style="width:70px"></label> <span id="propWeek"></span></div>
 <div class="wrap"><table class="lt" id="props"></table></div>
 <div class="legend"><b>The prop rule.</b> Main line = the strike priced nearest 50¢. <b>BET</b> = a player on the <b>underdog</b> (his team under 45% to win on Kalshi), with one of: <b>RB rushing yards UNDER</b>, <b>QB rushing yards UNDER</b>, <b>TE receiving yards UNDER</b>, <b>QB passing yards OVER</b>. That made <b>+11.8% on 358 bets</b> at the price at kickoff plus the fee, and it was positive in all 6 weeks (+3, +17, +21, +12, +4, +13%). It was found on weeks 1-4 and held on weeks 5-6, which weren't used to find it. The same four props on favorites were break-even, so they show as PASS. Edges are single digits per bet: it pays over many bets, not on one. <b>Not a bet:</b> first-TD and 2+ TD props (they lost 35-47% every week), overs in general (−9%), and our own projections vs the line (they lost at every threshold). For anytime TDs, use the BET / AVOID calls on the main board.</div>
 <div id="propScore"></div>
@@ -229,15 +230,23 @@ function leanCell(x){ const [k, lab, sd] = statFor(x), key = week + '|' + x.id, 
     out += pOver >= 0.6 ? ` <span class="lean o">OVER ${Math.round(pOver * 100)}%</span>` : pOver <= 0.4 ? ` <span class="lean u">UNDER ${Math.round((1 - pOver) * 100)}%</span>` : ` <span class="tm">${Math.round(pOver * 100)}% over</span>`;
     if (x.act) out += ` <span class="tm">${x.act[k] > +L ? '✓ over' : '✓ under'}</span>`; }
   return out; }
+let unit = 10; try { unit = +(localStorage.getItem('ftc_unit') || 10) || 10; } catch (e) {}
 function renderProps(){
   const xs = PROPS[week] || [], hide = $('#hidestart').checked;
   const list = xs.filter(x => x.v === 'BET' || !hide).filter(x => !hide || x.hist || new Date(x.time).getTime() > Date.now());
-  const head = '<tr><th>Player</th><th>Game</th><th>Prop</th><th class="num">Price</th><th class="num">Team win %</th><th>Verdict</th><th class="num">Actual</th></tr>';
-  $('#props').innerHTML = head + (list.map(x => `<tr><td><span class="nm">${x.name}</span> <span class="tm">${x.pos} · ${x.team}</span></td><td class="tm">${x.game}<br>${when(x.time)}</td>
+  // 1 unit on every BET at the price shown + Kalshi's fee: a win pays (1 - cost) / cost units, a loss is -1u
+  const pl = x => x.hit == null ? null : x.hit ? 1 / x.cost - 1 : -1;
+  const head = '<tr><th>Player</th><th>Game</th><th>Prop</th><th class="num">Price</th><th class="num">Team win %</th><th>Verdict</th><th class="num">Actual</th><th class="num">1 unit</th></tr>';
+  $('#props').innerHTML = head + (list.map(x => { const u = x.v === 'BET' ? pl(x) : null; return `<tr><td><span class="nm">${x.name}</span> <span class="tm">${x.pos} · ${x.team}</span></td><td class="tm">${x.game}<br>${when(x.time)}</td>
     <td class="nm">${x.side} ${x.line} ${x.stat}</td><td class="num">${Math.round(x.price * 100)}¢</td><td class="num ${x.winP != null && x.winP < .45 ? 'pos' : ''}">${x.winP == null ? '—' : Math.round(x.winP * 100) + '%'}</td>
     <td><span class="v ${x.v === 'BET' ? 'BET' : 'PASS'}">${x.v}</span>${x.v === 'PASS' ? ' <span class="tm">team not the underdog</span>' : ''}</td>
-    <td class="num">${x.actual == null ? '—' : x.actual + (x.v === 'BET' ? (x.hit ? ' <span class="res y">✓</span>' : ' <span class="res n">✗</span>') : ' <span class="tm">' + (x.hit ? 'won' : 'lost') + ' (no bet)</span>')}</td></tr>`).join('') ||
-    '<tr><td colspan="7" class="tm" style="text-align:center;padding:14px">no Kalshi prop lines yet for this week: they post a few days before each game</td></tr>');
+    <td class="num">${x.actual == null ? '—' : x.actual + (x.v === 'BET' ? (x.hit ? ' <span class="res y">✓</span>' : ' <span class="res n">✗</span>') : ' <span class="tm">' + (x.hit ? 'won' : 'lost') + ' (no bet)</span>')}</td>
+    <td class="num">${u == null ? '<span class="tm">—</span>' : `<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}u</b><br><span class="tm">${u >= 0 ? '+' : '−'}$${Math.abs(u * unit).toFixed(2)}</span>`}</td></tr>`; }).join('') ||
+    '<tr><td colspan="8" class="tm" style="text-align:center;padding:14px">no Kalshi prop lines yet for this week: they post a few days before each game</td></tr>');
+  // this week so far: every graded BET at 1 unit
+  const done = xs.filter(x => x.v === 'BET' && x.hit != null), units = done.reduce((a, x) => a + pl(x), 0), wins = done.filter(x => x.hit).length;
+  $('#propWeek').innerHTML = done.length ? `<b>Week ${week.split('wk')[1]} so far:</b> ${wins}-${done.length - wins} on BETs · <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)} units</b> = <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : '−'}$${Math.abs(units * unit).toFixed(2)}</b> at $${unit} a unit (${Math.round(units / done.length * 100)}% return on $${(done.length * unit).toFixed(0)} staked) · ${xs.filter(x => x.v === 'BET' && x.hit == null).length} still to play`
+    : `<span class="tm">${xs.filter(x => x.v === 'BET').length} BETs this week, none graded yet</span>`;
   // scorecard: every graded BET, by week
   const wks = Object.keys(PROPS).sort((a, b) => +a.split('wk')[1] - +b.split('wk')[1]);
   const rec = b => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.cost - 1 : -1), 0); return b.length ? `${w}-${b.length - w} · <span class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(1)}u (${Math.round(u / b.length * 100)}%)</span>` : '—'; };
@@ -268,6 +277,7 @@ document.querySelectorAll('#tbl thead th[data-k]').forEach(th => { th.dataset.l 
 document.querySelectorAll('#posTabs button').forEach(b => b.addEventListener('click', () => { pos = b.dataset.p; document.querySelectorAll('#posTabs button').forEach(x => x.classList.toggle('on', x === b)); if (pos !== 'ALL' && pos !== 'RISING') { sortKey = 'rank'; sortDir = 1; } render(); }));
 document.querySelector('#posTabs button').classList.add('on');
 ['#scoring', '#q', '#hidestart'].forEach(s => $(s).addEventListener('input', render));
+$('#unit').value = unit; $('#unit').addEventListener('input', e => { unit = +e.target.value || 10; try { localStorage.setItem('ftc_unit', unit); } catch (er) {} render(); });
 const f = ([d, n]) => n ? `<span class="${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '+' : ''}${d}</span> <span class="tm">(${n})</span>` : '—';
 $('#chk').innerHTML = CHECK.length ? CHECK.map(c => `<tr><td>${c.week.split('wk')[1]}</td><td class="num">${c.n}</td><td class="num">${c.maeFp}</td><td class="num tm">${c.maeAvgOnly}</td><td class="num">${c.maeRec}</td><td class="num">${c.maeRush}</td><td class="num">${f(c.boom)}</td><td class="num">${f(c.bust)}</td><td class="num">${f(c.rest)}</td></tr>`).join('') : '<tr><td colspan="9" class="tm">no finished weeks yet</td></tr>';
 render();
