@@ -18,9 +18,12 @@ kfee = lambda p: 0.07 * p * (1 - p)
 def dec(american):
     a = float(american); return 1 + (a / 100 if a > 0 else 100 / -a)
 
+MAX_KALSHI_EV = 0.15   # a main-line Kalshi price 15%+ better than Pinnacle is a mismatched or empty market, not an edge
+
 def ev_kalshi(fair, ask):
     if not ask or not 0.02 <= ask <= 0.98 or fair is None: return None
-    return fair / (ask + kfee(ask)) - 1
+    ev = fair / (ask + kfee(ask)) - 1
+    return None if ev > MAX_KALSHI_EV else ev
 
 def ev_book(fair, american):
     if american is None or fair is None: return None
