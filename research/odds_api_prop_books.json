@@ -1,0 +1,72 @@
+{
+ "event": "Miami Heat @ Charlotte Hornets",
+ "time": "2026-10-24T22:10:00Z",
+ "regions": {
+  "us": {
+   "fanduel": {
+    "player_assists": 18,
+    "player_points": 26,
+    "player_rebounds": 22
+   },
+   "draftkings": {
+    "player_assists": 16,
+    "player_points": 20,
+    "player_rebounds": 18
+   },
+   "betrivers": {
+    "player_assists": 20,
+    "player_points": 22,
+    "player_rebounds": 20
+   },
+   "betmgm": {
+    "player_assists": 18,
+    "player_points": 21,
+    "player_rebounds": 22
+   },
+   "betonlineag": {
+    "player_assists": 24,
+    "player_points": 26,
+    "player_rebounds": 26
+   },
+   "bovada": {
+    "player_assists": 40,
+    "player_points": 136,
+    "player_rebounds": 52
+   }
+  },
+  "us_ex": {
+   "polymarket": {
+    "player_assists": 86,
+    "player_points": 124,
+    "player_rebounds": 128
+   },
+   "novig": {
+    "player_assists": 91,
+    "player_points": 116,
+    "player_rebounds": 98
+   },
+   "prophetx": {
+    "player_assists": 102,
+    "player_points": 167,
+    "player_rebounds": 140
+   },
+   "betopenly": {
+    "player_assists": 2,
+    "player_points": 7,
+    "player_rebounds": 4
+   }
+  },
+  "eu": {
+   "betonlineag": {
+    "player_assists": 24,
+    "player_points": 26,
+    "player_rebounds": 26
+   },
+   "pinnacle": {
+    "player_assists": 10,
+    "player_points": 18,
+    "player_rebounds": 12
+   }
+  }
+ }
+}
