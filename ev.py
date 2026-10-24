@@ -79,6 +79,21 @@ def sides(now):
             if t.get('pinOverFair') is not None and t.get('ticker'):
                 for nm, fair, ask in ((f"Over {t['line']}", t['pinOverFair'], t.get('overAsk')), (f"Under {t['line']}", t['pinUnderFair'], t.get('underAsk'))):
                     add('NBA', src, gid, game, r['time'], 'Total', nm, 'Kalshi', fair, ask, ev_kalshi(fair, ask), pinLine=t.get('pinLine') if t.get('shift') else None)
+    # ---- NBA player props (nbaprops.py): every bettable book's price vs Pinnacle (or the sharp-book consensus), exact same line only
+    import nbaprops as NP
+    for d in (today - datetime.timedelta(days=1), today):
+        pp = os.path.join(BT, f'nbaprops_{d.isoformat()}.json')
+        for eid, g in (J(pp) if os.path.exists(pp) else {}).items():
+            fair = NP.fair_prices(g['books'])
+            for book, rows in g['books'].items():
+                if book == 'pinnacle': continue
+                for pl, mk, side, line, price in rows:
+                    f3 = fair.get((pl, mk, line))
+                    if not f3 or side not in ('Over', 'Under'): continue
+                    fp = f3[0] if side == 'Over' else f3[1]; ev = ev_book(fp, price)
+                    if ev is None or ev > 0.20: continue                                      # 20%+ on a prop = a stale or mismatched line
+                    add('NBA', f'nbaprops_{d.isoformat()}', eid, g['game'], g['time'], 'Prop', f"{pl} {side} {line} {NP.LABEL.get(mk, mk)}", book, fp, price, ev,
+                        player=pl, stat=mk, line=line, over=side == 'Over', fairSrc=f3[2])
     return out
 
 def run():
@@ -88,7 +103,7 @@ def run():
     for x in cur:
         e = log.get(x['key'])
         if e is None and x['ev'] >= MIN_EV:                                                  # first time this side is +EV: log the price it was seen at
-            e = log[x['key']] = {k: x[k] for k in ('sport', 'src', 'id', 'game', 'time', 'market', 'side', 'venue') if k in x} | {k: x[k] for k in ('home', 'fav', 'pinLine') if k in x}
+            e = log[x['key']] = {k: x[k] for k in ('sport', 'src', 'id', 'game', 'time', 'market', 'side', 'venue') if k in x} | {k: x[k] for k in ('home', 'fav', 'pinLine', 'player', 'stat', 'line', 'over', 'fairSrc') if k in x}
             e.update(at=at, price=x['price'], fair=x['fair'], ev=x['ev']); n_new += 1
         if e is not None:                                                                    # every logged side: keep the latest pre-game view (the close)
             e.update(lastAt=at, lastPrice=x['price'], closeFair=x['fair'], lastEv=x['ev'])

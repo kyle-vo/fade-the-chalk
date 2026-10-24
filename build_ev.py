@@ -19,6 +19,10 @@ def load(name):
 
 def result(e):
     """1 won, 0 lost, None not graded / push"""
+    if e['market'] == 'Prop':                                                  # NBA player props: graded from ESPN box scores (nbaprops.box_scores)
+        box = load('nbabox_' + e['src'][-10:]) or {}
+        v = (box.get(e.get('player')) or {}).get(e.get('stat'))
+        return None if v is None or v == e.get('line') else int((v > e['line']) == bool(e.get('over')))
     if e['src'].startswith('ml_'):
         g = (load('mlres_' + e['src'][3:]) or {}).get(e['id'])
         return None if not g or g.get('homeWin') is None else int(g['homeWin'] == (1 if e.get('home') else 0))
@@ -51,20 +55,20 @@ JS = r"""
 const $ = s => document.querySelector(s);
 const LS = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
 const SV = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-const NAMES = { Kalshi: 'Kalshi / Robinhood', draftkings: 'DraftKings', fanduel: 'FanDuel', betmgm: 'BetMGM', betrivers: 'BetRivers', bovada: 'Bovada', betonlineag: 'BetOnline', fliff: 'Fliff', williamhill_us: 'Caesars', espnbet: 'ESPN Bet', hardrockbet: 'Hard Rock', ballybet: 'Bally', betus: 'BetUS', lowvig: 'LowVig', mybookieag: 'MyBookie' };
+const NAMES = { Kalshi: 'Kalshi / Robinhood', draftkings: 'DraftKings', fanduel: 'FanDuel', betmgm: 'BetMGM', betrivers: 'BetRivers', bovada: 'Bovada', betonlineag: 'BetOnline', fliff: 'Fliff', novig: 'Novig', prophetx: 'ProphetX', polymarket: 'Polymarket', polymarket_us: 'Polymarket US', williamhill_us: 'Caesars', espnbet: 'ESPN Bet', hardrockbet: 'Hard Rock', ballybet: 'Bally', betus: 'BetUS', lowvig: 'LowVig', mybookieag: 'MyBookie' };
 const nm = v => NAMES[v] || v;
-let on = LS('ftc_ev_venues', null) || VENUES.filter(v => ['Kalshi', 'bovada', 'betonlineag'].includes(v));
-let sport = LS('ftc_ev_sport', 'ALL'), minEv = LS('ftc_ev_min', 2), bank = LS('ftc_ev_bank', 1000);
+let on = LS('ftc_ev_venues', null) || VENUES.filter(v => ['Kalshi', 'novig', 'prophetx', 'bovada', 'betonlineag'].includes(v));
+let mkt = LS('ftc_ev_mkt', 'ALL'), sport = LS('ftc_ev_sport', 'ALL'), minEv = LS('ftc_ev_min', 2), bank = LS('ftc_ev_bank', 1000);
 const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 const pricef = x => x.venue === 'Kalshi' ? Math.round(x.price * 100) + '¢' : (x.price > 0 ? '+' : '') + x.price;
 const evf = v => v == null ? '—' : `<span class="${v >= 0 ? 'pos' : 'neg'}">${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}%</span>`;
 const costOf = x => x.venue === 'Kalshi' ? x.price + 0.07 * x.price * (1 - x.price) : null;
 // quarter Kelly: f = (p*b - (1-p)) / b with b = profit per $1
 function kelly(x){ const b = x.venue === 'Kalshi' ? (1 - costOf(x)) / costOf(x) : (x.price > 0 ? x.price / 100 : 100 / -x.price); const f = (x.fair * b - (1 - x.fair)) / b; return Math.max(0, f / 4); }
-const bet = x => `${x.market === 'ML' ? x.side + ' ML' : x.side}${x.pinLine != null ? ` <span class="tm" title="Kalshi's line differs from Pinnacle's; fair adjusted about 2.5 points per half point">alt line · Pinnacle ${x.pinLine}</span>` : ''}`;
+const bet = x => `${x.market === 'ML' ? x.side + ' ML' : x.side}${x.market === 'Prop' ? ` <span class="tm">${x.fairSrc === 'pinnacle' ? 'vs Pinnacle' : 'vs sharp-book average (no Pinnacle line)'}</span>` : ''}${x.pinLine != null ? ` <span class="tm" title="Kalshi's line differs from Pinnacle's; fair adjusted about 2.5 points per half point">alt line · Pinnacle ${x.pinLine}</span>` : ''}`;
 let sk = 'ev', sd = -1;
 const cols = [['sport', 'Sport'], ['time', 'Game'], ['bet', 'Bet'], ['venue', 'Where'], ['price', 'Price'], ['fair', 'Pinnacle fair'], ['ev', 'EV'], ['stake', 'Stake (¼ Kelly)']];
-function filt(xs){ return xs.filter(x => (sport === 'ALL' || x.sport === sport) && on.includes(x.venue)); }
+function filt(xs){ return xs.filter(x => (sport === 'ALL' || x.sport === sport) && (mkt === 'ALL' || (mkt === 'Prop') === (x.market === 'Prop')) && on.includes(x.venue)); }
 function render(){
   const val = x => ({ sport: x.sport, time: x.time, bet: x.side, venue: x.venue, price: x.venue === 'Kalshi' ? x.price : 1 / dec(x.price), fair: x.fair, ev: x.ev, stake: kelly(x) })[sk];
   const xs = filt(NOW.sides).filter(x => x.ev * 100 >= minEv).sort((a, b) => { const A = val(a), B = val(b); return (A > B ? 1 : A < B ? -1 : 0) * sd; });
@@ -90,6 +94,7 @@ function render(){
 const dec = a => 1 + (a > 0 ? a / 100 : 100 / -a);
 $('#venues').innerHTML = VENUES.map(v => `<label class="ck"><input type="checkbox" value="${v}" ${on.includes(v) ? 'checked' : ''}> ${nm(v)}</label>`).join('');
 $('#venues').addEventListener('change', () => { on = [...document.querySelectorAll('#venues input:checked')].map(i => i.value); SV('ftc_ev_venues', on); render(); });
+$('#mkt').value = mkt; $('#mkt').addEventListener('change', e => { mkt = e.target.value; SV('ftc_ev_mkt', mkt); render(); });
 $('#sport').value = sport; $('#sport').addEventListener('change', e => { sport = e.target.value; SV('ftc_ev_sport', sport); render(); });
 $('#minev').value = minEv; $('#minev').addEventListener('input', e => { minEv = +e.target.value || 0; SV('ftc_ev_min', minEv); render(); });
 $('#bank').value = bank; $('#bank').addEventListener('input', e => { bank = +e.target.value || 0; SV('ftc_ev_bank', bank); render(); });
@@ -107,11 +112,12 @@ def page():
 <div class="panel top">
 <div class="kpi" id="kpi"></div>
 <div class="ctl"><label>sport <select id="sport"><option value="ALL">All</option><option>NFL</option><option>NBA</option><option>MLB</option></select></label>
+<label>market <select id="mkt"><option value="ALL">All</option><option value="GAME">Game lines</option><option value="Prop">Player props</option></select></label>
 <label>min EV % <input type="number" id="minev" step="0.5" min="0"></label><label>bankroll $ <input type="number" id="bank" step="50" min="0"></label></div>
 <div id="venues"></div>
 <h2 style="margin:12px 0 6px">Bet now</h2>
 <div class="wrap"><table class="lt" id="now"></table></div><div id="near"></div>
-<div class="legend"><b>How it works.</b> Pinnacle is the sharpest book, so its price with the vig removed is the best estimate of each side's real chance (<b>Pinnacle fair</b>). <b>EV</b> = that chance times what you'd be paid, minus your stake: +3% means you expect to make 3¢ per $1 over the long run. For <b>Kalshi / Robinhood</b>, the price is the ask plus Kalshi's taker fee (about 1.75¢ at 50¢). Robinhood charges a flat 2¢ per contract instead, so knock about a point off there. Sportsbook prices are their posted moneylines. <b>Stake</b> = a quarter of the Kelly bet for your bankroll, the standard way to size +EV without big swings. Pick the books you actually use; the choice is saved on this device.
+<div class="legend"><b>How it works.</b> Pinnacle is the sharpest book, so its price with the vig removed is the best estimate of each side's real chance (<b>Pinnacle fair</b>). <b>EV</b> = that chance times what you'd be paid, minus your stake: +3% means you expect to make 3¢ per $1 over the long run. For <b>Kalshi / Robinhood</b>, the price is the ask plus Kalshi's taker fee (about 1.75¢ at 50¢). Robinhood charges a flat 2¢ per contract instead, so knock about a point off there. Sportsbook prices are their posted moneylines. <b>NBA player props</b> (points, rebounds, assists, threes) come from Novig, ProphetX, Polymarket and the sportsbooks, compared at the exact same line against Pinnacle's no-vig price (power method), or, when Pinnacle doesn't list the player, the average of BetOnline / FanDuel / DraftKings (less reliable: shown under the bet). They're pulled once a game, about 2 to 3 hours before tip. Exchange fees other than Kalshi's are not included. <b>Stake</b> = a quarter of the Kelly bet for your bankroll, the standard way to size +EV without big swings. Pick the books you actually use; the choice is saved on this device.
 <b>Read it with care.</b> Prices refresh with each run (hourly, or press ↻ Rerun), Pinnacle at most every 50 minutes, so a big edge can be a stale line that's already moved. Check the live price before you bet. "Alt line" = Kalshi's strike differs from Pinnacle's, so the fair is adjusted and less exact. Kalshi asks are only good for the size posted at that price.</div>
 <h2 style="margin:18px 0 6px">Tracked plays <small>every side that hit +2%, with the closing line</small></h2>
 <div class="wrap"><table class="lt" id="log"></table></div>
