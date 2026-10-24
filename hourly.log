@@ -1,50 +1,4 @@
-﻿+ git push -q origin main 2>&1 | Out-File $log -Append -Encoding utf8
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (error: RPC fail...rned error: 408:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
-send-pack: unexpected disconnect while reading sideband packet
-fatal: the remote end hung up unexpectedly
-done 06:07
-=== 2026-10-23 09:05 ===
-Auto-merging backtest/ev_log.json
-Auto-merging backtest/ev_now.json
-Auto-merging backtest/kalshi_mlb_2026-10-23.json
-Auto-merging backtest/kalshi_nfl_2026-10-25.json
-Auto-merging backtest/kalshi_nfl_2026-10-26.json
-Auto-merging backtest/lines_2026-10-23.json
-Auto-merging backtest/lines_2026_wk7.json
-Auto-merging backtest/ml_2026-10-23.json
-Auto-merging backtest/ml_2026_wk7.json
-Auto-merging backtest/mlboard.json
-Auto-merging backtest/mlsnap_2026-10-23.json
-Auto-merging backtest/nba_2026-10-23.json
-Auto-merging backtest/nba_2026-10-24.json
-Auto-merging backtest/nflprops_2026_wk7.json
-Auto-merging backtest/odds_2026-10-23.json
-Auto-merging backtest/poly/MLB_849805.json
-Auto-merging backtest/poly/NFL_401873011.json
-Auto-merging backtest/poly/NFL_401873012.json
-Auto-merging backtest/poly/NFL_401873013.json
-Auto-merging backtest/poly/NFL_401873014.json
-Auto-merging backtest/poly/NFL_401873015.json
-Auto-merging backtest/poly/NFL_401873016.json
-Auto-merging backtest/poly/NFL_401873017.json
-Auto-merging backtest/poly/NFL_401873018.json
-Auto-merging backtest/poly/NFL_401873019.json
-Auto-merging backtest/poly/NFL_401873020.json
-Auto-merging backtest/taker/MLB_849805.json
-Auto-merging backtest/taker/NFL_401873009.json
-Auto-merging backtest/taker/NFL_401873011.json
-Auto-merging backtest/taker/NFL_401873012.json
-Auto-merging backtest/taker/NFL_401873013.json
-Auto-merging backtest/taker/NFL_401873014.json
-Auto-merging backtest/taker/NFL_401873015.json
-Auto-merging backtest/taker/NFL_401873016.json
-Auto-merging backtest/taker/NFL_401873017.json
-Auto-merging backtest/taker/NFL_401873018.json
-Auto-merging backtest/taker/NFL_401873019.json
-Auto-merging backtest/taker/NFL_401873020.json
+﻿Auto-merging backtest/taker/NFL_401873020.json
 Auto-merging backtest/taker/NFL_401873021.json
 Auto-merging backtest/taker/NFL_401873022.json
 Auto-merging docs/archive.html
@@ -240,6 +194,52 @@ polymarket tape attached to 15 games
   nba 2026-10-24: 8 games (0 final, 0 with a Kalshi spread)
   nflprops 2026_wk7: 13/13 upcoming games priced, 3807 markets saved
   ev: 332 prices vs Pinnacle, 3 at +2% EV or better, 0 newly logged (22 tracked)
+archive.html: 7 NFL weeks, 45 MLB days
+ml.html: 36 MLB days, 7 NFL weeks, 340 graded games
+lines.html: 24 MLB days, 5 NFL weeks, 158 games
+done 15:07
+=== 2026-10-23 18:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Kenneth Walker III     KC   RB p=0.580 fair -138 heat 39 share 0.382
+  NFL Javonte Williams       DAL  RB p=0.568 fair -131 heat 73 share 0.298
+  NFL Kyren Williams         LAR  RB p=0.550 fair -122 heat 73 share 0.27
+  NFL Aaron Jones Sr.        MIN  RB p=0.543 fair -119 heat 43 share 0.284
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #3 used this run
+snapshot 11 saved for 2026-10-23
+  Kalshi MLB 2026-10-23: 18 players, $1,476,133 traded
+  Kalshi NFL 2026-10-25: 272 players, $1,516,832 traded
+  Kalshi NFL 2026-10-26: 25 players, $125,336 traded
+  ML 2026_wk4: 16/16 graded
+  ML 2026_wk5: 15/15 graded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 1/14 graded
+MLB 2026-10-23: kept 18 frozen, refreshed 0, late 0
+NFL 2026_wk7: kept 21 frozen, refreshed 239, late 0
+NFL stats 2026_wk4: 16/16 games (0 new)
+NFL stats 2026_wk5: 15/15 games (0 new)
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 1/14 games (0 new)
+site: index + 45 day pages + 7 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, current 2026_wk7: 258 players; check rows 4
+nba.html: 5 days, showing 2026-10-23: 12 games
+ev.html: 304 prices now, 1 at +2%+, 22 tracked (3 graded)
+  NFL LAR@LV: $159,384 on LV / $49,120 on LAR (8,852 trades)  (partial, game not started)
+  NFL KC@SEA: $127,574 on SEA / $531,488 on KC (28,721 trades)  (partial, game not started)
+  NFL DAL@PHI: $39,942 on PHI / $90,396 on DAL (6,010 trades)  (partial, game not started)
+taker tape attached to 358 locked games
+  NFL LAR@LV: $20,765 on LV / $7,274 on LAR (250 trades, $72,250 traded)  (partial, game not started)
+  NFL KC@SEA: $38,911 on SEA / $12,525 on KC (235 trades, $97,709 traded)  (partial, game not started)
+  NFL DAL@PHI: $608 on PHI / $1,899 on DAL (97 trades, $4,562 traded)  (partial, game not started)
+polymarket tape attached to 15 games
+  nba 2026-10-23: 12 games (1 final, 12 with a Kalshi spread)
+  nba 2026-10-24: 8 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk7: 13/13 upcoming games priced, 3845 markets saved
+  ev: 278 prices vs Pinnacle, 1 at +2% EV or better, 0 newly logged (22 tracked)
 archive.html: 7 NFL weeks, 45 MLB days
 ml.html: 36 MLB days, 7 NFL weeks, 340 graded games
 lines.html: 24 MLB days, 5 NFL weeks, 158 games
