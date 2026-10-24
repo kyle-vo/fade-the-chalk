@@ -264,6 +264,31 @@ def books():
             print(f"  {sport} {region}: {c}  (credits left {r.headers.get('x-requests-remaining')})")
     json.dump(out, open(os.path.join(OUT, 'odds_api_books.json'), 'w', encoding='utf-8'), indent=1)
 
+# ---------------------------------------------------------------- props_books: who prices NBA player props on The Odds API
+def props_books():
+    """one NBA game, points / rebounds / assists, every bookmaker in us, us_ex and eu (about 9 credits): which books carry props,
+    so the NBA prop +EV board knows its sharp reference and its bettable venues. -> research/odds_api_prop_books.json"""
+    ev = None
+    for k in L.KEYS:
+        r = L.S.get("https://api.the-odds-api.com/v4/sports/basketball_nba/events", params={'apiKey': k}, timeout=40)
+        if r.status_code == 200: ev = r.json(); break
+    if not ev: print("no events"); return
+    now = datetime.datetime.now(datetime.timezone.utc)
+    ev = [e for e in ev if datetime.datetime.fromisoformat(e['commence_time'].replace('Z', '+00:00')) > now]
+    e = ev[0]; out = {'event': f"{e['away_team']} @ {e['home_team']}", 'time': e['commence_time'], 'regions': {}}
+    for region in ('us', 'us_ex', 'eu'):
+        for k in L.KEYS:
+            r = L.S.get(f"https://api.the-odds-api.com/v4/sports/basketball_nba/events/{e['id']}/odds",
+                        params={'apiKey': k, 'regions': region, 'markets': 'player_points,player_rebounds,player_assists', 'oddsFormat': 'american'}, timeout=40)
+            if r.status_code not in (401, 402, 429): break
+        if r.status_code != 200: print(region, r.status_code, r.text[:100]); continue
+        c = {}
+        for b in r.json().get('bookmakers', []):
+            c[b['key']] = {m['key']: len(m['outcomes']) for m in b.get('markets', [])}
+        out['regions'][region] = c
+        print(f"  {region}: {c}  (credits left on that key {r.headers.get('x-requests-remaining')}, used {r.headers.get('x-requests-last')})")
+    json.dump(out, open(os.path.join(OUT, 'odds_api_prop_books.json'), 'w', encoding='utf-8'), indent=1)
+
 if __name__ == '__main__':
     job = sys.argv[1] if len(sys.argv) > 1 else ''
     arg = sys.argv[2] if len(sys.argv) > 2 else ''
@@ -271,4 +296,5 @@ if __name__ == '__main__':
     elif job == 'nba_hist': nba_hist()
     elif job == 'props_hist': props_hist()
     elif job == 'books': books()
+    elif job == 'props_books': props_books()
     else: print("unknown job", job)
