@@ -289,6 +289,65 @@ def props_books():
         print(f"  {region}: {c}  (credits left on that key {r.headers.get('x-requests-remaining')}, used {r.headers.get('x-requests-last')})")
     json.dump(out, open(os.path.join(OUT, 'odds_api_prop_books.json'), 'w', encoding='utf-8'), indent=1)
 
+# ---------------------------------------------------------------- nba_smart: who moved the money, and when (smart-money tests)
+def trade_list(ticker, max_ts):
+    """every trade before max_ts: (unix time, taker side, $ staked by the taker, yes price), live path then the archive"""
+    for path in ('/markets/trades', '/historical/trades'):
+        out, cur = [], None
+        try:
+            while True:
+                p = {'ticker': ticker, 'limit': 1000, 'max_ts': int(max_ts)}
+                if cur: p['cursor'] = cur
+                d = L.kget(path, **p); ts = d.get('trades', [])
+                for t in ts:
+                    c = f(t.get('count_fp') or t.get('count'))
+                    yp = f(t.get('yes_price_dollars')) or f(t.get('yes_price')) / 100
+                    np_ = f(t.get('no_price_dollars')) or f(t.get('no_price')) / 100
+                    at = datetime.datetime.fromisoformat(t['created_time'].replace('Z', '+00:00')).timestamp() if t.get('created_time') else None
+                    side = t.get('taker_side'); out.append((at, side, c * (yp if side == 'yes' else np_), yp))
+                cur = d.get('cursor')
+                if not cur or not ts: break
+        except Exception: out = []
+        if out: return out
+    return []
+
+def smart_summary(trades, tip):
+    """money on YES vs NO split by trade size and by timing, plus the price path"""
+    def agg(sel):
+        y = sum(d for a, s, d, p in trades if s == 'yes' and sel(a, d)); n = sum(d for a, s, d, p in trades if s != 'yes' and sel(a, d)); return round(y), round(n)
+    big = lambda a, d: d >= 1000; small = lambda a, d: d < 100
+    late = lambda a, d: a is not None and a >= tip - 2 * 3600; early = lambda a, d: a is not None and a < tip - 6 * 3600
+    px = lambda before: next((p for a, s, d, p in trades if a is not None and a < before), None)   # trades are newest first
+    out = {'all': agg(lambda a, d: True), 'big': agg(big), 'small': agg(small), 'late': agg(late), 'early': agg(early), 'lateBig': agg(lambda a, d: late(a, d) and big(a, d)),
+           'pClose': trades[0][3] if trades else None, 'p2h': px(tip - 2 * 3600), 'p6h': px(tip - 6 * 3600), 'p24h': px(tip - 24 * 3600), 'n': len(trades),
+           'maxTrade': round(max((d for a, s, d, p in trades), default=0))}
+    return out
+
+def nba_smart():
+    """For every game in research/nba_hist_2025.json: the moneyline (both teams) and main-spread trades with size and time.
+    Resumable (75 min a run). -> research/nba_smart_2025.json = {eventId: {ml_home, ml_away, spread}}"""
+    hist = json.load(open(os.path.join(OUT, 'nba_hist_2025.json'), encoding='utf-8'))
+    path = os.path.join(OUT, 'nba_smart_2025.json'); done = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
+    from concurrent.futures import ThreadPoolExecutor
+    todo = [r for r in hist if r['eventId'] not in done and r.get('type') in ('regular-season', 'post-season') and (r.get('ml') or r.get('spread'))]
+    print(f"nba_smart: {len(done)} done, {len(todo)} to go")
+    def one(r):
+        tip = datetime.datetime.fromisoformat(r['time'].replace('Z', '+00:00')).timestamp(); o = {}
+        m = r.get('ml') or {}
+        for side in ('home', 'away'):
+            if (m.get(side) or {}).get('ticker'): o['ml_' + side] = smart_summary(trade_list(m[side]['ticker'], tip), tip)
+        s = r.get('spread') or {}
+        if s.get('ticker'): o['spread'] = smart_summary(trade_list(s['ticker'], tip), tip)
+        return r['eventId'], o
+    n = 0
+    with ThreadPoolExecutor(6) as ex:
+        for i in range(0, len(todo), 30):
+            if time.time() - T0 > 75 * 60: break
+            for eid, o in ex.map(one, todo[i:i + 30]): done[eid] = o; n += 1
+            json.dump(done, open(path, 'w', encoding='utf-8'))
+            print(f"  {len(done)} games ({time.time() - T0:.0f}s)")
+    print(f"nba_smart: +{n}, {len(done)} total")
+
 if __name__ == '__main__':
     job = sys.argv[1] if len(sys.argv) > 1 else ''
     arg = sys.argv[2] if len(sys.argv) > 2 else ''
@@ -297,4 +356,5 @@ if __name__ == '__main__':
     elif job == 'props_hist': props_hist()
     elif job == 'books': books()
     elif job == 'props_books': props_books()
+    elif job == 'nba_smart': nba_smart()
     else: print("unknown job", job)
