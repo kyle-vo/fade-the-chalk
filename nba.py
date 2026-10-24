@@ -80,8 +80,12 @@ def build_row(g, lad_ml, lad_s, lad_t, pin, now):
     start = datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00')); cut = min(start, now).timestamp()
     row = {k: g[k] for k in ('eventId', 'date', 'time', 'state', 'home', 'away', 'homeName', 'awayName')}; row['at'] = now.isoformat(timespec='minutes')
     pk = pin.get(nick(g['homeName']) + '|' + nick(g['awayName'])) or {}
+    # Kalshi's event codes carry the game's US Eastern date (26OCT24HOUATL). Match on it too: teams meet more than once a season,
+    # and a team-only match picked up a later meeting's thin moneyline market (HOU @ ATL showed ATL at 38c with $534 traded).
+    code = (start - datetime.timedelta(hours=4)).strftime('%y%b%d').upper()
+    on_date = lambda lad: {ev: ms for ev, ms in lad.items() if ev.split('-', 1)[-1].startswith(code)}
     # ---- moneyline: one Kalshi market per team; YES on X and NO on the other team are both money on X ----
-    ev, ms = L.find_event(lad_ml, g['home'], g['away'], 'NBA')
+    ev, ms = L.find_event(on_date(lad_ml), g['home'], g['away'], 'NBA')
     if ms:
         by = {canon(m['ticker'].rsplit('-', 1)[-1]): m for m in ms}
         mh, ma = by.get(g['home']), by.get(g['away'])
@@ -100,7 +104,7 @@ def build_row(g, lad_ml, lad_s, lad_t, pin, now):
     elif pk.get('ml'):
         fh, fa = L.devig(*pk['ml']); row['ml'] = {'pinHome': round(fh, 4), 'pinAway': round(fa, 4), 'note': 'no Kalshi market found'}
     # ---- spread ----
-    ev, ms = L.find_event(lad_s, g['home'], g['away'], 'NBA')
+    ev, ms = L.find_event(on_date(lad_s), g['home'], g['away'], 'NBA')
     if pk.get('spread'):
         hp, hprice, aprice = pk['spread']; fav_home = hp < 0; line = abs(hp)
         fair_fav, fair_dog = L.devig(hprice, aprice) if fav_home else L.devig(aprice, hprice)
@@ -117,7 +121,7 @@ def build_row(g, lad_ml, lad_s, lad_t, pin, now):
         if fav in (g['home'], g['away']):
             row['spread'] = {'line': f(m.get('floor_strike')), 'shift': 0.0, 'fav': fav, 'dog': g['away'] if fav == g['home'] else g['home'], 'kalshiOnly': True} | kalshi(m, ms, cut, 'fav', 'dog')
     # ---- total ----
-    ev, ms = L.find_event(lad_t, g['home'], g['away'], 'NBA')
+    ev, ms = L.find_event(on_date(lad_t), g['home'], g['away'], 'NBA')
     if pk.get('total'):
         line, op, up = pk['total']; fo, fu = L.devig(op, up)
         d = {'pinLine': line, 'line': line, 'shift': 0.0, 'pinOverFair': round(fo, 4), 'pinUnderFair': round(fu, 4)}
