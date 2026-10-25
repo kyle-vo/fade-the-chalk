@@ -1,50 +1,4 @@
-﻿  NFL LAR@LV: $193,124 on LV / $59,895 on LAR (10,479 trades)  (partial, game not started)
-  NFL KC@SEA: $146,872 on SEA / $615,044 on KC (31,788 trades)  (partial, game not started)
-  NFL DAL@PHI: $47,105 on PHI / $98,155 on DAL (6,815 trades)  (partial, game not started)
-taker tape attached to 359 locked games
-  NFL LAR@LV: $20,959 on LV / $31,967 on LAR (280 trades, $112,575 traded)  (partial, game not started)
-  NFL KC@SEA: $39,183 on SEA / $12,793 on KC (249 trades, $98,809 traded)  (partial, game not started)
-  NFL DAL@PHI: $685 on PHI / $1,952 on DAL (107 trades, $4,860 traded)  (partial, game not started)
-polymarket tape attached to 16 games
-  nba 2026-10-24: 8 games (0 final, 8 with a Kalshi spread)
-  nba 2026-10-25: 7 games (0 final, 0 with a Kalshi spread)
-  nflprops 2026_wk7: 13/13 upcoming games priced, 3948 markets saved
-  ev: 290 prices vs Pinnacle, 0 at +2% EV or better, 0 newly logged (30 tracked)
-archive.html: 7 NFL weeks, 46 MLB days
-ml.html: 37 MLB days, 7 NFL weeks, 341 graded games
-lines.html: 25 MLB days, 5 NFL weeks, 159 games
-done 12:07
-=== 2026-10-24 15:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Kenneth Walker III     KC   RB p=0.580 fair -138 heat 39 share 0.382
-  NFL Javonte Williams       DAL  RB p=0.579 fair -138 heat 74 share 0.307
-  NFL Kyren Williams         LAR  RB p=0.550 fair -122 heat 73 share 0.27
-  NFL Aaron Jones Sr.        MIN  RB p=0.543 fair -119 heat 43 share 0.284
-  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 06:05))
-  baseball_mlb/batter_home_runs: 17 players priced, 13 on Fliff, 0 Underdog-only (credits used this month: 292 used / 208 left on key #10)
-key #10 used this run
-snapshot 12 saved for 2026-10-24
-  Kalshi MLB 2026-10-24: 18 players, $316,247 traded
-  Kalshi NFL 2026-10-25: 274 players, $2,004,236 traded
-  Kalshi NFL 2026-10-26: 24 players, $297,395 traded
-  ML 2026_wk4: 16/16 graded
-  ML 2026_wk5: 15/15 graded
-  ML 2026_wk6: 14/14 graded
-  ML 2026_wk7: 1/14 graded
-MLB 2026-10-24: kept 0 frozen, refreshed 18, late 0
-NFL 2026_wk7: kept 21 frozen, refreshed 236, late 0
-NFL stats 2026_wk4: 16/16 games (0 new)
-NFL stats 2026_wk5: 15/15 games (0 new)
-NFL stats 2026_wk6: 14/14 games (0 new)
-NFL stats 2026_wk7: 1/14 games (0 new)
-site: index + 46 day pages + 7 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, current 2026_wk7: 255 players; check rows 4
-nba.html: 6 days, showing 2026-10-24: 8 games
-ev.html: 825 prices now, 35 at +2%+, 66 tracked (12 graded)
-  NFL LAR@LV: $206,092 on LV / $61,595 on LAR (10,983 trades)  (partial, game not started)
+﻿  NFL LAR@LV: $206,092 on LV / $61,595 on LAR (10,983 trades)  (partial, game not started)
   NFL KC@SEA: $151,009 on SEA / $639,616 on KC (32,700 trades)  (partial, game not started)
   NFL DAL@PHI: $48,886 on PHI / $127,680 on DAL (7,143 trades)  (partial, game not started)
 taker tape attached to 359 locked games
@@ -240,6 +194,52 @@ polymarket tape attached to 16 games
   nflprops 2026_wk7: 13/13 upcoming games priced, 4126 markets saved
   nbaprops 2026-10-25: 0 games pulled now, 0 saved (0 tipping within 3h)
   ev: 288 prices vs Pinnacle, 0 at +2% EV or better, 0 newly logged (345 tracked)
+archive.html: 7 NFL weeks, 46 MLB days
+ml.html: 37 MLB days, 7 NFL weeks, 342 graded games
+lines.html: 25 MLB days, 5 NFL weeks, 159 games
+done 03:07
+=== 2026-10-25 06:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Kenneth Walker III     KC   RB p=0.580 fair -138 heat 39 share 0.382
+  NFL Javonte Williams       DAL  RB p=0.572 fair -134 heat 73 share 0.307
+  NFL Kyren Williams         LAR  RB p=0.554 fair -124 heat 73 share 0.27
+  NFL Aaron Jones Sr.        MIN  RB p=0.543 fair -119 heat 43 share 0.284
+  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 06:05))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #5 used this run
+snapshot 4 saved for 2026-10-25
+  Kalshi MLB 2026-10-26: 11 players, $5,720 traded
+  Kalshi NFL 2026-10-25: 274 players, $5,196,769 traded
+  Kalshi NFL 2026-10-26: 24 players, $331,295 traded
+  Kalshi NFL 2026-10-29: 2 players, $0 traded
+  ML 2026_wk4: 16/16 graded
+  ML 2026_wk5: 15/15 graded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 1/14 graded
+NFL 2026_wk7: kept 21 frozen, refreshed 236, late 0
+NFL stats 2026_wk4: 16/16 games (0 new)
+NFL stats 2026_wk5: 15/15 games (0 new)
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 1/14 games (0 new)
+site: index + 46 day pages + 7 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, current 2026_wk7: 255 players; check rows 4
+nba.html: 7 days, showing 2026-10-25: 7 games
+ev.html: 288 prices now, 0 at +2%+, 345 tracked (316 graded)
+  NFL LAR@LV: $283,808 on LV / $116,824 on LAR (14,374 trades)  (partial, game not started)
+  NFL KC@SEA: $183,940 on SEA / $795,266 on KC (38,252 trades)  (partial, game not started)
+  NFL DAL@PHI: $57,894 on PHI / $142,419 on DAL (8,513 trades)  (partial, game not started)
+taker tape attached to 359 locked games
+  NFL LAR@LV: $31,586 on LV / $53,484 on LAR (331 trades, $174,831 traded)  (partial, game not started)
+  NFL KC@SEA: $40,549 on SEA / $16,081 on KC (303 trades, $108,909 traded)  (partial, game not started)
+  NFL DAL@PHI: $1,384 on PHI / $2,202 on DAL (120 trades, $7,356 traded)  (partial, game not started)
+polymarket tape attached to 16 games
+  nba 2026-10-26: 9 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk7: 13/13 upcoming games priced, 4128 markets saved
+  nbaprops 2026-10-25: 0 games pulled now, 0 saved (0 tipping within 3h)
+  ev: 282 prices vs Pinnacle, 1 at +2% EV or better, 1 newly logged (346 tracked)
 archive.html: 7 NFL weeks, 46 MLB days
 ml.html: 37 MLB days, 7 NFL weeks, 342 graded games
 lines.html: 25 MLB days, 5 NFL weeks, 159 games
