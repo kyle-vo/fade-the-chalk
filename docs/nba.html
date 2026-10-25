@@ -43,7 +43,7 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 .note{font-size:12px;color:var(--mute);line-height:1.6;max-width:90ch}
 .empty{padding:22px;color:var(--mute);text-align:center;border:1px dashed var(--line);border-radius:8px}
 @media(max-width:700px){header,nav,.tabs,.panel{padding-left:10px;padding-right:10px}.panel{margin-left:6px;margin-right:6px}}
-</style><header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">NBA · moneyline, spread, total · Robinhood vs Pinnacle · crowd money by side · built 2026-10-25T11:09</div></header><style>
+</style><header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">NBA · moneyline, spread, total · Robinhood vs Pinnacle · crowd money by side · built 2026-10-25T12:05</div></header><style>
 nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px 26px;border-bottom:1px solid var(--line);background:#0e1115;font-size:14px;position:sticky;top:0;z-index:5}
 .nb .sp{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .nb .sp a{padding:6px 16px;border-radius:999px;color:var(--mute);font-weight:800;letter-spacing:1px;font-size:12px;cursor:pointer;text-decoration:none;user-select:none}
@@ -60,7 +60,7 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .nb [hidden]{display:none!important}
 @media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
 </style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="nba.html">NBA</a></div><div class="pg nbatabs"><a data-nt="board" href="#board" class="on">Games</a><a data-nt="spread" href="#spread">Spreads</a><a data-nt="score" href="#score">Scorecard</a></div><label class="sl">slate <select></select></label><div class="aux"><a href="ev.html" title="every price you can bet vs Pinnacle's fair line">+EV</a><a href="track.html">Track</a><a href="archive.html">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
-const NAV = {"page": "nba", "root": "", "slates": {"mlb": [], "nfl": [], "nba": [["2026-10-26", "Mon Oct 26", ""], ["2026-10-25", "Sun Oct 25", ""], ["2026-10-24", "Sat Oct 24", ""], ["2026-10-23", "Fri Oct 23", ""], ["2026-10-22", "Thu Oct 22", ""], ["2026-10-21", "Wed Oct 21", ""], ["2026-10-20", "Tue Oct 20", ""]]}, "cur": {"nba": "2026-10-25"}, "fixed": "nba", "built": "2026-10-25T18:09:26+00:00"};
+const NAV = {"page": "nba", "root": "", "slates": {"mlb": [], "nfl": [], "nba": [["2026-10-26", "Mon Oct 26", ""], ["2026-10-25", "Sun Oct 25", ""], ["2026-10-24", "Sat Oct 24", ""], ["2026-10-23", "Fri Oct 23", ""], ["2026-10-22", "Thu Oct 22", ""], ["2026-10-21", "Wed Oct 21", ""], ["2026-10-20", "Tue Oct 20", ""]]}, "cur": {"nba": "2026-10-25"}, "fixed": "nba", "built": "2026-10-25T19:05:35+00:00"};
 const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
