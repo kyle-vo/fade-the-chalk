@@ -64,9 +64,16 @@ function sides(r){
     x.under = x.team && gpOk && myM != null && opM != null && myM - opM >= 4 && !x.fav && (x.kind === 'ml' || x.kind === 'spread');
     if (x.under && x.v === 'PASS') x.v = 'LEAN';
     if (x.kind === 'total' && x.side.startsWith('Under') && r.total && r.total.line < 220) x.v = 'LEAN';
+    // FADE THE LINE MOVE (last season, 94 games: 55% covered, +12%, +10% Oct-Jan / +14% Feb-Apr; following the move lost 17%):
+    // the favorite's price at this line now (frozen at tip) vs the first price seen 6h+ before tip; a 4c+ move -> LEAN the side it moved AWAY from
+    if (x.kind === 'spread') { const sp = r.spread || {}, op = (r.spreadOpen || {})[sp.ticker];
+      if (op && sp.favAsk && sp.dogAsk && (new Date(r.time) - new Date(op[1])) >= 6 * 3600e3) {
+        const mid = (sp.favAsk + 1 - sp.dogAsk) / 2, mv = mid - op[0]; x.move = mv;
+        if (Math.abs(mv) >= 0.04 && ((mv > 0) !== x.fav)) { x.fadeMove = true; if (x.v === 'PASS') x.v = 'LEAN'; } } }
     x.why = [x.blow ? `${x.team} won its last game by ${last}` + (x.v === 'STRONG BET' ? ', and its opponent won its last too' : '') : '',
              x.under ? `the better team (${myM >= 0 ? '+' : ''}${myM} vs ${opM >= 0 ? '+' : ''}${opM} per game) priced as the underdog` : '',
-             x.v === 'LEAN' && x.kind === 'total' ? 'total under 220' : ''].filter(Boolean).join(' · '); }
+             x.v === 'LEAN' && x.kind === 'total' ? 'total under 220' : '',
+             x.fadeMove ? `fade the line move: the ${x.move > 0 ? 'favorite' : 'underdog'} went ${Math.round(Math.abs(x.move) * 100)}¢ pricier since it opened` : ''].filter(Boolean).join(' · '); }
   return out;
 }
 // ---- board: one row per game. Every market on one line; our pick (if any) in its own column ----
@@ -163,6 +170,7 @@ const strat = {
   'Moneyline LEAN: same blowout team': G.filter(x => x.kind === 'ml' && x.blow),
   'LEAN: better team (season margin +4/game) priced as underdog, moneyline': G.filter(x => x.kind === 'ml' && x.under),
   'LEAN: same, spread': G.filter(x => x.kind === 'spread' && x.under),
+  'LEAN: fade a 4¢+ spread line move (opened 6h+ before tip)': G.filter(x => x.kind === 'spread' && x.fadeMove),
   'Total LEAN: under when the total is below 220': G.filter(x => x.kind === 'total' && x.v === 'LEAN'),
   'Spread: side with LESS of the crowd $ (NFL rule, break-even last season)': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
   'Spread: side with MORE of the crowd $': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd >= 0.5),
@@ -212,7 +220,7 @@ def page():
 <div class="legend"><b>Rules, tested on all of last season</b> (1,086 regular-season games, Kalshi's price at tip plus the fee):
 <b>BET</b> on a spread = the team that <i>won its last game by 20+</i>. It covered 58% (+14%), and held in both halves of the season (+10% Oct-Jan, +18% Feb-Apr) and across favorites, underdogs, home and road. The market prices in a letdown after a blowout that doesn't come.
 <b>STRONG BET</b> = the same, when its opponent also won its last game (+23%, about 125 games).
-<b>LEAN</b> on a moneyline = the same team (+8%; the spread pays better). <b>LEAN</b> on a moneyline or spread also = <i>the better team priced as the underdog</i>: its season point differential is 4+ points a game better than its opponent's (5+ games each), yet it's the underdog. Last season: +39% on the moneyline, +22% on the spread, both halves of the season, and stronger as the gap grew, but only about 57 games all season, so it's a LEAN. <b>LEAN</b> on a total = the under when the total is below 220 (+18%, only 74 games).
+<b>LEAN</b> on a moneyline = the same team (+8%; the spread pays better). <b>LEAN</b> on a moneyline or spread also = <i>the better team priced as the underdog</i>: its season point differential is 4+ points a game better than its opponent's (5+ games each), yet it's the underdog. Last season: +39% on the moneyline, +22% on the spread, both halves of the season, and stronger as the gap grew, but only about 57 games all season, so it's a LEAN. <b>LEAN</b> on a total = the under when the total is below 220 (+18%, only 74 games). <b>LEAN · fade the line move</b> = when a spread's price moved 4¢+ toward one side between the first price we saw (6+ hours before tip) and tip-off, take the other side: last season 55% covered, +12% (+10% Oct-Jan, +14% Feb-Apr) on 94 games, while following the move lost 17%. The NBA spread market overreacts. Of the "smart money" signals tested on 1,305 games, it's the only one that held: following $1k+ trades lost 4%, following money in the last 2 hours lost 6%.
 What did <i>not</i> work last season: fading the crowd's spread money (the NFL rule, +0.6% on 1,128 games), the crowd's moneyline money, back-to-backs, win streaks, home/road. The rule needs each team's previous game, so it starts with each team's second game. Regular season only: in the playoffs it was flat.</div>
 </div>
 </div>

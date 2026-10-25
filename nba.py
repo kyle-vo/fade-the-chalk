@@ -120,6 +120,14 @@ def build_row(g, lad_ml, lad_s, lad_t, pin, now):
         m = main_line(ms); fav = canon(m['ticker'].rsplit('-', 1)[-1].rstrip('0123456789'))
         if fav in (g['home'], g['away']):
             row['spread'] = {'line': f(m.get('floor_strike')), 'shift': 0.0, 'fav': fav, 'dog': g['away'] if fav == g['home'] else g['home'], 'kalshiOnly': True} | kalshi(m, ms, cut, 'fav', 'dog')
+    # every spread strike's mid price now: merge() keeps the FIRST one seen per strike, so the board can measure the line move by tip
+    # (last season, fading a 4c+ move from 24h out to tip covered 55%, +12%, both halves; following it lost 17%)
+    if ms:
+        nowp = {}
+        for x in ms:
+            a, b = f(x.get('yes_ask_dollars')), f(x.get('yes_bid_dollars'))
+            if a and b and b < a: nowp[x['ticker']] = [round((a + b) / 2, 3), now.isoformat(timespec='minutes')]
+        if nowp: row['spreadOpen'] = nowp
     # ---- total ----
     ev, ms = L.find_event(on_date(lad_t), g['home'], g['away'], 'NBA')
     if pk.get('total'):
@@ -150,6 +158,8 @@ def merge(old, new):
                 for t in ('tapeHome$', 'tapeAway$', 'tapeFav$', 'tapeDog$', 'tapeOver$', 'tapeUnder$', 'tapeTrades', 'vol', 'ladderVol'):
                     if (o.get(t) or 0) > (n.get(t) or 0): m[t] = o[t]
             out[k] = m
+    op = dict(new.get('spreadOpen') or {}); op.update(old.get('spreadOpen') or {})       # the first price seen per strike wins
+    if op: out['spreadOpen'] = op
     return out
 
 def grade(rows, games):
