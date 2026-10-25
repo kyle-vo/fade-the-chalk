@@ -1,50 +1,4 @@
-﻿Auto-merging docs/archive.html
-Auto-merging docs/days/2026-09-03.html
-Auto-merging docs/days/2026-09-04.html
-Auto-merging docs/days/2026-09-05.html
-Auto-merging docs/days/2026-09-06.html
-Auto-merging docs/days/2026-09-07.html
-Auto-merging docs/days/2026-09-08.html
-Auto-merging docs/days/2026-09-09.html
-Auto-merging docs/days/2026-09-10.html
-Auto-merging docs/days/2026-09-11.html
-Auto-merging docs/days/2026-09-12.html
-Auto-merging docs/days/2026-09-13.html
-Auto-merging docs/days/2026-09-14.html
-Auto-merging docs/days/2026-09-15.html
-Auto-merging docs/days/2026-09-16.html
-Auto-merging docs/days/2026-09-17.html
-Auto-merging docs/days/2026-09-18.html
-Auto-merging docs/days/2026-09-19.html
-Auto-merging docs/days/2026-09-20.html
-Auto-merging docs/days/2026-09-21.html
-Auto-merging docs/days/2026-09-22.html
-Auto-merging docs/days/2026-09-23.html
-Auto-merging docs/days/2026-09-24.html
-Auto-merging docs/days/2026-09-25.html
-Auto-merging docs/days/2026-09-26.html
-Auto-merging docs/days/2026-09-27.html
-Auto-merging docs/days/2026-09-29.html
-Auto-merging docs/days/2026-09-30.html
-Auto-merging docs/days/2026-10-01.html
-Auto-merging docs/days/2026-10-03.html
-Auto-merging docs/days/2026-10-04.html
-Auto-merging docs/days/2026-10-05.html
-Auto-merging docs/days/2026-10-06.html
-Auto-merging docs/days/2026-10-07.html
-Auto-merging docs/days/2026-10-08.html
-Auto-merging docs/days/2026-10-10.html
-Auto-merging docs/days/2026-10-11.html
-Auto-merging docs/days/2026-10-12.html
-Auto-merging docs/days/2026-10-13.html
-Auto-merging docs/days/2026-10-14.html
-Auto-merging docs/days/2026-10-15.html
-Auto-merging docs/days/2026-10-16.html
-Auto-merging docs/days/2026-10-17.html
-Auto-merging docs/days/2026-10-18.html
-Auto-merging docs/days/2026-10-19.html
-Auto-merging docs/days/2026-10-23.html
-Auto-merging docs/days/2026-10-24.html
+﻿Auto-merging docs/days/2026-10-24.html
 Auto-merging docs/ev.html
 Auto-merging docs/fantasy.html
 Auto-merging docs/index.html
@@ -240,6 +194,52 @@ polymarket tape attached to 16 games
   nflprops 2026_wk7: 13/13 upcoming games priced, 4095 markets saved
   nbaprops 2026-10-24: 6 games pulled now, 6 saved (6 tipping within 3h)
   ev: 3476 prices vs Pinnacle, 172 at +2% EV or better, 170 newly logged (236 tracked)
+archive.html: 7 NFL weeks, 46 MLB days
+ml.html: 37 MLB days, 7 NFL weeks, 341 graded games
+lines.html: 25 MLB days, 5 NFL weeks, 159 games
+done 15:07
+=== 2026-10-24 18:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Kenneth Walker III     KC   RB p=0.580 fair -138 heat 39 share 0.382
+  NFL Javonte Williams       DAL  RB p=0.572 fair -134 heat 73 share 0.307
+  NFL Kyren Williams         LAR  RB p=0.550 fair -122 heat 73 share 0.27
+  NFL Aaron Jones Sr.        MIN  RB p=0.543 fair -119 heat 43 share 0.284
+  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 06:05))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #1 used this run
+snapshot 18 saved for 2026-10-24
+  Kalshi MLB 2026-10-24: 18 players, $917,304 traded
+  Kalshi NFL 2026-10-25: 274 players, $2,180,169 traded
+  Kalshi NFL 2026-10-26: 24 players, $305,057 traded
+  ML 2026_wk4: 16/16 graded
+  ML 2026_wk5: 15/15 graded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 1/14 graded
+MLB 2026-10-24: kept 18 frozen, refreshed 0, late 0
+NFL 2026_wk7: kept 21 frozen, refreshed 236, late 0
+NFL stats 2026_wk4: 16/16 games (0 new)
+NFL stats 2026_wk5: 15/15 games (0 new)
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 1/14 games (0 new)
+site: index + 46 day pages + 7 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, current 2026_wk7: 255 players; check rows 4
+nba.html: 6 days, showing 2026-10-24: 8 games
+ev.html: 1222 prices now, 58 at +2%+, 344 tracked (61 graded)
+  NFL LAR@LV: $217,530 on LV / $64,607 on LAR (11,554 trades)  (partial, game not started)
+  NFL KC@SEA: $155,806 on SEA / $662,976 on KC (33,777 trades)  (partial, game not started)
+  NFL DAL@PHI: $50,871 on PHI / $130,984 on DAL (7,464 trades)  (partial, game not started)
+taker tape attached to 359 locked games
+  NFL LAR@LV: $21,171 on LV / $32,007 on LAR (291 trades, $113,183 traded)  (partial, game not started)
+  NFL KC@SEA: $40,374 on SEA / $13,421 on KC (265 trades, $102,323 traded)  (partial, game not started)
+  NFL DAL@PHI: $691 on PHI / $2,192 on DAL (111 trades, $5,241 traded)  (partial, game not started)
+polymarket tape attached to 16 games
+  nba 2026-10-25: 7 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk7: 13/13 upcoming games priced, 4118 markets saved
+  nbaprops 2026-10-24: 0 games pulled now, 8 saved (2 tipping within 3h)
+  ev: 1214 prices vs Pinnacle, 58 at +2% EV or better, 0 newly logged (344 tracked)
 archive.html: 7 NFL weeks, 46 MLB days
 ml.html: 37 MLB days, 7 NFL weeks, 341 graded games
 lines.html: 25 MLB days, 5 NFL weeks, 159 games
