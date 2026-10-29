@@ -1,7 +1,7 @@
 """One navigation bar for every page: pick the sport once (MLB / NFL), then the page (props, moneyline, spreads & totals), then the slate.
 The sport choice rides in the URL hash (#mlb / #nfl) and in localStorage, so moving between pages keeps it.
 
-page   : 'props' | 'ml' | 'lines' | 'fantasy' | 'nba' | 'ev' | 'track' | 'archive'
+page   : 'props' | 'ml' | 'lines' | 'fantasy' | 'nba' | 'ev' | 'book' | 'track' | 'archive'
 root   : '' or '../' (day and week pages live one folder down)
 slates : {'mlb': [(value, label, href)], 'nfl': [...]}; href '' means the page switches in place through window.onNavSlate(sport, value)
 cur    : {'mlb': value, 'nfl': value}, the slate this page shows first for each sport
@@ -54,7 +54,7 @@ window.navSport = function(s, cur){
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('nav.nb .sp a:not([data-sp=nba])').forEach(a => a.addEventListener('click', ev => {
     ev.preventDefault(); const s = a.dataset.sp;
-    if (NAV.page === 'track' || NAV.page === 'archive' || NAV.page === 'ev') { navSport(s); return; }
+    if (NAV.page === 'track' || NAV.page === 'archive' || NAV.page === 'ev' || NAV.page === 'book') { navSport(s); return; }
     if (NAV.page === 'nba') { location.href = NAV.root + 'index.html#' + s; return; }
     if (window.onNavSport && window.onNavSport(s) !== false) return;
     const t = link(NAV.page, s);
@@ -87,7 +87,7 @@ def navbar(page, root='', slates=None, cur=None, fixed=None):
             + ('<div class="pg nbatabs"><a data-nt="board" href="#board" class="on">Games</a><a data-nt="spread" href="#spread">Spreads</a><a data-nt="score" href="#score">Scorecard</a></div>' if fixed == 'nba' else
                f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a><a data-pg="fantasy" href="{root}fantasy.html"{on("fantasy")}>Fantasy &amp; Yards</a></div>') +
             f'{slate}'
-            f'<div class="aux"><a href="{root}ev.html"{on("ev")} title="every price you can bet vs Pinnacle\'s fair line">+EV</a><a href="{root}track.html"{on("track")}>Track</a><a href="{root}archive.html"{on("archive")}>Archive</a>'
+            f'<div class="aux"><a href="{root}ev.html"{on("ev")} title="every price you can bet vs Pinnacle\'s fair line">+EV</a><a href="{root}book.html"{on("book")} title="what the book makes in each result, from all the crowd\'s spread + moneyline money">Book</a><a href="{root}track.html"{on("track")}>Track</a><a href="{root}archive.html"{on("archive")}>Archive</a>'
             '<span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" '
             'title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div>'
             '</nav>' + JS.replace('__NAV__', cfg))
