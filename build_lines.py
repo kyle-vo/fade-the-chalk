@@ -16,6 +16,7 @@ for lf in sorted(glob.glob(os.path.join(BT, 'lines_*.json'))):
         for r in boards[tag]:
             m = ml.get(r.get('eventId') or r.get('gamePk'))
             if m and m.get('takerHome$') is not None: r['mlHome$'], r['mlAway$'] = m['takerHome$'], m.get('takerAway$') or 0
+            if m and m.get('kalshiAsk') and m.get('kalshiAwayAsk'): r['mlHomeAsk'], r['mlAwayAsk'] = m['kalshiAsk'], m['kalshiAwayAsk']
 mlb_days = sorted([t for t in boards if '_wk' not in t], reverse=True); nfl_weeks = sorted([t for t in boards if '_wk' in t], reverse=True)
 today = mlb_days[0] if mlb_days else None; week = nfl_weeks[0] if nfl_weeks else None
 
@@ -74,6 +75,32 @@ function sides(r){
     x.oldV = x.edge == null ? '—' : x.edge >= 5 ? 'STRONG BET' : x.edge >= 2 ? 'BET' : 'PASS'; }
   return out;
 }
+// ---- what the book needs: the book's net in each of the three results, from the crowd's spread + moneyline taker $ at Robinhood's asks.
+// The book keeps every losing stake and pays every winner's profit (stake x (1-p)/p). A = favorite covers, B = favorite wins but doesn't cover, C = underdog wins.
+// Weeks 3-7 (68 games): the book's best result happened 30 times (44%; a coin would give 33%) and the book netted about +$10M.
+// The spread side that wins in the book's best result covered 41-27 (+20%), 12-3 in primetime: shown as a cross-check, the verdicts above don't use it.
+function bookNeeds(r){
+  const s = r.spread; if (!s || !s.ticker || r['mlHome$'] == null || !r.mlHomeAsk || !s.favAsk || !s.dogAsk) return null;
+  const fh = s.fav === r.home, sf = s['tapeFav$'] || 0, sd = s['tapeDog$'] || 0, mf = fh ? r['mlHome$'] : r['mlAway$'], md = fh ? r['mlAway$'] : r['mlHome$'];
+  const pf = fh ? r.mlHomeAsk : r.mlAwayAsk, pd = fh ? r.mlAwayAsk : r.mlHomeAsk, W = (S, p) => S * (1 - p) / p;
+  const out = [sd + md - W(sf, s.favAsk) - W(mf, pf), sf + md - W(sd, s.dogAsk) - W(mf, pf), sf + mf - W(sd, s.dogAsk) - W(md, pd)];
+  const best = out.indexOf(Math.max(...out)); let act = null;
+  if (r.finalHome != null) { const mar = (r.finalHome - r.finalAway) * (fh ? 1 : -1); act = mar > s.line ? 0 : mar > 0 ? 1 : mar < 0 ? 2 : null; }
+  return { s, out, best, act, side: best === 0 ? s.fav + ' -' + s.line : s.dog + ' +' + s.line, hit: act == null ? null : (best === 0) === (act === 0), all: sf + sd + mf + md };
+}
+function renderBook(games){
+  const tb = $('#tblB tbody'); tb.innerHTML = ''; let n = 0, nb = 0, net = 0, w = 0, g = 0;
+  const sgn = v => (v >= 0 ? '+' : '−') + money(Math.round(Math.abs(v))).slice(0);
+  for (const r of games) { const b = bookNeeds(r); if (!b) continue; n++;
+    if (b.act != null) { nb += b.act === b.best; net += b.out[b.act]; g++; w += b.hit ? 1 : 0; }
+    const lab = [`${b.s.fav} covers −${b.s.line}`, `${b.s.fav} wins by less than ${b.s.line}`, `${b.s.dog} wins outright`];
+    const cell = i => `<td class="num${i === b.best ? ' bk' : ''}${i === b.act ? ' ac' : ''}" title="${lab[i]}"><b class="${b.out[i] >= 0 ? 'pos' : 'neg'}">${sgn(b.out[i])}</b>${i === b.best ? '<br><span class="tm">book\'s best</span>' : ''}${i === b.act ? '<br><span class="tm">✔ happened</span>' : ''}</td>`;
+    const tr = document.createElement('tr'); tr.className = 'row';
+    tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}${isPrime(r.time) ? ' 🌙' : ''}</span></td><td class="num">${b.s.fav} −${b.s.line}</td>${cell(0)}${cell(1)}${cell(2)}<td class="num">${money(Math.round(b.all))}</td><td><span class="nm">${b.side}</span></td><td>${b.hit == null ? '<span class="res n">—</span>' : b.hit ? '<span class="res y">✓ covered</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>`;
+    tb.appendChild(tr); }
+  if (!n) tb.innerHTML = '<tr><td colspan="8" class="tm" style="text-align:center;padding:16px">no games with both spread and moneyline money yet</td></tr>';
+  $('#cntB').textContent = n + ' games' + (g ? ` · book's best happened ${nb} of ${g} · book net ${sgn(net)} · book's side covered ${w}-${g - w}` : '');
+}
 function render(){
   const rows = (tab === 'mlb' ? (BOARDS[day] || []) : (BOARDS[week] || [])).flatMap(sides);
   const hide = $('#onlyplays').checked, kind = $('#kind').value, hidefinal = $('#hidefinal').checked, hidestart = $('#hidestart').checked;
@@ -82,7 +109,8 @@ function render(){
   const gsel = $('#game'), gv = gsel.value, glist = [...new Map(rows.map(x => [x.r.away + ' @ ' + x.r.home, x.r.time])).entries()].sort((a, b) => a[1] < b[1] ? -1 : 1);
   gsel.innerHTML = '<option value="">all games</option>' + glist.map(([g, t]) => `<option value="${g}">${g} · ${when(t)}</option>`).join(''); gsel.value = glist.some(([g]) => g === gv) ? gv : '';
   const list = rows.filter(x => (!gsel.value || x.r.away + ' @ ' + x.r.home === gsel.value) && (!hidefinal || !finished(x)) && (!hidestart || (x.hit == null && x.r.finalHome == null && new Date(x.r.time).getTime() > Date.now())) && (!hide || x.v !== 'PASS') && (kind === 'all' || x.kind === kind)).sort((a, b) => { const A = get(a), B = get(b); return (A > B ? 1 : A < B ? -1 : 0) * sortDir; });
-  document.querySelectorAll('table.lt thead th').forEach(th => th.textContent = th.dataset.l + (th.dataset.k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''));
+  document.querySelectorAll('#tblS thead th, #tblT thead th').forEach(th => th.textContent = th.dataset.l + (th.dataset.k === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : ''));
+  renderBook([...new Map(list.filter(x => x.kind === 'spread').map(x => [x.r.date + (x.r.gamePk || x.r.eventId), x.r])).values()].sort((a, b) => a.time < b.time ? -1 : 1));
   const tbS = $('#tblS tbody'), tbT = $('#tblT tbody'); tbS.innerHTML = ''; tbT.innerHTML = '';
   let g = 0, w = 0, u = 0, tg = 0, tw = 0, take = 0, gave = 0, nS = 0, nT = 0;
   // record = the spread plays actually bet: one side per game, never both (-2.5 and +2.5), and never a PASS. Totals are not bet, so they get their own tile.
@@ -96,7 +124,7 @@ function render(){
     if (x.kind === 'spread') { tbS.appendChild(tr); nS++; } else { tbT.appendChild(tr); nT++; } }
   const empty = '<tr><td colspan="14" class="tm" style="text-align:center;padding:16px">nothing matches the filters</td></tr>';
   if (!nS) tbS.innerHTML = empty; if (!nT) tbT.innerHTML = empty;
-  $('#secS').hidden = kind === 'total'; $('#secT').hidden = kind === 'spread';
+  $('#secS').hidden = kind === 'total'; $('#secB').hidden = kind === 'total' || !$('#tblB tbody tr.row'); $('#secT').hidden = kind === 'spread';
   $('#cntS').textContent = nS + ' sides'; $('#cntT').textContent = nT + ' sides';
   const games = new Set(list.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size;
   $('#kpi').innerHTML = `<div>games<b>${games}</b></div><div>sides shown<b>${list.length}</b></div>` + (g ? `<div>spread plays graded<b>${g}</b></div><div>spread record<b>${w}-${g - w}</b></div><div>units, 1u each play<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}</b></div>` : '') + (tg ? `<div>totals LEAN (not bet)<b>${tw}-${tg - tw}</b></div>` : '') + (take + gave ? `<div>book take<b class="neg">${money(Math.round(take))}</b></div><div>book gave<b class="pos">${money(Math.round(gave))}</b></div>` : '');
@@ -105,7 +133,7 @@ function setTab(t){ tab = t; history.replaceState(null, '', '#' + t); if (window
 window.onNavSport = t => setTab(t);
 window.onNavSlate = (sp, v) => { if (sp === 'mlb') day = v; else week = v; setTab(sp); };
 ['#onlyplays', '#hidestart', '#hidefinal', '#kind', '#game'].forEach(s => $(s).addEventListener('input', render));
-document.querySelectorAll('table.lt thead th').forEach(th => { th.dataset.l = th.textContent; th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'time' || k === 'side' ? 1 : -1; } render(); }); });
+document.querySelectorAll('#tblS thead th, #tblT thead th').forEach(th => { th.dataset.l = th.textContent; th.addEventListener('click', () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'time' || k === 'side' ? 1 : -1; } render(); }); });
 setTab(tab);
 // ---- scorecard over every graded side ----
 const G = Object.values(BOARDS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
@@ -162,6 +190,7 @@ def page():
 <style>h2.mk{{margin:16px 0 8px}}</style><div class="panel top">
 <div class="kpi" id="kpi"></div>
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label><input type="checkbox" id="hidestart"> hide started games</label><label><input type="checkbox" id="hidefinal"> hide finished games</label><label>game <select id="game"><option value="">all games</option></select></label><label>show <select id="kind"><option value="all">spreads and totals</option><option value="spread">spreads only</option><option value="total">totals only</option></select></label></div>
+<style>td.bk{{background:rgba(224,160,48,.13)}}td.ac{{outline:2px solid #4caf50;outline-offset:-2px}}</style><div id="secB"><h2 class="mk">What the book needs <small id="cntB"></small></h2><p class="note">The book's net in each result, from all the crowd's money on the game (spread + moneyline). It keeps the losing stakes and pays the winners' profit. <b>Shaded</b> = the result that makes the book the most; <b>green outline</b> = what happened. <b>Book's side</b> = the spread bet that wins in the book's best result (weeks 3-7: 41-27, 12-3 in primetime). It's a cross-check on the verdicts below, not a separate pick.</p><div class="wrap"><table id="tblB" class="lt"><thead><tr><th>Game</th><th class="num">Spread</th><th class="num">Fav covers</th><th class="num">Fav wins, dog covers</th><th class="num">Dog wins outright</th><th class="num">All $ on game</th><th>Book's side</th><th>Result</th></tr></thead><tbody></tbody></table></div></div>
 <div id="secS"><h2 class="mk">Spreads <small id="cntS"></small></h2><div class="wrap"><table id="tblS" class="lt"><thead><tr><th data-k="time">Game</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd share</th><th class="num" data-k="own">$ on this side</th><th class="num" data-k="all" title="spread + moneyline money on this team">All $ on team (spread + ML)</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th><th class="num" data-k="take">Book take</th><th class="num" data-k="gave">Book gave</th></tr></thead><tbody></tbody></table></div></div><div id="secT"><h2 class="mk">Totals <small id="cntT"></small></h2><div class="wrap"><table id="tblT" class="lt"><thead><tr><th data-k="time">Game</th><th data-k="side">Side</th><th class="num" data-k="ask">Robinhood ask</th><th class="num" data-k="fair">Pinnacle fair</th><th class="num" data-k="edge">Edge</th><th class="num" data-k="crowd">Crowd share</th><th class="num" data-k="own">$ on this side</th><th class="num" data-k="all" title="spread + moneyline money on this team">All $ on team (spread + ML)</th><th class="num" data-k="tape">Tape $</th><th class="num" data-k="vol">$ traded</th><th data-k="v">Verdict</th><th data-k="hit">Result</th><th class="num" data-k="take">Book take</th><th class="num" data-k="gave">Book gave</th></tr></thead><tbody></tbody></table></div></div>
 <div class="legend"><b>No model here.</b> Each row is one side of a spread or total, so a 12-game slate is 48 rows (24 with spreads or totals only). Click any column header to sort; click again to flip. <b>Robinhood ask</b> = what a $1 contract on that side costs. <b>Pinnacle fair</b> = the sharpest book's de-vigged chance at the same line (a ~ means Pinnacle's line was a whole number, Robinhood only lists half points, so the nearest strike is shown and the fair price is nudged for the half point).
 <b>Edge</b> = fair minus ask, in points. It is shown for reference only: betting the side Robinhood sells below Pinnacle's price lost money here. <b>LEAN</b> = the only trends that have paid so far, on 4 MLB days: the MLB run-line favorite (-1.5) and the MLB over. Small stakes only; <b>NFL spreads (rebuilt Oct 16, weeks 3-6):</b> the side with <i>less</i> of the crowd's spread money covered 29 of 42; the side with more covered 13 of 42. How much money is in the market decides it: in a spread market of $300k+ the less-money side covered 18 of 20, under $300k 11 of 22. <b>STRONG BET</b> = 🌙 primetime (Thursday, Sunday night, Monday), the side with less money: 10-0, always the underdog so far. <b>BET</b> = Sunday daytime, the side with less money in a $300k+ market, favorite or underdog: 10-2. Smaller markets are a PASS: check back near kickoff, when most of the money is in. NFL totals: <b>LEAN</b> the crowd's side (26-15); primetime <b>LEAN</b> the over (7-3). Four weeks of data, so size accordingly. <b>All $ on team</b> = spread + moneyline money on that team added together, and its share of all the money on the game (red = the team with most of the money). <b>ML $</b> (under the crowd share) = the moneyline crowd on the same team; <b>⚠ ML split</b> = moneyline money is on the other team (e.g. KC-SEA week 7: 85% of the spread $ on SEA, 77% of the ML $ on KC). The verdict still fades the spread money, because in those split games fading the spread $ covered 17-8 and fading the ML $ 8-17. <b>Crowd $ on this side</b> = share of the taker dollars on this exact market from the trade tape (each trade credited to the side the bettor backed); <b>$ on this side</b> = those taker dollars; <b>Tape $</b> = both sides together; <b>Book take</b> = once graded, the dollars on a side that lost (what the winners collected), <b>Book gave</b> = the dollars on a side that won; the tiles sum them. <b>$ traded</b> = the whole ladder of lines for this game.
