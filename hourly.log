@@ -1,48 +1,4 @@
-﻿NFL stats 2026_wk7: 14/14 games (0 new)
-NFL stats 2026_wk8: 0/14 games (0 new)
-site: index + 49 day pages + 8 nfl pages + track -> C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\docs
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, current 2026_wk8: 271 players; check rows 5
-nba.html: 11 days, showing 2026-10-29: 3 games
-ev.html: 1427 prices now, 67 at +2%+, 1529 tracked (1352 graded)
-  NFL NE@MIA: $9,336 on MIA / $456,742 on NE (3,390 trades)  (partial, game not started)
-  NFL PHI@WSH: $18,702 on WSH / $16,146 on PHI (2,292 trades)  (partial, game not started)
-  NFL CHI@SEA: $38,634 on SEA / $75,461 on CHI (6,570 trades)  (partial, game not started)
-taker tape attached to 376 locked games
-  NFL NE@MIA: $177 on MIA / $3,294 on NE (30 trades, $5,024 traded)  (partial, game not started)
-  NFL PHI@WSH: $3,210 on WSH / $255 on PHI (72 trades, $5,541 traded)  (partial, game not started)
-  NFL CHI@SEA: $251 on SEA / $555 on CHI (56 trades, $1,660 traded)  (partial, game not started)
-polymarket tape attached to 18 games
-  nba 2026-10-30: 10 games (0 final, 10 with a Kalshi spread)
-  nflprops 2026_wk8: 13/13 upcoming games priced, 3161 markets saved
-  nbaprops 2026-10-29: 0 games pulled now, 2 saved (2 tipping within 3h)
-  ev: 1427 prices vs Pinnacle, 67 at +2% EV or better, 0 newly logged (1529 tracked)
-archive.html: 8 NFL weeks, 49 MLB days
-ml.html: 40 MLB days, 8 NFL weeks, 358 graded games
-lines.html: 28 MLB days, 6 NFL weeks, 176 games
-done 15:07
-=== 2026-10-29 18:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Kenneth Walker III     KC   RB p=0.595 fair -147 heat 41 share 0.375
-  NFL Jonathan Taylor        IND  RB p=0.559 fair -127 heat 78 share 0.39
-  NFL Bijan Robinson         ATL  RB p=0.552 fair -123 heat 52 share 0.333
-  NFL Bucky Irving           TB   RB p=0.547 fair -121 heat 43 share 0.293
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #1 used this run
-snapshot 12 saved for 2026-10-29
-  Kalshi NFL 2026-10-29: 23 players, $4,142,336 traded
-  Kalshi NFL 2026-11-01: 249 players, $490,597 traded
-  Kalshi NFL 2026-11-02: 18 players, $3,738 traded
-  ML 2026_wk5: 15/15 graded
-  ML 2026_wk6: 14/14 graded
-  ML 2026_wk7: 14/14 graded
-  ML 2026_wk8: 0/14 graded
-NFL 2026_wk8: kept 21 frozen, refreshed 249, late 0
-NFL stats 2026_wk5: 15/15 games (0 new)
-NFL stats 2026_wk6: 14/14 games (0 new)
+﻿NFL stats 2026_wk6: 14/14 games (0 new)
 NFL stats 2026_wk7: 14/14 games (0 new)
 NFL stats 2026_wk8: 0/14 games (0 new)
 fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, current 2026_wk8: 268 players; check rows 5
@@ -238,6 +194,50 @@ polymarket tape attached to 16 games
   nflprops 2026_wk8: 13/13 upcoming games priced, 3619 markets saved
   nbaprops 2026-10-30: 0 games pulled now, 0 saved (0 tipping within 3h)
   ev: 300 prices vs Pinnacle, 4 at +2% EV or better, 0 newly logged (1638 tracked)
+archive.html: 8 NFL weeks, 49 MLB days
+ml.html: 40 MLB days, 8 NFL weeks, 359 graded games
+lines.html: 28 MLB days, 6 NFL weeks, 176 games
+done 06:06
+=== 2026-10-30 09:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Kenneth Walker III     KC   RB p=0.595 fair -147 heat 41 share 0.375
+  NFL Jonathan Taylor        IND  RB p=0.559 fair -127 heat 78 share 0.39
+  NFL Chase Brown            CIN  RB p=0.549 fair -122 heat 69 share 0.235
+  NFL Kyren Williams         LAR  RB p=0.545 fair -120 heat 73 share 0.263
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #6 used this run
+snapshot 6 saved for 2026-10-30
+  Kalshi NFL 2026-11-01: 256 players, $649,156 traded
+  Kalshi NFL 2026-11-02: 19 players, $132,530 traded
+  ML 2026_wk5: 15/15 graded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 14/14 graded
+  ML 2026_wk8: 1/14 graded
+NFL 2026_wk8: kept 21 frozen, refreshed 249, late 0
+NFL stats 2026_wk5: 15/15 games (0 new)
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 14/14 games (0 new)
+NFL stats 2026_wk8: 1/14 games (0 new)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, current 2026_wk8: 268 players; check rows 5
+nba.html: 12 days, showing 2026-10-30: 10 games
+ev.html: 280 prices now, 3 at +2%+, 1638 tracked (1512 graded)
+book.html: 6 NFL weeks, 82 games
+  NFL NE@MIA: $14,502 on MIA / $480,212 on NE (5,455 trades)  (partial, game not started)
+  NFL PHI@WSH: $27,341 on WSH / $23,757 on PHI (3,043 trades)  (partial, game not started)
+  NFL CHI@SEA: $70,130 on SEA / $96,529 on CHI (8,082 trades)  (partial, game not started)
+taker tape attached to 376 locked games
+  NFL NE@MIA: $181 on MIA / $3,892 on NE (36 trades, $5,827 traded)  (partial, game not started)
+  NFL PHI@WSH: $3,713 on WSH / $295 on PHI (91 trades, $6,391 traded)  (partial, game not started)
+  NFL CHI@SEA: $362 on SEA / $775 on CHI (68 trades, $2,402 traded)  (partial, game not started)
+polymarket tape attached to 16 games
+  nba 2026-10-31: 7 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk8: 13/13 upcoming games priced, 3666 markets saved
+  nbaprops 2026-10-30: 0 games pulled now, 0 saved (0 tipping within 3h)
+  ev: 282 prices vs Pinnacle, 3 at +2% EV or better, 0 newly logged (1638 tracked)
 archive.html: 8 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 8 NFL weeks, 359 graded games
 lines.html: 28 MLB days, 6 NFL weeks, 176 games
