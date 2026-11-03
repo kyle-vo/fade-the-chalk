@@ -47,6 +47,7 @@ const pct = p => p == null ? '—' : Math.round(p * 100) + '%';
 const money = v => v == null ? '—' : '$' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1000 ? Math.round(v / 1000) + 'k' : Math.round(v));
 const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 // one row per market side. crowd = share of the taker $ on this side; edge = Pinnacle fair minus Robinhood ask, in points
+const VR = { 'STRONG BET': 4, 'BET': 3, 'LEAN': 2, 'PASS': 0 };
 function sides(r){
   const out = [], m = r.ml, s = r.spread, t = r.total;
   if (m && (m.homeAsk || m.pinHome != null)) { const tot = (m['tapeHome$'] || 0) + (m['tapeAway$'] || 0);
@@ -91,6 +92,10 @@ function sides(r){
              x.under ? `the better team (${myM >= 0 ? '+' : ''}${myM} vs ${opM >= 0 ? '+' : ''}${opM} per game) priced as the underdog` : '',
              x.v === 'LEAN' && x.kind === 'total' ? 'total under 220' : '',
              x.toDog ? `the line moved ${Math.round(Math.abs(x.move) * 100)}¢ toward ${x.team} (tracked, not a pick)` : ''].filter(Boolean).join(' · '); }
+  // never both sides of one market: a BET on one side outranks a LEAN on the other (LAL -12.5 BET vs SAC +12.5 big-dog LEAN)
+  for (const k of ['spread', 'ml']) { const two = out.filter(x => x.kind === k); if (two.length !== 2) continue;
+    const [a, b] = VR[two[0].v] >= VR[two[1].v] ? two : [two[1], two[0]];
+    if (VR[a.v] > VR[b.v] && VR[b.v] > 0) { b.v = 'PASS'; b.why = (b.why ? b.why + ' · ' : '') + `outranked by the ${a.v} on ${a.side}`; } }
   return out;
 }
 // ---- board: one row per game. Every market on one line; our pick (if any) in its own column ----
