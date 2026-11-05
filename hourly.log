@@ -1,86 +1,130 @@
-﻿  ML 2026_wk9: 0/15 graded
-NFL 2026_wk9: kept 0 frozen, refreshed 283, late 0
-NFL stats 2026_wk6: 14/14 games (0 new)
+﻿NFL stats 2026_wk6: 14/14 games (0 new)
 NFL stats 2026_wk7: 14/14 games (0 new)
-NFL stats 2026_wk8: 14/14 games (1 new)
+NFL stats 2026_wk8: 14/14 games (0 new)
 NFL stats 2026_wk9: 0/15 games (0 new)
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 282 players; check rows 6
-nba.html: 14 days, showing 2026-11-02: 15 games
-ev.html: 0 prices now, 0 at +2%+, 2910 tracked (2633 graded)
-book.html: 6 NFL weeks, 82 games
-  NFL ARI@SEA: $20,867 on SEA / $9,580 on ARI (1,911 trades)  (partial, game not started)
-  NFL TB@CHI: $207,921 on CHI / $3,697 on TB (1,355 trades)  (partial, game not started)
-  NFL BUF@MIN: $8,845 on MIN / $21,341 on BUF (2,002 trades)  (partial, game not started)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 289 players; check rows 6
+nba.html: 16 days, showing 2026-11-04: 14 games
+ev.html: 358 prices now, 13 at +2%+, 2938 tracked (2709 graded)
+book.html: 7 NFL weeks, 97 games
+  NFL ARI@SEA: $26,673 on SEA / $17,807 on ARI (2,762 trades)  (partial, game not started)
+  NFL TB@CHI: $239,161 on CHI / $9,545 on TB (3,470 trades)  (partial, game not started)
+  NFL BUF@MIN: $19,081 on MIN / $33,233 on BUF (2,955 trades)  (partial, game not started)
 taker tape attached to 391 locked games
   File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
     if t.get('timestamp', 0) >= cut_ts: continue
        ^^^^^
 AttributeError: 'str' object has no attribute 'get'
-  nflprops 2026_wk9: 1/1 upcoming games priced, 287 markets saved
-  nbaprops 2026-11-03: 0 games pulled now, 0 saved (0 tipping within 3h)
-  nbabox 2026-11-02: 4 games added
-  ev: 262 prices vs Pinnacle, 15 at +2% EV or better, 15 newly logged (2925 tracked)
+  nba 2026-11-05: 2 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk9: 1/1 upcoming games priced, 319 markets saved
+  nbaprops 2026-11-04: 0 games pulled now, 0 saved (0 tipping within 3h)
+  ev: 352 prices vs Pinnacle, 20 at +2% EV or better, 4 newly logged (2942 tracked)
 archive.html: 9 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
 lines.html: 28 MLB days, 7 NFL weeks, 191 games
-done 23:06
-=== 2026-11-03 02:05 ===
+done 05:06
+=== 2026-11-04 08:05 ===
   saved nfl_depth.json
   depth charts: 32 teams
   saved nfl_team_stats_prev.json
 done
   NFL Bijan Robinson         ATL  RB p=0.620 fair -163 heat 61 share 0.34
-  NFL Jonathan Taylor        IND  RB p=0.618 fair -162 heat 85 share 0.368
-  NFL D'Andre Swift          CHI  RB p=0.570 fair -133 heat 60 share 0.28
+  NFL Jonathan Taylor        IND  RB p=0.616 fair -161 heat 85 share 0.366
+  NFL D'Andre Swift          CHI  RB p=0.604 fair -152 heat 62 share 0.301
   NFL James Cook III         BUF  RB p=0.567 fair -131 heat 76 share 0.297
   NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
   baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
 key #4 used this run
-snapshot 1 saved for 2026-11-03
-  Kalshi NFL 2026-11-05: 20 players, $51,015 traded
+snapshot 4 saved for 2026-11-04
+  Kalshi NFL 2026-11-05: 22 players, $176,526 traded
+  Kalshi NFL 2026-11-08: 212 players, $13,098 traded
   ML 2026_wk6: 14/14 graded
   ML 2026_wk7: 14/14 graded
   ML 2026_wk8: 14/14 graded
   ML 2026_wk9: 0/15 graded
-NFL 2026_wk9: kept 0 frozen, refreshed 283, late 0
+NFL 2026_wk9: kept 0 frozen, refreshed 290, late 0
 NFL stats 2026_wk6: 14/14 games (0 new)
 NFL stats 2026_wk7: 14/14 games (0 new)
 NFL stats 2026_wk8: 14/14 games (0 new)
 NFL stats 2026_wk9: 0/15 games (0 new)
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 282 players; check rows 6
-nba.html: 15 days, showing 2026-11-04: 14 games
-ev.html: 274 prices now, 14 at +2%+, 2925 tracked (2709 graded)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 289 players; check rows 6
+nba.html: 16 days, showing 2026-11-04: 14 games
+ev.html: 352 prices now, 20 at +2%+, 2942 tracked (2709 graded)
 book.html: 7 NFL weeks, 97 games
-  NFL ARI@SEA: $20,927 on SEA / $9,874 on ARI (1,945 trades)  (partial, game not started)
-  NFL TB@CHI: $211,037 on CHI / $3,926 on TB (1,469 trades)  (partial, game not started)
-  NFL BUF@MIN: $8,966 on MIN / $21,822 on BUF (2,029 trades)  (partial, game not started)
+  NFL ARI@SEA: $29,085 on SEA / $18,729 on ARI (2,847 trades)  (partial, game not started)
+  NFL TB@CHI: $241,342 on CHI / $9,678 on TB (3,584 trades)  (partial, game not started)
+  NFL BUF@MIN: $20,676 on MIN / $34,507 on BUF (3,067 trades)  (partial, game not started)
 taker tape attached to 391 locked games
   File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
     if t.get('timestamp', 0) >= cut_ts: continue
        ^^^^^
 AttributeError: 'str' object has no attribute 'get'
-  nba 2026-11-04: 14 games (0 final, 5 with a Kalshi spread)
-  nflprops 2026_wk9: 1/1 upcoming games priced, 289 markets saved
-  nbaprops 2026-11-03: 0 games pulled now, 0 saved (0 tipping within 3h)
-  ev: 274 prices vs Pinnacle, 14 at +2% EV or better, 0 newly logged (2925 tracked)
+  nba 2026-11-05: 2 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk9: 2/2 upcoming games priced, 517 markets saved
+  nbaprops 2026-11-04: 0 games pulled now, 0 saved (0 tipping within 3h)
+  ev: 352 prices vs Pinnacle, 17 at +2% EV or better, 1 newly logged (2943 tracked)
 archive.html: 9 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
 lines.html: 28 MLB days, 7 NFL weeks, 191 games
-done 02:07
-=== 2026-11-03 05:05 ===
+done 08:06
+=== 2026-11-04 11:05 ===
   saved nfl_depth.json
   depth charts: 32 teams
   saved nfl_team_stats_prev.json
 done
+  NFL Jonathan Taylor        IND  RB p=0.620 fair -163 heat 86 share 0.366
   NFL Bijan Robinson         ATL  RB p=0.620 fair -163 heat 61 share 0.34
-  NFL Jonathan Taylor        IND  RB p=0.618 fair -162 heat 85 share 0.368
-  NFL D'Andre Swift          CHI  RB p=0.597 fair -148 heat 61 share 0.301
+  NFL D'Andre Swift          CHI  RB p=0.604 fair -152 heat 62 share 0.301
   NFL James Cook III         BUF  RB p=0.567 fair -131 heat 76 share 0.297
   NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
   baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
 key #5 used this run
-snapshot 2 saved for 2026-11-03
-  Kalshi NFL 2026-11-05: 20 players, $52,813 traded
+snapshot 6 saved for 2026-11-04
+  Kalshi NFL 2026-11-05: 22 players, $186,333 traded
+  Kalshi NFL 2026-11-08: 225 players, $25,844 traded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 14/14 graded
+  ML 2026_wk8: 14/14 graded
+  ML 2026_wk9: 0/15 graded
+NFL 2026_wk9: kept 0 frozen, refreshed 291, late 0
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 14/14 games (0 new)
+NFL stats 2026_wk8: 14/14 games (0 new)
+NFL stats 2026_wk9: 0/15 games (0 new)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 290 players; check rows 6
+nba.html: 16 days, showing 2026-11-04: 14 games
+ev.html: 352 prices now, 17 at +2%+, 2943 tracked (2709 graded)
+book.html: 7 NFL weeks, 97 games
+  NFL ARI@SEA: $39,988 on SEA / $96,807 on ARI (3,382 trades)  (partial, game not started)
+  NFL TB@CHI: $247,951 on CHI / $11,173 on TB (3,730 trades)  (partial, game not started)
+  NFL BUF@MIN: $21,122 on MIN / $35,224 on BUF (3,164 trades)  (partial, game not started)
+taker tape attached to 391 locked games
+  File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
+    if t.get('timestamp', 0) >= cut_ts: continue
+       ^^^^^
+AttributeError: 'str' object has no attribute 'get'
+  nba 2026-11-05: 2 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk9: 9/9 upcoming games priced, 1334 markets saved
+  nbaprops 2026-11-04: 0 games pulled now, 0 saved (0 tipping within 3h)
+  ev: 348 prices vs Pinnacle, 17 at +2% EV or better, 5 newly logged (2948 tracked)
+archive.html: 9 NFL weeks, 49 MLB days
+ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
+lines.html: 28 MLB days, 7 NFL weeks, 191 games
+done 11:06
+=== 2026-11-04 14:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Jonathan Taylor        IND  RB p=0.621 fair -164 heat 86 share 0.367
+  NFL Bijan Robinson         ATL  RB p=0.620 fair -163 heat 61 share 0.34
+  NFL D'Andre Swift          CHI  RB p=0.604 fair -152 heat 62 share 0.301
+  NFL James Cook III         BUF  RB p=0.567 fair -131 heat 76 share 0.297
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #6 used this run
+snapshot 7 saved for 2026-11-04
+  Kalshi NFL 2026-11-05: 22 players, $253,815 traded
+  Kalshi NFL 2026-11-08: 234 players, $32,500 traded
   ML 2026_wk6: 14/14 graded
   ML 2026_wk7: 14/14 graded
   ML 2026_wk8: 14/14 graded
@@ -91,153 +135,110 @@ NFL stats 2026_wk7: 14/14 games (0 new)
 NFL stats 2026_wk8: 14/14 games (0 new)
 NFL stats 2026_wk9: 0/15 games (0 new)
 fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 286 players; check rows 6
-nba.html: 15 days, showing 2026-11-04: 14 games
-ev.html: 274 prices now, 14 at +2%+, 2925 tracked (2709 graded)
+nba.html: 16 days, showing 2026-11-04: 14 games
+ev.html: 348 prices now, 17 at +2%+, 2948 tracked (2709 graded)
 book.html: 7 NFL weeks, 97 games
-  NFL ARI@SEA: $21,412 on SEA / $10,379 on ARI (2,017 trades)  (partial, game not started)
-  NFL TB@CHI: $213,411 on CHI / $4,264 on TB (1,637 trades)  (partial, game not started)
-  NFL BUF@MIN: $9,259 on MIN / $22,457 on BUF (2,085 trades)  (partial, game not started)
+  NFL ARI@SEA: $43,561 on SEA / $101,988 on ARI (3,679 trades)  (partial, game not started)
+  NFL TB@CHI: $250,399 on CHI / $11,558 on TB (3,869 trades)  (partial, game not started)
+  NFL BUF@MIN: $21,825 on MIN / $37,053 on BUF (3,281 trades)  (partial, game not started)
 taker tape attached to 391 locked games
   File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
     if t.get('timestamp', 0) >= cut_ts: continue
        ^^^^^
 AttributeError: 'str' object has no attribute 'get'
-  nba 2026-11-04: 14 games (0 final, 5 with a Kalshi spread)
-  nflprops 2026_wk9: 1/1 upcoming games priced, 301 markets saved
-  nbaprops 2026-11-03: 0 games pulled now, 0 saved (0 tipping within 3h)
-  ev: 278 prices vs Pinnacle, 15 at +2% EV or better, 2 newly logged (2927 tracked)
+  nba 2026-11-05: 2 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk9: 13/13 upcoming games priced, 1906 markets saved
+  nbaprops 2026-11-04: 6 games pulled now, 6 saved (6 tipping within 3h)
+  ev: 4094 prices vs Pinnacle, 166 at +2% EV or better, 153 newly logged (3101 tracked)
 archive.html: 9 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
 lines.html: 28 MLB days, 7 NFL weeks, 191 games
-done 05:06
-=== 2026-11-03 08:05 ===
+done 14:07
+=== 2026-11-04 17:05 ===
   saved nfl_depth.json
   depth charts: 32 teams
   saved nfl_team_stats_prev.json
 done
+  NFL Jonathan Taylor        IND  RB p=0.621 fair -164 heat 86 share 0.367
   NFL Bijan Robinson         ATL  RB p=0.620 fair -163 heat 61 share 0.34
-  NFL Jonathan Taylor        IND  RB p=0.616 fair -161 heat 85 share 0.366
-  NFL D'Andre Swift          CHI  RB p=0.597 fair -148 heat 61 share 0.301
+  NFL D'Andre Swift          CHI  RB p=0.604 fair -152 heat 62 share 0.301
   NFL James Cook III         BUF  RB p=0.567 fair -131 heat 76 share 0.297
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
   baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #6 used this run
-snapshot 4 saved for 2026-11-03
-  Kalshi NFL 2026-11-05: 21 players, $66,716 traded
-  Kalshi NFL 2026-11-08: 19 players, $22 traded
-  ML 2026_wk6: 14/14 graded
-  ML 2026_wk7: 14/14 graded
-  ML 2026_wk8: 14/14 graded
-  ML 2026_wk9: 0/15 graded
-NFL 2026_wk9: kept 0 frozen, refreshed 296, late 0
-NFL stats 2026_wk6: 14/14 games (0 new)
-NFL stats 2026_wk7: 14/14 games (0 new)
-NFL stats 2026_wk8: 14/14 games (0 new)
-NFL stats 2026_wk9: 0/15 games (0 new)
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 295 players; check rows 6
-nba.html: 15 days, showing 2026-11-04: 14 games
-ev.html: 282 prices now, 15 at +2%+, 2929 tracked (2709 graded)
-book.html: 7 NFL weeks, 97 games
-  NFL ARI@SEA: $21,811 on SEA / $11,590 on ARI (2,134 trades)  (partial, game not started)
-  NFL TB@CHI: $216,996 on CHI / $5,013 on TB (1,877 trades)  (partial, game not started)
-  NFL BUF@MIN: $12,540 on MIN / $24,026 on BUF (2,198 trades)  (partial, game not started)
-taker tape attached to 391 locked games
-  File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
-    if t.get('timestamp', 0) >= cut_ts: continue
-       ^^^^^
-AttributeError: 'str' object has no attribute 'get'
-  nba 2026-11-04: 14 games (0 final, 5 with a Kalshi spread)
-  nflprops 2026_wk9: 1/1 upcoming games priced, 302 markets saved
-  nbaprops 2026-11-03: 0 games pulled now, 0 saved (0 tipping within 3h)
-  ev: 280 prices vs Pinnacle, 16 at +2% EV or better, 0 newly logged (2929 tracked)
-archive.html: 9 NFL weeks, 49 MLB days
-ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
-lines.html: 28 MLB days, 7 NFL weeks, 191 games
-done 08:06
-=== 2026-11-03 11:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Bijan Robinson         ATL  RB p=0.620 fair -163 heat 61 share 0.34
-  NFL Jonathan Taylor        IND  RB p=0.616 fair -161 heat 85 share 0.366
-  NFL D'Andre Swift          CHI  RB p=0.597 fair -148 heat 61 share 0.301
-  NFL James Cook III         BUF  RB p=0.567 fair -131 heat 76 share 0.297
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+  americanfootball_nfl/player_anytime_td: 476 players priced, 360 on Fliff, 0 Underdog-only (credits used this month: 39 used / 461 left on key #7)
 key #7 used this run
-snapshot 5 saved for 2026-11-03
-  Kalshi NFL 2026-11-05: 21 players, $105,548 traded
-  Kalshi NFL 2026-11-08: 81 players, $851 traded
+snapshot 9 saved for 2026-11-04
+  Kalshi NFL 2026-11-05: 22 players, $267,231 traded
+  Kalshi NFL 2026-11-08: 252 players, $64,481 traded
   ML 2026_wk6: 14/14 graded
   ML 2026_wk7: 14/14 graded
   ML 2026_wk8: 14/14 graded
   ML 2026_wk9: 0/15 graded
-NFL 2026_wk9: kept 0 frozen, refreshed 291, late 0
+NFL 2026_wk9: kept 0 frozen, refreshed 287, late 0
 NFL stats 2026_wk6: 14/14 games (0 new)
 NFL stats 2026_wk7: 14/14 games (0 new)
 NFL stats 2026_wk8: 14/14 games (0 new)
 NFL stats 2026_wk9: 0/15 games (0 new)
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 290 players; check rows 6
-nba.html: 15 days, showing 2026-11-04: 14 games
-ev.html: 280 prices now, 16 at +2%+, 2929 tracked (2709 graded)
-book.html: 7 NFL weeks, 97 games
-  NFL ARI@SEA: $22,297 on SEA / $12,984 on ARI (2,262 trades)  (partial, game not started)
-  NFL TB@CHI: $220,545 on CHI / $5,529 on TB (2,137 trades)  (partial, game not started)
-  NFL BUF@MIN: $13,722 on MIN / $25,057 on BUF (2,338 trades)  (partial, game not started)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 286 players; check rows 6
+nba.html: 16 days, showing 2026-11-04: 14 games
+ev.html: 5207 prices now, 209 at +2%+, 3144 tracked (2709 graded)
+book.html: 7 NFL weeks, 96 games
+  NFL ARI@SEA: $46,052 on SEA / $105,201 on ARI (3,855 trades)  (partial, game not started)
+  NFL TB@CHI: $253,488 on CHI / $11,965 on TB (4,013 trades)  (partial, game not started)
+  NFL BUF@MIN: $22,734 on MIN / $39,210 on BUF (3,412 trades)  (partial, game not started)
 taker tape attached to 391 locked games
   File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
     if t.get('timestamp', 0) >= cut_ts: continue
        ^^^^^
 AttributeError: 'str' object has no attribute 'get'
-  nba 2026-11-04: 14 games (0 final, 5 with a Kalshi spread)
-  nflprops 2026_wk9: 1/1 upcoming games priced, 302 markets saved
-  nbaprops 2026-11-03: 0 games pulled now, 0 saved (0 tipping within 3h)
-  ev: 264 prices vs Pinnacle, 14 at +2% EV or better, 2 newly logged (2931 tracked)
+  nba 2026-11-05: 2 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk9: 13/13 upcoming games priced, 2069 markets saved
+  nbaprops 2026-11-04: 9 games pulled now, 14 saved (9 tipping within 3h)
+  ev: 5663 prices vs Pinnacle, 207 at +2% EV or better, 189 newly logged (3333 tracked)
 archive.html: 9 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
 lines.html: 28 MLB days, 7 NFL weeks, 191 games
-done 11:06
-=== 2026-11-03 14:05 ===
+done 17:06
+=== 2026-11-04 20:05 ===
   saved nfl_depth.json
   depth charts: 32 teams
   saved nfl_team_stats_prev.json
 done
+  NFL Jonathan Taylor        IND  RB p=0.621 fair -164 heat 86 share 0.367
   NFL Bijan Robinson         ATL  RB p=0.620 fair -163 heat 61 share 0.34
-  NFL Jonathan Taylor        IND  RB p=0.616 fair -161 heat 85 share 0.366
-  NFL D'Andre Swift          CHI  RB p=0.597 fair -148 heat 61 share 0.301
+  NFL D'Andre Swift          CHI  RB p=0.604 fair -152 heat 62 share 0.301
   NFL James Cook III         BUF  RB p=0.567 fair -131 heat 76 share 0.297
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  NFL touchdown props: skipped, 0 credits (already pulled for the Wednesday night window (Wed 17:05))
   baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
 key #8 used this run
-snapshot 7 saved for 2026-11-03
-  Kalshi NFL 2026-11-05: 21 players, $136,041 traded
-  Kalshi NFL 2026-11-08: 88 players, $2,699 traded
+snapshot 11 saved for 2026-11-04
+  Kalshi NFL 2026-11-05: 22 players, $321,480 traded
+  Kalshi NFL 2026-11-08: 254 players, $71,002 traded
+  Kalshi NFL 2026-11-09: 20 players, $78 traded
   ML 2026_wk6: 14/14 graded
   ML 2026_wk7: 14/14 graded
   ML 2026_wk8: 14/14 graded
   ML 2026_wk9: 0/15 graded
-NFL 2026_wk9: kept 0 frozen, refreshed 291, late 0
+NFL 2026_wk9: kept 0 frozen, refreshed 286, late 0
 NFL stats 2026_wk6: 14/14 games (0 new)
 NFL stats 2026_wk7: 14/14 games (0 new)
 NFL stats 2026_wk8: 14/14 games (0 new)
 NFL stats 2026_wk9: 0/15 games (0 new)
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 290 players; check rows 6
-nba.html: 15 days, showing 2026-11-04: 14 games
-ev.html: 278 prices now, 17 at +2%+, 2933 tracked (2709 graded)
-book.html: 7 NFL weeks, 97 games
-  NFL ARI@SEA: $22,879 on SEA / $13,757 on ARI (2,361 trades)  (partial, game not started)
-  NFL TB@CHI: $224,821 on CHI / $6,650 on TB (2,474 trades)  (partial, game not started)
-  NFL BUF@MIN: $15,736 on MIN / $26,125 on BUF (2,449 trades)  (partial, game not started)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 285 players; check rows 6
+nba.html: 16 days, showing 2026-11-04: 14 games
+ev.html: 1477 prices now, 47 at +2%+, 3363 tracked (2788 graded)
+book.html: 7 NFL weeks, 96 games
+  NFL ARI@SEA: $47,476 on SEA / $106,305 on ARI (4,009 trades)  (partial, game not started)
+  NFL TB@CHI: $256,552 on CHI / $12,603 on TB (4,175 trades)  (partial, game not started)
+  NFL BUF@MIN: $23,761 on MIN / $59,990 on BUF (3,569 trades)  (partial, game not started)
 taker tape attached to 391 locked games
   File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
     if t.get('timestamp', 0) >= cut_ts: continue
        ^^^^^
 AttributeError: 'str' object has no attribute 'get'
-  nba 2026-11-04: 14 games (0 final, 11 with a Kalshi spread)
-  nflprops 2026_wk9: 1/1 upcoming games priced, 302 markets saved
-  nbaprops 2026-11-03: 0 games pulled now, 0 saved (0 tipping within 3h)
-  ev: 278 prices vs Pinnacle, 17 at +2% EV or better, 0 newly logged (2933 tracked)
+  nflprops 2026_wk9: 14/14 upcoming games priced, 2294 markets saved
+  nbaprops 2026-11-04: 0 games pulled now, 14 saved (0 tipping within 3h)
+  nbabox 2026-11-04: 4 games added
+  ev: 276 prices vs Pinnacle, 12 at +2% EV or better, 0 newly logged (3363 tracked)
 archive.html: 9 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
 lines.html: 28 MLB days, 7 NFL weeks, 191 games
