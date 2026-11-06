@@ -2,10 +2,16 @@ name: Update MLB Data & Board
 
 on:
   schedule:
-    # Run every hour at :00 (0 * * * * = every hour)
-    - cron: '0 * * * *'
+    # GitHub drops or delays scheduled runs when it is busy, worst at :00 (the hourly cron was firing only every 4-8 hours).
+    # Hourly at an off-peak minute, which GitHub skips far less often. Not more often than hourly: the NFL Pinnacle/moneyline pulls are not cached,
+    # so every run spends Odds API credits.
+    - cron: '17 * * * *'
   # Allow manual trigger from GitHub Actions tab
   workflow_dispatch:
+
+concurrency:                       # a manual rerun and a scheduled run never push over each other
+  group: update
+  cancel-in-progress: false
 
 env:
   TZ: America/Los_Angeles          # 'today' must be the Pacific calendar day, not UTC (UTC flips to tomorrow at 5pm PT)
