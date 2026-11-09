@@ -49,12 +49,13 @@ def game(r, m):
     elif not winners: head, shape = 'Book loses whatever happens', 'none'
     else: head, shape = f"Book wins unless {res[worst]['lab'].split(' (')[0]}", 'two'
     book_side = f'{fav} −{line}' if res[best]['favCovers'] else f'{dog} +{line}'
+    anti_side = f'{dog} +{line}' if res[worst]['favCovers'] else f'{fav} −{line}'   # the spread bet that loses if the book's worst result happens
     bs, bv = board_verdict(s, 'fav', r['time']); board = None if bs is None else (f'{fav} −{line}' if bs == 'fav' else f'{dog} +{line}')
     cover = s.get('favCovered'); hit = lambda side: None if cover is None else int((side.startswith(fav + ' ')) == bool(cover))
     team_all = {fav: sf + mf, dog: sd + md}
     return {'g': f"{r['away']} @ {r['home']}", 'time': r['time'], 'prime': prime(r['time']), 'at': r.get('at') or m.get('takerAt'), 'fav': fav, 'dog': dog, 'line': line,
             'bets': [(b[0], b[2] or 0, b[3], p) for b, p in zip(bets, pays)], 'res': res, 'best': best, 'worst': worst, 'act': act, 'head': head, 'shape': shape,
-            'bookSide': book_side, 'bookHit': hit(book_side), 'board': board, 'boardV': bv, 'boardHit': hit(board) if board else None, 'all': team_all,
+            'bookSide': book_side, 'bookHit': hit(book_side), 'antiSide': anti_side, 'antiHit': hit(anti_side), 'week': None, 'board': board, 'boardV': bv, 'boardHit': hit(board) if board else None, 'all': team_all,
             'final': None if r.get('finalHome') is None else f"{r['away']} {r['finalAway']} – {r['home']} {r['finalHome']}"}
 
 weeks = {}
@@ -87,7 +88,7 @@ def card(g):
 <div class="head {g['shape']}">{g['head']}</div>
 <div class="two"><div><h4>The money</h4><table class="bt"><thead><tr><th>Bet</th><th class="num">$ on it</th><th class="num">Price</th><th class="num">Profit if it wins</th></tr></thead><tbody>{rows}</tbody></table></div>
 <div><h4>What the book makes</h4><table class="bt"><thead><tr><th>Result</th><th class="num">Keeps</th><th class="num">Pays</th><th class="num">Book net</th></tr></thead><tbody>{outs}</tbody></table></div></div>
-<div class="foot"><span>Book’s side: <b>{g['bookSide']}</b> {res_tag(g['bookHit'])}</span><span>Board: <b>{(g['boardV'] + ' ' + g['board']) if g['board'] else '—'}</b> {res_tag(g['boardHit']) if g['boardV'] and not g['boardV'].startswith('PASS') else ''}{' <span class="agree">same side</span>' if agree else ' <span class="split">different sides</span>' if g['board'] else ''}</span><span class="tm">all $ (spread + ML): {allm}</span></div></div>'''
+<div class="foot"><span>Book’s side: <b>{g['bookSide']}</b> {res_tag(g['bookHit'])}</span><span>Against the book’s worst: <b>{g['antiSide']}</b> {res_tag(g['antiHit'])}</span><span>Board: <b>{(g['boardV'] + ' ' + g['board']) if g['board'] else '—'}</b> {res_tag(g['boardHit']) if g['boardV'] and not g['boardV'].startswith('PASS') else ''}{' <span class="agree">same side</span>' if agree else ' <span class="split">different sides</span>' if g['board'] else ''}</span><span class="tm">all $ (spread + ML): {allm}</span></div></div>'''
 
 def week_html(w):
     gs = weeks[w]; done = [g for g in gs if g['act'] is not None]
@@ -95,7 +96,25 @@ def week_html(w):
     k = f'<div class="kpi"><div>games<b>{len(gs)}</b></div>' + (f'<div>book’s best happened<b>{nb} of {len(done)}</b></div><div>book net<b class="{"pos" if net >= 0 else "neg"}">{signed(net)}</b></div><div>book’s side covered<b>{rec(gs, "bookHit")}</b></div>' if done else '') + '</div>'
     return f'<div class="wk" data-w="{w}" hidden>{k}' + ''.join(card(g) for g in gs) + '</div>'
 
+for w in weeks:
+    for g in weeks[w]: g['week'] = int(w.split('wk')[1])
 allg = [g for w in weeks for g in weeks[w]]
+# the strategies the book's numbers suggest, by period: weeks 3-6 (the board rule was fitted on these), 7, 8+ (after the Book page existed)
+PERIODS = [('Wk 3–6', lambda n: n <= 6), ('Wk 7', lambda n: n == 7), ('Wk 8+', lambda n: n >= 8), ('Season', lambda n: True)]
+def strat_cell(gs, side_key, hit_key):
+    done = [g for g in gs if g[hit_key] is not None]
+    if not done: return '<td class="num">—</td>'
+    w = sum(g[hit_key] for g in done)
+    u = sum((1 / g['bets'][0 if g[side_key].startswith(g['fav'] + ' ') else 1][2] - 1) if g[hit_key] else -1 for g in done)
+    return f'<td class="num">{w}-{len(done) - w} <span class="{"pos" if u >= 0 else "neg"}">{u:+.1f}u</span></td>'
+def strat_row(name, gs, side_key, hit_key):
+    return f'<tr><td>{name}</td>' + ''.join(strat_cell([g for g in gs if f(g['week'])], side_key, hit_key) for _, f in PERIODS) + '</tr>'
+board_gs = [g for g in allg if g['boardV'] and not g['boardV'].startswith('PASS')]
+strats = ''.join([strat_row('Against the book’s worst result', allg, 'antiSide', 'antiHit'),
+                  strat_row('The book’s side (wins in its best result)', allg, 'bookSide', 'bookHit'),
+                  strat_row('The board’s BET / STRONG BET (fade the spread $)', board_gs, 'board', 'boardHit')])
+weekly = ''.join(f'<tr><td>Week {w.split("wk")[1]}</td><td class="num">{sum(g["act"] is not None for g in weeks[w])}</td><td class="num {"pos" if n >= 0 else "neg"}">{signed(n)}</td><td class="num">{sum(1 for g in weeks[w] if g["act"] is not None and g["res"][g["act"]]["net"] > 0)}</td></tr>'
+                 for w in sorted(weeks, key=lambda w: int(w.split('wk')[1])) for n in [sum(g['res'][g['act']]['net'] for g in weeks[w] if g['act'] is not None)] if any(g['act'] is not None for g in weeks[w]))
 def season_row(name, gs):
     done = [g for g in gs if g['bookHit'] is not None]; w = sum(g['bookHit'] for g in done)
     units = sum((1 / g['bets'][0 if g['bookSide'].startswith(g['fav'] + ' ') else 1][2] - 1) if g['bookHit'] else -1 for g in done)
@@ -131,6 +150,12 @@ def page():
 <div class="ctl"><label>week <select id="wk">{opts}</select></label><label><input type="checkbox" id="hidedone"> hide finished games</label></div>
 {''.join(week_html(w) for w in order)}
 <h2 class="mk" style="margin-top:22px">Season so far <small>{len(done_all)} graded games · book’s best result happened {best_all} ({best_all / max(1, len(done_all)):.0%}; chance ≈ 33%) · book net {signed(net_all)}</small></h2>
+<h3 style="margin:14px 0 6px">Does the book win every week?</h3>
+<div class="wrap"><table class="bt" style="max-width:560px"><thead><tr><th>Week</th><th class="num">Games graded</th><th class="num">Book net (spread + ML)</th><th class="num">Games the book won</th></tr></thead><tbody>{weekly}</tbody></table></div>
+<h3 style="margin:14px 0 6px">Which bet follows the book? <small>1 unit each at Robinhood’s ask</small></h3>
+<div class="wrap"><table class="bt" style="max-width:720px"><thead><tr><th>Bet</th>{''.join(f'<th class="num">{n}</th>' for n, _ in PERIODS)}</tr></thead><tbody>{strats}</tbody></table></div>
+<p class="note"><b>Against the book’s worst result</b> = the spread side that loses if the result that costs the book the most happens (that result happened 29% of the time, less than a third). The board rule was fitted on weeks 3–6 and the book’s side was found on weeks 3–7, so <b>Wk 8+</b> is the honest test.</p>
+<h3 style="margin:14px 0 6px">The book’s side, by kind of game</h3>
 <div class="wrap"><table class="bt" style="max-width:560px"><thead><tr><th>Bet the book’s side when…</th><th class="num">Record</th><th class="num">1 unit each</th></tr></thead><tbody>{season}</tbody></table></div>
 <p class="note">Small samples: a few weeks of games. A cross-check on the board, not a separate pick.</p>
 </div>
