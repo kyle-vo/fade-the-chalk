@@ -1,46 +1,4 @@
-﻿NFL stats 2026_wk7: 14/14 games (0 new)
-NFL stats 2026_wk8: 14/14 games (0 new)
-NFL stats 2026_wk9: 0/15 games (0 new)
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, current 2026_wk9: 289 players; check rows 6
-nba.html: 16 days, showing 2026-11-04: 14 games
-ev.html: 352 prices now, 20 at +2%+, 2942 tracked (2709 graded)
-book.html: 7 NFL weeks, 97 games
-  NFL ARI@SEA: $29,085 on SEA / $18,729 on ARI (2,847 trades)  (partial, game not started)
-  NFL TB@CHI: $241,342 on CHI / $9,678 on TB (3,584 trades)  (partial, game not started)
-  NFL BUF@MIN: $20,676 on MIN / $34,507 on BUF (3,067 trades)  (partial, game not started)
-taker tape attached to 391 locked games
-  File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
-    if t.get('timestamp', 0) >= cut_ts: continue
-       ^^^^^
-AttributeError: 'str' object has no attribute 'get'
-  nba 2026-11-05: 2 games (0 final, 0 with a Kalshi spread)
-  nflprops 2026_wk9: 2/2 upcoming games priced, 517 markets saved
-  nbaprops 2026-11-04: 0 games pulled now, 0 saved (0 tipping within 3h)
-  ev: 352 prices vs Pinnacle, 17 at +2% EV or better, 1 newly logged (2943 tracked)
-archive.html: 9 NFL weeks, 49 MLB days
-ml.html: 40 MLB days, 9 NFL weeks, 372 graded games
-lines.html: 28 MLB days, 7 NFL weeks, 191 games
-done 08:06
-=== 2026-11-04 11:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Jonathan Taylor        IND  RB p=0.620 fair -163 heat 86 share 0.366
-  NFL Bijan Robinson         ATL  RB p=0.620 fair -163 heat 61 share 0.34
-  NFL D'Andre Swift          CHI  RB p=0.604 fair -152 heat 62 share 0.301
-  NFL James Cook III         BUF  RB p=0.567 fair -131 heat 76 share 0.297
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #5 used this run
-snapshot 6 saved for 2026-11-04
-  Kalshi NFL 2026-11-05: 22 players, $186,333 traded
-  Kalshi NFL 2026-11-08: 225 players, $25,844 traded
-  ML 2026_wk6: 14/14 graded
-  ML 2026_wk7: 14/14 graded
-  ML 2026_wk8: 14/14 graded
-  ML 2026_wk9: 0/15 graded
-NFL 2026_wk9: kept 0 frozen, refreshed 291, late 0
+﻿NFL 2026_wk9: kept 0 frozen, refreshed 291, late 0
 NFL stats 2026_wk6: 14/14 games (0 new)
 NFL stats 2026_wk7: 14/14 games (0 new)
 NFL stats 2026_wk8: 14/14 games (0 new)
@@ -238,4 +196,100 @@ AttributeError: 'str' object has no attribute 'get'
   ev: 18 prices vs Pinnacle, 0 at +2% EV or better, 0 newly logged (3950 tracked)
 archive.html: 9 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 9 NFL weeks, 386 graded games
+lines.html: 28 MLB days, 7 NFL weeks, 191 games
+done 20:50
+=== 2026-11-11 20:31 ===
+git : Updating files:  57% (70/122)
+At C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\hourly.ps1:7 char:1
++ git pull -q --no-rebase -X theirs origin main 2>&1 | Out-File $log -A ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Updating files:  57% (70/122):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Updating files:  58% (71/122)
+Updating files:  59% (72/122)
+Updating files:  60% (74/122)
+Updating files:  61% (75/122)
+Updating files:  62% (76/122)
+Updating files:  63% (77/122)
+Updating files:  64% (79/122)
+Updating files:  65% (80/122)
+Updating files:  66% (81/122)
+Updating files:  67% (82/122)
+Updating files:  68% (83/122)
+Updating files:  69% (85/122)
+Updating files:  70% (86/122)
+Updating files:  71% (87/122)
+Updating files:  72% (88/122)
+Updating files:  73% (90/122)
+Updating files:  74% (91/122)
+Updating files:  75% (92/122)
+Updating files:  76% (93/122)
+Updating files:  77% (94/122)
+Updating files:  78% (96/122)
+Updating files:  79% (97/122)
+Updating files:  80% (98/122)
+Updating files:  81% (99/122)
+Updating files:  82% (101/122)
+Updating files:  83% (102/122)
+Updating files:  84% (103/122)
+Updating files:  85% (104/122)
+Updating files:  86% (105/122)
+Updating files:  87% (107/122)
+Updating files:  88% (108/122)
+Updating files:  89% (109/122)
+Updating files:  90% (110/122)
+Updating files:  91% (112/122)
+Updating files:  92% (113/122)
+Updating files:  93% (114/122)
+Updating files:  94% (115/122)
+Updating files:  95% (116/122)
+Updating files:  96% (118/122)
+Updating files:  97% (119/122)
+Updating files:  98% (120/122)
+Updating files:  99% (121/122)
+Updating files: 100% (122/122)
+Updating files: 100% (122/122), done.
+MLB fetch failed: HTTPSConnectionPool(host='statsapi.mlb.com', port=443): Max retries exceeded with url: /api/v1/schedule?sportId=1&date=2026-11-11&hydrate=probablePitcher%2Cvenue%2Cweather%2Clineups%2Cteam (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+[NFL]
+NFL fetch failed: HTTPSConnectionPool(host='site.web.api.espn.com', port=443): Max retries exceeded with url: /apis/site/v2/sports/football/nfl/scoreboard (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+done
+  NFL Bijan Robinson         ATL  RB p=0.577 fair -136 heat 55 share 0.34
+  NFL Christian McCaffrey    SF   RB p=0.560 fair -127 heat 78 share 0.325
+  NFL James Cook III         BUF  RB p=0.548 fair -121 heat 73 share 0.297
+  NFL Bucky Irving           TB   RB p=0.539 fair -117 heat 40 share 0.306
+  NFL touchdown props: skipped, 0 credits (already pulled for the Wednesday night window (Wed 19:02))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #10 used this run
+snapshot 5 saved for 2026-11-11
+  Kalshi NFL 2026-11-12: 22 players, $230,201 traded
+  Kalshi NFL 2026-11-15: 234 players, $524,575 traded
+  Kalshi NFL 2026-11-16: 19 players, $205 traded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 14/14 graded
+  ML 2026_wk8: 14/14 graded
+  ML 2026_wk9: 15/15 graded
+NFL 2026_wk9: kept 249 frozen, refreshed 14, late 0
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 14/14 games (0 new)
+NFL stats 2026_wk8: 14/14 games (0 new)
+NFL stats 2026_wk9: 15/15 games (0 new)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, 2026_wk10, current 2026_wk10: 248 players; check rows 7
+nba.html: 23 days, showing 2026-11-11: 10 games
+ev.html: 849 prices now, 14 at +2%+, 4384 tracked (4060 graded)
+book.html: 7 NFL weeks, 96 games
+  NFL SF@DAL: $56,584 on DAL / $233,570 on SF (9,336 trades)  (partial, game not started)
+  NFL PIT@CIN: $51,568 on CIN / $53,346 on PIT (4,917 trades)  (partial, game not started)
+  NFL LAC@BAL: $26,595 on BAL / $22,313 on LAC (3,880 trades)  (partial, game not started)
+taker tape attached to 405 locked games
+  File "C:\Users\Kyle\OneDrive\Desktop\FadeTheChalk\polymarket.py", line 57, in tape
+    if t.get('timestamp', 0) >= cut_ts: continue
+       ^^^^^
+AttributeError: 'str' object has no attribute 'get'
+  nflprops 2026_wk10: 13/13 upcoming games priced, 2460 markets saved
+  nbaprops 2026-11-11: 0 games pulled now, 4 saved (0 tipping within 3h)
+  nbabox 2026-11-11: 5 games added
+  ev: 232 prices vs Pinnacle, 3 at +2% EV or better, 0 newly logged (4384 tracked)
+archive.html: 10 NFL weeks, 49 MLB days
+ml.html: 40 MLB days, 10 NFL weeks, 387 graded games
 lines.html: 28 MLB days, 7 NFL weeks, 191 games
