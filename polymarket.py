@@ -53,6 +53,9 @@ def tape(cid, cut_ts, outcomes):
         try: page = S.get(f'{DATA}/trades', params={'market': cid, 'limit': 500, 'offset': off, 'takerOnly': 'true'}, timeout=30).json()
         except Exception as e: print(f'  polymarket trades failed: {e}'); break
         if not page: break
+        if not isinstance(page, list):                     # an error object, not trades (e.g. past the API's paging limit): keep what we have
+            if off == 0: print(f'  polymarket trades {cid[:10]}: {str(page)[:120]}')
+            break
         for t in page:
             if t.get('timestamp', 0) >= cut_ts: continue
             o = t.get('outcome'); other = outcomes[1] if o == outcomes[0] else outcomes[0]

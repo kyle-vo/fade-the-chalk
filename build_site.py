@@ -273,8 +273,8 @@ svg.chart{width:100%;height:220px;display:block;background:#0e1115;border:1px so
 def nav(active, root, sport=None):
     """one bar for every page (navbar.py): sport switch, page, slate picker, then Track / Archive"""
     from navbar import navbar, day_label, week_label
-    idx_day = INDEX_DAY if 'INDEX_DAY' in globals() else None; idx_wk = max(weeks) if weeks else None
-    dl = sorted(days, reverse=True); wl = sorted(weeks, reverse=True)
+    idx_day = INDEX_DAY if 'INDEX_DAY' in globals() else None; idx_wk = max(weeks, key=lambda t: int(t.split('wk')[1])) if weeks else None
+    dl = sorted(days, reverse=True); wl = sorted(weeks, key=lambda t: int(t.split('wk')[1]), reverse=True)   # numeric: as text wk10 < wk9
     slates = {'mlb': [(d, day_label(d) + (' (today)' if d == idx_day else ''), f'{root}index.html#mlb' if d == idx_day else f'{root}days/{d}.html') for d in dl],
               'nfl': [(w, week_label(w) + (' (this week)' if w == idx_wk else ''), f'{root}index.html#nfl' if w == idx_wk else f'{root}nfl/{w}.html') for w in wl]}
     if active in ('track.html', 'archive.html'): return navbar(active[:-5], root)
