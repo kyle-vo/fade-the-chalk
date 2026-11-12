@@ -685,7 +685,7 @@ for r in board['nfl']: r.setdefault('date', 'now')
 _cal = datetime.date.today().isoformat()
 INDEX_DAY = _cal if _cal in days else today   # output/board.json is local and gitignored, so it can be a day behind the locks pulled from git: the calendar day's lock wins
 today_rows = days.get(_cal) or days.get(today, board['mlb'])
-cur_week = max(weeks) if weeks else None
+cur_week = max(weeks, key=lambda t: int(t.split('wk')[1])) if weeks else None   # numeric: as text max() picks wk9 over wk10
 nfl_today = weeks[cur_week] if cur_week else board['nfl']   # locked + graded rows, same as the week page
 W('index.html', board_page('Fade The Chalk', f'MLB HR + NFL anytime TD · model prob vs. the price vs. the crowd · built {gen}', 'index.html', '', today_rows, nfl_today, False))
 for d, rows in days.items():
