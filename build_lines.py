@@ -17,7 +17,7 @@ for lf in sorted(glob.glob(os.path.join(BT, 'lines_*.json'))):
             m = ml.get(r.get('eventId') or r.get('gamePk'))
             if m and m.get('takerHome$') is not None: r['mlHome$'], r['mlAway$'] = m['takerHome$'], m.get('takerAway$') or 0
             if m and m.get('kalshiAsk') and m.get('kalshiAwayAsk'): r['mlHomeAsk'], r['mlAwayAsk'] = m['kalshiAsk'], m['kalshiAwayAsk']
-mlb_days = sorted([t for t in boards if '_wk' not in t], reverse=True); nfl_weeks = sorted([t for t in boards if '_wk' in t], reverse=True)
+mlb_days = sorted([t for t in boards if '_wk' not in t], reverse=True); nfl_weeks = sorted([t for t in boards if '_wk' in t], key=lambda t: int(t.split('wk')[1]), reverse=True)   # numeric: as text wk10 < wk9
 today = mlb_days[0] if mlb_days else None; week = nfl_weeks[0] if nfl_weeks else None
 
 def head():

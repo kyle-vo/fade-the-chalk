@@ -186,7 +186,7 @@ if __name__ == '__main__':
     jobs = []
     mp = os.path.join(BT, f'ml_{today}.json')
     if os.path.exists(mp): jobs.append(('MLB', today, J(mp)))
-    wk = sorted(glob.glob(os.path.join(BT, 'ml_2026_wk*.json')))
+    wk = sorted(glob.glob(os.path.join(BT, 'ml_2026_wk*.json')), key=lambda p: int(p.rsplit('wk', 1)[1][:-5]))   # numeric: as text 'wk10' sorts before 'wk9'
     if wk: tag = os.path.basename(wk[-1])[3:-5]; jobs.append(('NFL', tag, J(wk[-1])))
     for sport, tag, lock_rows in jobs:
         try: new = build(sport, lock_rows, now)

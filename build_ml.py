@@ -60,7 +60,7 @@ for lockf in sorted(glob.glob(os.path.join(BT, 'ml_*.json'))):
                 r['spLine'] = pt + (' -' if onfav else ' +') + str(sp['line'])
     boards[tag] = rows
 mlb_days = sorted([t for t in boards if not t.endswith(('wk1', 'wk2', 'wk3', 'wk4', 'wk5', 'wk6', 'wk7', 'wk8', 'wk9')) and '_wk' not in t], reverse=True)
-nfl_weeks = sorted([t for t in boards if '_wk' in t], reverse=True)
+nfl_weeks = sorted([t for t in boards if '_wk' in t], key=lambda t: int(t.split('wk')[1]), reverse=True)   # numeric: as text wk10 < wk9
 today = mlb_days[0] if mlb_days else None; week = nfl_weeks[0] if nfl_weeks else None
 graded = [r for rows in boards.values() for r in rows if r['homeWin'] is not None]
 # slim copy for track.html (build_site.py embeds it so moneyline paper bets can be scored there)
@@ -360,7 +360,7 @@ def _row(label, href, hr, ml, what):
     mlc = '—' if not ml else (f"{ml['w']}-{ml['graded'] - ml['w']} picks (expected {ml['exp']:.1f})" if ml['graded'] else f"{ml['n']} locked")
     return f'<tr><td><a href="{href}">{label}</a></td><td class="tm">{what}</td><td class="tm">{hrc}</td><td class="tm">{mlc}</td></tr>'
 mlb_tags = sorted({os.path.basename(f)[5:15] for f in glob.glob(os.path.join(BT, 'pred_*.json'))} | {t for t in boards if '_wk' not in t}, reverse=True)
-nfl_tags = sorted({os.path.basename(f)[4:-5] for f in glob.glob(os.path.join(BT, 'nfl_*.json'))} | {t for t in boards if '_wk' in t}, reverse=True)
+nfl_tags = sorted({os.path.basename(f)[4:-5] for f in glob.glob(os.path.join(BT, 'nfl_*.json'))} | {t for t in boards if '_wk' in t}, key=lambda t: int(t.split('wk')[1]), reverse=True)
 arch = head('Fade The Chalk', 'archive · every locked day and week, both boards, kept forever', 'archive')
 arch += '<div class="panel top"><h2>NFL weeks <small>touchdowns page · moneylines tab</small></h2><div class="wrap"><table><thead><tr><th>Week</th><th></th><th>Anytime TD</th><th>Moneyline</th></tr></thead><tbody>'
 for t in nfl_tags: arch += _row(t.replace('_', ' '), f'nfl/{t}.html', _hr_summary(t, 'NFL'), _ml_summary(t), 'TD board → nfl page · ML → Moneyline, pick the week')
