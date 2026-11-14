@@ -54,7 +54,7 @@ def _ts(v):
     except Exception: return 0
 
 def _page(url, cid, off, cursor):
-    p = {'market': cid, 'limit': 500, 'takerOnly': 'true'}
+    p = {'condition' if '/v2/' in url else 'market': cid, 'limit': 500, 'takerOnly': 'true'}   # v2 filters by 'condition'
     if cursor: p['cursor'] = cursor
     else: p['offset'] = off
     page = S.get(url, params=p, timeout=30).json()
