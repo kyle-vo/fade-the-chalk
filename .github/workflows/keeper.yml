@@ -1,0 +1,31 @@
+name: Hourly keeper
+
+# GitHub's own hourly schedule for update.yml only fires every 5-8 hours (scheduled runs are best-effort and dropped when GitHub is busy).
+# This job stays alive for up to ~5h50m and starts update.yml itself once an hour; whenever GitHub does fire this keeper's schedule,
+# the new keeper replaces the old one (cancel-in-progress), so there is always one running. Public repo: Actions minutes are free.
+on:
+  schedule:
+    - cron: '43 */3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: keeper
+  cancel-in-progress: true
+
+permissions:
+  actions: write
+
+jobs:
+  keep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - name: Start update.yml once an hour
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          for i in 1 2 3 4 5; do
+            gh workflow run update.yml --ref main && echo "started update.yml ($i) at $(date -u +%H:%MZ)" || echo "dispatch failed ($i)"
+            sleep 3540
+          done
