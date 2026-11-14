@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          ref: main            # the latest main, not the commit at trigger time: a queued run otherwise rebuilds stale files and conflicts on push
 
       - name: Set up Python
         uses: actions/setup-python@v4
