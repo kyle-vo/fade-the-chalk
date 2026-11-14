@@ -7,8 +7,11 @@ toward the final score: their cover rates are biased. Spreads are now tested aga
   spread BET   = won its last game by 18+ AND (its opponent also won its last OR it is the underdog): 62% (+18%), 61% / 63% by half; 2026 8-2.
                  STRONG when both. If both teams qualify, only the underdog (16-9; the favorite 9-16). Coming off a blowout, favored, against a team that lost its last: 48%, no edge -> PASS.
   ML LEAN      = the same team on the moneyline (+15%).
-  LEAN         = the better team (season margin 4+/game better, 5+ games each) as the moneyline underdog: +33% on 47 games, both halves.
+  tracked      = the better team (season margin 4+/game better, 5+ games each) as the moneyline underdog: +33% on 47 games last season,
+                 but 4-8 in 2026, so no longer a pick (2026-11-14).
   LEAN         = the underdog getting 10-12.5 points: 57% both halves (+8%).
+  LEAN         = the underdog in the lone first or last game of the day (3+ game slate, the only game in that tip-off slot): 56% (55% / 57% by half
+                 of 2025, 16-13 in 2026). When the slot is shared it's 52%, and the favorite in a lone slot covered only 43%. Added 2026-11-14.
   total LEAN   = under below 220: NOT validated (last season's totals data is the biased kind); kept small until this season says otherwise.
 Dropped: fading a 4c spread line move. Measured on the moneyline price (unbiased), fading a 3c+ move in the last 6h covered 43% (-19%);
 following it 57%, best when the move is toward an underdog that stays the underdog (60%). Tracked on the scorecard, not a pick yet.
@@ -35,6 +38,12 @@ for d in days:
             prev = [m for t, m in _log.get(r[side], []) if t < r['time']]
             r[side + 'Last'] = prev[-1] if prev else None
             r[side + 'Margin'] = round(sum(prev) / len(prev), 1) if prev else None; r[side + 'Gp'] = len(prev)   # season point differential per game so far
+# the lone first / last game of the day: on a slate of 3+ games, the only game in the earliest (or latest) tip-off slot
+for d in days:
+    ts = sorted(r['time'] for r in days[d])
+    for r in days[d]:
+        r['slot'] = None
+        if len(ts) >= 3 and ts.count(r['time']) == 1: r['slot'] = 'first' if r['time'] == ts[0] else 'last' if r['time'] == ts[-1] else None
 _pt = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-7)).date().isoformat()
 cur = _pt if _pt in days else (min([d for d in order if d >= _pt], default=None) or (order[0] if order else None))
 
@@ -75,9 +84,11 @@ function sides(r){
     // +33% on the moneyline (47 games, both halves), only +5% on the spread, so the LEAN is the moneyline
     const myM = home ? r.homeMargin : r.awayMargin, opM = home ? r.awayMargin : r.homeMargin, gpOk = Math.min(r.homeGp || 0, r.awayGp || 0) >= 5;
     x.under = x.team && gpOk && myM != null && opM != null && myM - opM >= 4 && !x.fav && (x.kind === 'ml' || x.kind === 'spread');
-    if (x.under && x.kind === 'ml' && x.v === 'PASS') x.v = 'LEAN';
+    // was a moneyline LEAN (+33% on 47 games last season); 4-8 this season, so tracked on the scorecard, not a pick (2026-11-14)
     x.bigDog = x.kind === 'spread' && !x.fav && s && s.line >= 10 && s.line < 13;   // 10-12.5 point underdogs covered 57%
     if (x.bigDog && x.v === 'PASS') x.v = 'LEAN';
+    x.edgeDog = x.kind === 'spread' && !x.fav && !!r.slot;   // the underdog in the lone first/last game of the day covered 56% (each half of 2025 and 2026)
+    if (x.edgeDog && x.v === 'PASS') x.v = 'LEAN';
     if (x.kind === 'total' && x.side.startsWith('Under') && r.total && r.total.line < 220) x.v = 'LEAN';
     // line move: the favorite's price at this line now (frozen at tip) vs the first price seen 6h+ before tip. Not a pick any more (fading it
     // was measured on the biased strikes); x.toDog = a 2c+ move toward this underdog, the follow-the-move idea, tracked on the scorecard
@@ -89,7 +100,8 @@ function sides(r){
              x.blowFav && x.v === 'PASS' && x.kind === 'spread' ? `${x.team} won its last by ${last} but is favored against a team that lost: no edge` : '',
              x.bothFav && x.kind === 'spread' ? `${x.team} won its last by ${last}, but so did its opponent: the underdog side is the play` : '',
              x.bigDog ? `${s.line}-point underdog (10-12.5 covered 57%)` : '',
-             x.under ? `the better team (${myM >= 0 ? '+' : ''}${myM} vs ${opM >= 0 ? '+' : ''}${opM} per game) priced as the underdog` : '',
+             x.edgeDog ? `underdog in the only ${r.slot} game of the day (covered 56%)` : '',
+             x.under && x.kind === 'ml' ? `tracked, not a pick: the better team (${myM >= 0 ? '+' : ''}${myM} vs ${opM >= 0 ? '+' : ''}${opM} per game) priced as the underdog` : '',
              x.v === 'LEAN' && x.kind === 'total' ? 'total under 220' : '',
              x.toDog ? `the line moved ${Math.round(Math.abs(x.move) * 100)}¢ toward ${x.team} (tracked, not a pick)` : ''].filter(Boolean).join(' · '); }
   // never both sides of one market: a BET on one side outranks a LEAN on the other (LAL -12.5 BET vs SAC +12.5 big-dog LEAN)
@@ -191,9 +203,10 @@ const strat = {
   '   of which STRONG (both)': G.filter(x => x.kind === 'spread' && x.v === 'STRONG BET'),
   'PASS now: won last by 18+, favored, opponent lost its last (old BET)': G.filter(x => x.kind === 'spread' && x.blowFav),
   'Moneyline LEAN: same blowout team': G.filter(x => x.kind === 'ml' && x.blow),
-  'LEAN: better team (season margin +4/game) priced as underdog, moneyline': G.filter(x => x.kind === 'ml' && x.under),
+  'Tracked (was LEAN): better team (season margin +4/game) priced as underdog, moneyline': G.filter(x => x.kind === 'ml' && x.under),
   '   same, spread (not a pick)': G.filter(x => x.kind === 'spread' && x.under),
   'LEAN: underdog getting 10-12.5 points': G.filter(x => x.kind === 'spread' && x.bigDog),
+  'LEAN: underdog in the lone first / last game of the day': G.filter(x => x.kind === 'spread' && x.edgeDog),
   'Tracked: follow a 2¢+ line move toward the underdog': G.filter(x => x.kind === 'spread' && x.toDog),
   'Total LEAN: under when the total is below 220': G.filter(x => x.kind === 'total' && x.v === 'LEAN'),
   'Spread: side with LESS of the crowd $ (NFL rule, break-even last season)': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
@@ -244,7 +257,7 @@ def page():
 <div class="legend"><b>Rules, re-tested Oct 30</b> on all of last season (1,306 games) and checked against this season. Last season's spreads are graded against the line implied by Kalshi's closing moneyline (it matches Pinnacle's line within half a point), at a 51¢ ask plus the fee. An older test used spread lines picked partly by in-game trading, which flattered several rules; those numbers are replaced below.<br>
 <b>BET</b> on a spread = the team that <i>won its last game by 18+</i>, when its opponent also won its last game <i>or</i> it is the underdog: covered 62% (+18%), 61% and 63% in the two halves of the season, 8-2 so far this season. The market prices in a letdown after a blowout that doesn't come.
 <b>STRONG BET</b> = both (opponent won its last <i>and</i> it is the underdog). If <i>both</i> teams qualify, only the underdog is the bet (16-9 vs 9-16 for the favorite). <b>No longer a bet:</b> the blowout team favored against an opponent that lost its last game (48% last season, 0-4 this season).
-<b>LEAN</b> on a moneyline = the same blowout team (+15%). <b>LEAN</b> on a moneyline = <i>the better team priced as the underdog</i>: its season point differential is 4+ points a game better than its opponent's (5+ games each): +33% on 47 games, both halves (only +5% on the spread, so it's the moneyline). <b>LEAN</b> on a spread = <i>the underdog getting 10-12.5 points</i>: 57% both halves (+8%); smaller and bigger underdogs didn't cover. <b>LEAN</b> on a total = the under below 220: not confirmed (last season's totals data isn't reliable), so keep it small.
+<b>LEAN</b> on a moneyline = the same blowout team (+15%). <b>Tracked, no longer a pick:</b> <i>the better team priced as the moneyline underdog</i> (+33% on 47 games last season, 4-8 this season). <b>LEAN</b> on a spread = <i>the underdog getting 10-12.5 points</i>: 57% both halves (+8%); smaller and bigger underdogs didn't cover. <b>LEAN</b> on a spread = <i>the underdog in the lone first or last game of the day</i> (on a slate of 3+ games, the only game in the earliest or latest tip-off slot): 56% in each half of last season and this season. If several games share that slot, no edge. <b>LEAN</b> on a total = the under below 220: not confirmed (last season's totals data isn't reliable), so keep it small.
 <b>Dropped:</b> fading a line move. On clean prices, fading a 3¢+ move in the last 6 hours covered only 43%; following the move did better (57%), best when it moves toward an underdog that stays the underdog. That one is tracked on the scorecard, not a pick yet.
 What did <i>not</i> work: the crowd's money of any kind (moneyline or spread, big or small bets, early or late), back-to-backs and rest, win or losing streaks, home/road. The rule needs each team's previous game, so it starts with each team's second game. Regular season only: in the playoffs it was flat.</div>
 </div>
