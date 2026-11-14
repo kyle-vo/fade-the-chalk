@@ -68,9 +68,11 @@ def _page(url, cid, off, cursor):
     if isinstance(page, list): return page, None, None
     if not isinstance(page, dict): return None, None, f'unexpected {type(page).__name__}'
     rows = next((page[k] for k in ('data', 'trades', 'results', 'items') if isinstance(page.get(k), list)), None)
-    nxt = page.get('next_cursor') or page.get('nextCursor') or page.get('cursor')
+    pg = page.get('pagination') if isinstance(page.get('pagination'), dict) else {}   # v2 puts the cursor in a 'pagination' object
+    nxt = (page.get('next_cursor') or page.get('nextCursor') or pg.get('next_cursor') or pg.get('nextCursor') or pg.get('cursor') or pg.get('next'))
+    if pg and pg.get('has_more') is False or pg.get('hasMore') is False: nxt = None
     if url not in _LOGGED:   # log the shape once per run so a format change is visible in the Actions log
-        _LOGGED.add(url); print(f'  polymarket {url.rsplit("/", 2)[-2]}: keys {list(page)[:8]}' + (f' trade keys {list(rows[0])[:10]}' if rows else '') + (f' (dropped {sorted(_DROP)})' if _DROP else ''))
+        _LOGGED.add(url); print(f'  polymarket {url.rsplit("/", 2)[-2]}: keys {list(page)[:8]}' + (f' trade keys {list(rows[0])[:10]}' if rows else '') + (f' (dropped {sorted(_DROP)})' if _DROP else '') + (f' pagination {pg}' if pg else ''))
     if rows is None: return None, None, str(page)[:160]
     return rows, (nxt if nxt not in ('', 'LTE=') else None), None   # 'LTE=' is Polymarket's end-of-list cursor
 
