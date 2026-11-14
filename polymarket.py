@@ -46,25 +46,52 @@ def same_team(outcome, full, abbr):
     return bool(o) and (o == f or f.endswith(' ' + o) or o == (abbr or '').lower())
 
 
+_LOGGED = set()
+def _ts(v):
+    """trade time as unix seconds (v1 sent seconds; accept ms or an ISO string too)"""
+    if isinstance(v, (int, float)): return v / 1000 if v > 1e11 else v
+    try: return datetime.datetime.fromisoformat(str(v).replace('Z', '+00:00')).timestamp()
+    except Exception: return 0
+
+def _page(url, cid, off, cursor):
+    p = {'market': cid, 'limit': 500, 'takerOnly': 'true'}
+    if cursor: p['cursor'] = cursor
+    else: p['offset'] = off
+    page = S.get(url, params=p, timeout=30).json()
+    if isinstance(page, list): return page, None, None
+    if not isinstance(page, dict): return None, None, f'unexpected {type(page).__name__}'
+    rows = next((page[k] for k in ('data', 'trades', 'results', 'items') if isinstance(page.get(k), list)), None)
+    nxt = page.get('next_cursor') or page.get('nextCursor') or page.get('cursor')
+    if url not in _LOGGED:   # log the shape once per run so a format change is visible in the Actions log
+        _LOGGED.add(url); print(f'  polymarket {url.rsplit("/", 2)[-2]}: keys {list(page)[:8]}' + (f' trade keys {list(rows[0])[:10]}' if rows else ''))
+    if rows is None: return None, None, str(page)[:160]
+    return rows, (nxt if nxt not in ('', 'LTE=') else None), None   # 'LTE=' is Polymarket's end-of-list cursor
+
+
 def tape(cid, cut_ts, outcomes):
-    """pre-game taker dollars by team: {outcome: dollars}, trade count"""
-    d = {outcomes[0]: 0.0, outcomes[1]: 0.0}; n = 0; off = 0
-    while off <= 20000:
-        try: page = S.get(f'{DATA}/trades', params={'market': cid, 'limit': 500, 'offset': off, 'takerOnly': 'true'}, timeout=30).json()
-        except Exception as e: print(f'  polymarket trades failed: {e}'); break
-        if not page: break
-        if not isinstance(page, list):                     # an error object, not trades (e.g. past the API's paging limit): keep what we have
-            if off == 0: print(f'  polymarket trades {cid[:10]}: {str(page)[:120]}')
-            break
-        for t in page:
-            if t.get('timestamp', 0) >= cut_ts: continue
-            o = t.get('outcome'); other = outcomes[1] if o == outcomes[0] else outcomes[0]
-            if o not in d: continue
-            size, price = float(t.get('size') or 0), float(t.get('price') or 0)
-            if t.get('side') == 'BUY': d[o] += size * price
-            else: d[other] += size * (1 - price)
-            n += 1
-        off += 500
+    """pre-game taker dollars by team: {outcome: dollars}, trade count. Data API v1 (/trades) was retired in Nov 2026: try /v2/trades first."""
+    d = {outcomes[0]: 0.0, outcomes[1]: 0.0}; n = 0
+    for url in (f'{DATA}/v2/trades', f'{DATA}/trades'):
+        off, cursor, ok = 0, None, False
+        while off <= 20000:
+            try: page, cursor, err = _page(url, cid, off, cursor)
+            except Exception as e: page, err = None, f'{type(e).__name__} {e}'
+            if page is None:
+                if off == 0: print(f'  polymarket trades {cid[:10]} via {url.rsplit("/", 2)[-2]}: {err}')
+                break
+            ok = True
+            if not page: break
+            for t in page:
+                if _ts(t.get('timestamp') or t.get('time') or t.get('createdAt') or 0) >= cut_ts: continue
+                o = t.get('outcome'); other = outcomes[1] if o == outcomes[0] else outcomes[0]
+                if o not in d: continue
+                size, price = float(t.get('size') or 0), float(t.get('price') or 0)
+                if str(t.get('side', '')).upper() == 'BUY': d[o] += size * price
+                else: d[other] += size * (1 - price)
+                n += 1
+            if not cursor and len(page) < 500: break
+            off += 500
+        if ok: break
     return d, n
 
 
