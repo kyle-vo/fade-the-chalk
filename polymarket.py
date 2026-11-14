@@ -4,7 +4,7 @@ team the bettor backed (BUY team X = money on X; SELL team X = money on the othe
 Adds fields to the locked moneyline rows (never removes any): pmHome$, pmAway$, pmPubHome, pmTrades, pmVol, pmAt.
 Games are matched by team names and start time. Started games are frozen from a cache (backtest/poly/) so a result never changes them.
 """
-import os, sys, json, glob, datetime, requests
+import os, re, sys, json, glob, datetime, requests
 
 HERE = os.path.dirname(os.path.abspath(__file__)); BT = os.path.join(HERE, 'backtest'); CACHE = os.path.join(BT, 'poly')
 os.makedirs(CACHE, exist_ok=True)
@@ -53,17 +53,24 @@ def _ts(v):
     try: return datetime.datetime.fromisoformat(str(v).replace('Z', '+00:00')).timestamp()
     except Exception: return 0
 
+_DROP = set()   # query params the v2 API said it doesn't accept ("'x' is not a query param on this API")
 def _page(url, cid, off, cursor):
-    p = {'condition' if '/v2/' in url else 'market': cid, 'limit': 500, 'takerOnly': 'true'}   # v2 filters by 'condition'
-    if cursor: p['cursor'] = cursor
-    else: p['offset'] = off
-    page = S.get(url, params=p, timeout=30).json()
+    v2 = '/v2/' in url
+    for _ in range(4):
+        p = {'condition' if v2 else 'market': cid, 'limit': 500, 'takerOnly': 'true'}   # v2 filters by 'condition'
+        if cursor: p['cursor'] = cursor
+        elif not v2: p['offset'] = off                                                   # v2 pages are cursor-only
+        for k in _DROP: p.pop(k, None)
+        page = S.get(url, params=p, timeout=30).json()
+        m = re.search(r"'(\w+)' is not a query param", str(page.get('error', ''))) if isinstance(page, dict) else None
+        if m and m.group(1) not in _DROP and m.group(1) not in ('condition', 'market'): _DROP.add(m.group(1)); continue
+        break
     if isinstance(page, list): return page, None, None
     if not isinstance(page, dict): return None, None, f'unexpected {type(page).__name__}'
     rows = next((page[k] for k in ('data', 'trades', 'results', 'items') if isinstance(page.get(k), list)), None)
     nxt = page.get('next_cursor') or page.get('nextCursor') or page.get('cursor')
     if url not in _LOGGED:   # log the shape once per run so a format change is visible in the Actions log
-        _LOGGED.add(url); print(f'  polymarket {url.rsplit("/", 2)[-2]}: keys {list(page)[:8]}' + (f' trade keys {list(rows[0])[:10]}' if rows else ''))
+        _LOGGED.add(url); print(f'  polymarket {url.rsplit("/", 2)[-2]}: keys {list(page)[:8]}' + (f' trade keys {list(rows[0])[:10]}' if rows else '') + (f' (dropped {sorted(_DROP)})' if _DROP else ''))
     if rows is None: return None, None, str(page)[:160]
     return rows, (nxt if nxt not in ('', 'LTE=') else None), None   # 'LTE=' is Polymarket's end-of-list cursor
 
@@ -89,7 +96,7 @@ def tape(cid, cut_ts, outcomes):
                 if str(t.get('side', '')).upper() == 'BUY': d[o] += size * price
                 else: d[other] += size * (1 - price)
                 n += 1
-            if not cursor and len(page) < 500: break
+            if not cursor and (len(page) < 500 or '/v2/' in url): break   # v2: no cursor = last page
             off += 500
         if ok: break
     return d, n
