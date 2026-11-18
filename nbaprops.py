@@ -2,8 +2,7 @@
 
 For every NBA game tipping within the next 3 hours, one Odds API call (all books in one request, so about 1 credit per market:
 4 credits a game) pulls points / rebounds / assists / threes from:
-  sharp  : Pinnacle (de-vigged with the power method, which doesn't overrate longshots); if Pinnacle doesn't list the player,
-           the median de-vigged price of BetOnline / FanDuel / DraftKings (marked 'consensus', less trustworthy)
+  sharp  : the average de-vigged price (power method) of Pinnacle, Novig and ProphetX, when at least two list the prop (fair_prices)
   venues : Novig, ProphetX, Polymarket (exchanges), Bovada, BetOnline, FanDuel, DraftKings
 Each game is pulled again at most every 75 minutes, so the last pull before tip doubles as the closing line.
 Writes backtest/nbaprops_<date>.json = {eventId: {at, time, game, books: {book: [[player, market, side, line, american], ...]}}}.
@@ -89,24 +88,21 @@ def devig_power(p_over, p_under):
 
 imp = lambda a: 100 / (a + 100) if a > 0 else -a / (-a + 100)
 
+SHARPS = ('pinnacle', 'novig', 'prophetx')
+
 def fair_prices(books):
-    """{(player, market, line): (fair_over, fair_under, source)} from Pinnacle, else the median of BetOnline / FanDuel / DraftKings"""
+    """{(player, market, line): (fair_over, fair_under, source)}: the average de-vigged price of Pinnacle, Novig and ProphetX, when at least
+    two of them list the prop at that line. Pinnacle alone was not sharp on NBA props: when Novig disagreed with it by 3+ points Novig was
+    closer to the result 55% of the time, and +2% flags vs Pinnacle alone went 944-1063 (-5.4%). Flags vs this blend: 319-300 (+2.9%), on the
+    saved snapshots of Oct 24 - Nov 17 (2026-11-18). The old BetOnline/FanDuel/DraftKings consensus fallback is gone (it lost too)."""
     def pairs(rows):
         d = {}
         for pl, mk, side, line, price in rows: d.setdefault((pl, mk, line), {})[side] = price
         return {k: v for k, v in d.items() if 'Over' in v and 'Under' in v}
-    out = {}
-    for k, v in pairs(books.get('pinnacle', [])).items():
-        fo, fu = devig_power(imp(v['Over']), imp(v['Under'])); out[k] = (fo, fu, 'pinnacle')
-    cons = {}
-    for bk in ('betonlineag', 'fanduel', 'draftkings'):
-        for k, v in pairs(books.get(bk, [])).items():
-            if k in out: continue
-            cons.setdefault(k, []).append(devig_power(imp(v['Over']), imp(v['Under']))[0])
-    for k, fos in cons.items():
-        if len(fos) >= 2:
-            fo = sorted(fos)[len(fos) // 2]; out[k] = (fo, 1 - fo, 'consensus')
-    return out
+    got = {}
+    for bk in SHARPS:
+        for k, v in pairs(books.get(bk, [])).items(): got.setdefault(k, []).append(devig_power(imp(v['Over']), imp(v['Under']))[0])
+    return {k: (sum(fs) / len(fs), 1 - sum(fs) / len(fs), f'blend of {len(fs)}') for k, fs in got.items() if len(fs) >= 2}
 
 LABEL = {'player_points': 'pts', 'player_rebounds': 'reb', 'player_assists': 'ast', 'player_threes': '3PM'}
 
