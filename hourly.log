@@ -1,48 +1,4 @@
-﻿Auto-merging docs/days/2026-10-23.html
-Auto-merging docs/days/2026-10-24.html
-Auto-merging docs/days/2026-10-26.html
-Auto-merging docs/days/2026-10-27.html
-Auto-merging docs/days/2026-10-28.html
-Auto-merging docs/ev.html
-Auto-merging docs/fantasy.html
-Auto-merging docs/index.html
-Auto-merging docs/lines.html
-Auto-merging docs/ml.html
-Auto-merging docs/nba.html
-Auto-merging docs/nfl/2026_wk1.html
-Auto-merging docs/nfl/2026_wk10.html
-Auto-merging docs/nfl/2026_wk11.html
-Auto-merging docs/nfl/2026_wk2.html
-Auto-merging docs/nfl/2026_wk3.html
-Auto-merging docs/nfl/2026_wk4.html
-Auto-merging docs/nfl/2026_wk5.html
-Auto-merging docs/nfl/2026_wk6.html
-Auto-merging docs/nfl/2026_wk7.html
-Auto-merging docs/nfl/2026_wk8.html
-Auto-merging docs/nfl/2026_wk9.html
-Auto-merging docs/track.html
-done 23:06
-=== 2026-11-18 02:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Derrick Henry          BAL  RB p=0.567 fair -131 heat 76 share 0.347
-  NFL Tony Pollard           TEN  RB p=0.563 fair -129 heat 43 share 0.313
-  NFL Christian McCaffrey    SF   RB p=0.562 fair -128 heat 82 share 0.296
-  NFL Kenneth Walker III     KC   RB p=0.560 fair -127 heat 51 share 0.246
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #1 used this run
-snapshot 1 saved for 2026-11-18
-  Kalshi NFL 2026-11-19: 22 players, $426,412 traded
-  Kalshi NFL 2026-11-22: 202 players, $332,362 traded
-  ML 2026_wk6: 14/14 graded
-  ML 2026_wk7: 14/14 graded
-  ML 2026_wk8: 14/14 graded
-  ML 2026_wk9: 15/15 graded
-NFL 2026_wk11: kept 0 frozen, refreshed 249, late 0
-NFL stats 2026_wk6: 14/14 games (0 new)
+﻿NFL stats 2026_wk6: 14/14 games (0 new)
 NFL stats 2026_wk7: 14/14 games (0 new)
 NFL stats 2026_wk8: 14/14 games (0 new)
 NFL stats 2026_wk9: 15/15 games (0 new)
@@ -238,6 +194,50 @@ polymarket tape attached to 15 games
   nflprops 2026_wk11: 11/11 upcoming games priced, 1970 markets saved
   nbaprops 2026-11-18: 0 games pulled now, 6 saved (6 tipping within 3h)
   ev: 9253 prices vs Pinnacle, 200 at +2% EV or better, 1 newly logged (6094 tracked)
+archive.html: 11 NFL weeks, 49 MLB days
+ml.html: 40 MLB days, 11 NFL weeks, 401 graded games
+lines.html: 28 MLB days, 9 NFL weeks, 218 games
+done 14:07
+=== 2026-11-18 17:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL Tony Pollard           TEN  RB p=0.571 fair -133 heat 44 share 0.313
+  NFL Christian McCaffrey    SF   RB p=0.562 fair -128 heat 82 share 0.296
+  NFL Chase Brown            CIN  RB p=0.557 fair -126 heat 70 share 0.232
+  NFL Derrick Henry          BAL  RB p=0.556 fair -125 heat 75 share 0.345
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+  americanfootball_nfl/player_anytime_td: 425 players priced, 345 on Fliff, 0 Underdog-only (credits used this month: 119 used / 381 left on key #6)
+key #6 used this run
+snapshot 18 saved for 2026-11-18
+  Kalshi NFL 2026-11-19: 22 players, $574,221 traded
+  Kalshi NFL 2026-11-22: 218 players, $567,956 traded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 14/14 graded
+  ML 2026_wk8: 14/14 graded
+  ML 2026_wk9: 15/15 graded
+NFL 2026_wk11: kept 0 frozen, refreshed 247, late 0
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 14/14 games (0 new)
+NFL stats 2026_wk8: 14/14 games (0 new)
+NFL stats 2026_wk9: 15/15 games (0 new)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, 2026_wk10, 2026_wk11, current 2026_wk11: 246 players; check rows 8
+nba.html: 30 days, showing 2026-11-18: 12 games
+ev.html: 8620 prices now, 214 at +2%+, 6545 tracked (5453 graded)
+book.html: 9 NFL weeks, 122 games
+  NFL JAX@NYG: $17,314 on NYG / $31,908 on JAX (2,834 trades)  (partial, game not started)
+  NFL MIN@SF: $162,121 on SF / $340,331 on MIN (13,512 trades)  (partial, game not started)
+  NFL CIN@WSH: $6,780 on WSH / $33,924 on CIN (2,395 trades)  (partial, game not started)
+taker tape attached to 418 locked games
+  NFL JAX@NYG: $68 on NYG / $456 on JAX (23 trades, $865 traded)  (partial, game not started)
+  NFL MIN@SF: $2,145 on SF / $1,932 on MIN (82 trades, $8,296 traded)  (partial, game not started)
+  NFL CIN@WSH: $1,522 on WSH / $286 on CIN (29 trades, $5,829 traded)  (partial, game not started)
+polymarket tape attached to 15 games
+  nba 2026-11-19: 4 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk11: 11/11 upcoming games priced, 1999 markets saved
+  nbaprops 2026-11-18: 0 games pulled now, 12 saved (6 tipping within 3h)
+  ev: 8604 prices vs Pinnacle, 213 at +2% EV or better, 0 newly logged (6545 tracked)
 archive.html: 11 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 11 NFL weeks, 401 graded games
 lines.html: 28 MLB days, 9 NFL weeks, 218 games
