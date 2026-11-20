@@ -10,6 +10,8 @@ toward the final score: their cover rates are biased. Spreads are now tested aga
   tracked      = the better team (season margin 4+/game better, 5+ games each) as the moneyline underdog: +33% on 47 games last season,
                  but 4-8 in 2026, so no longer a pick (2026-11-14).
   LEAN         = the underdog getting 10-12.5 points: 57% both halves (+8%).
+  LEAN         = against a team that won its last game by 1-3 points: 62% (66% / 56% by half of 2025, 9-6 in 2026); a blowout BET on the
+                 other side of such a team was 25-5, so it is a STRONG BET. Wins by 4-7 don't qualify (the edge fades). Added 2026-11-20.
   LEAN         = the underdog in the lone first or last game of the day (3+ game slate, the only game in that tip-off slot): 56% (55% / 57% by half
                  of 2025, 16-13 in 2026). When the slot is shared it's 52%, and the favorite in a lone slot covered only 43%. Added 2026-11-14.
   total LEAN   = under below 220: NOT validated (last season's totals data is the biased kind); kept small until this season says otherwise.
@@ -89,6 +91,11 @@ function sides(r){
     if (x.bigDog && x.v === 'PASS') x.v = 'LEAN';
     x.edgeDog = x.kind === 'spread' && !x.fav && !!r.slot;   // the underdog in the lone first/last game of the day covered 56% (each half of 2025 and 2026)
     if (x.edgeDog && x.v === 'PASS') x.v = 'LEAN';
+    // fade a team that won its last game by 1-3: it covered only 38% next time (2025 halves 66% / 56% for the fade, 9-6 in 2026). A narrow win
+    // gets overrated. Stacked on a blowout BET for the other side it was 25-5, so that pick becomes STRONG (added 2026-11-20)
+    x.closeFade = x.kind === 'spread' && oppLast != null && oppLast >= 1 && oppLast <= 3;
+    if (x.closeFade && x.v === 'PASS') x.v = 'LEAN';
+    if (x.closeFade && x.v === 'BET' && x.blow) x.v = 'STRONG BET';
     if (x.kind === 'total' && x.side.startsWith('Under') && r.total && r.total.line < 220) x.v = 'LEAN';
     // line move: the favorite's price at this line now (frozen at tip) vs the first price seen 6h+ before tip. Not a pick any more (fading it
     // was measured on the biased strikes); x.toDog = a 2c+ move toward this underdog, the follow-the-move idea, tracked on the scorecard
@@ -101,13 +108,16 @@ function sides(r){
              x.bothFav && x.kind === 'spread' ? `${x.team} won its last by ${last}, but so did its opponent: the underdog side is the play` : '',
              x.bigDog ? `${s.line}-point underdog (10-12.5 covered 57%)` : '',
              x.edgeDog ? `underdog in the only ${r.slot} game of the day (covered 56%)` : '',
+             x.closeFade ? `the other team won its last game by only ${oppLast} (fading that covered 62%)` : '',
              x.under && x.kind === 'ml' ? `tracked, not a pick: the better team (${myM >= 0 ? '+' : ''}${myM} vs ${opM >= 0 ? '+' : ''}${opM} per game) priced as the underdog` : '',
              x.v === 'LEAN' && x.kind === 'total' ? 'total under 220' : '',
              x.toDog ? `the line moved ${Math.round(Math.abs(x.move) * 100)}¢ toward ${x.team} (tracked, not a pick)` : ''].filter(Boolean).join(' · '); }
   // never both sides of one market: a BET on one side outranks a LEAN on the other (LAL -12.5 BET vs SAC +12.5 big-dog LEAN)
   for (const k of ['spread', 'ml']) { const two = out.filter(x => x.kind === k); if (two.length !== 2) continue;
     const [a, b] = VR[two[0].v] >= VR[two[1].v] ? two : [two[1], two[0]];
-    if (VR[a.v] > VR[b.v] && VR[b.v] > 0) { b.v = 'PASS'; b.why = (b.why ? b.why + ' · ' : '') + `outranked by the ${a.v} on ${a.side}`; } }
+    const rk = x => VR[x.v] + (x.closeFade && x.v === 'LEAN' ? .5 : 0);   // the close-win fade (62%) outranks the other LEANs (56-57%)
+    if (rk(a) < rk(b)) [a, b] = [b, a];
+    if (rk(a) > rk(b) && VR[b.v] > 0) { b.v = 'PASS'; b.why = (b.why ? b.why + ' · ' : '') + `outranked by the ${a.v} on ${a.side}`; } }
   return out;
 }
 // ---- board: one row per game. Every market on one line; our pick (if any) in its own column ----
@@ -207,6 +217,7 @@ const strat = {
   '   same, spread (not a pick)': G.filter(x => x.kind === 'spread' && x.under),
   'LEAN: underdog getting 10-12.5 points': G.filter(x => x.kind === 'spread' && x.bigDog),
   'LEAN: underdog in the lone first / last game of the day': G.filter(x => x.kind === 'spread' && x.edgeDog),
+  'LEAN: against a team that won its last game by 1-3': G.filter(x => x.kind === 'spread' && x.closeFade),
   'Tracked: follow a 2¢+ line move toward the underdog': G.filter(x => x.kind === 'spread' && x.toDog),
   'Total LEAN: under when the total is below 220': G.filter(x => x.kind === 'total' && x.v === 'LEAN'),
   'Spread: side with LESS of the crowd $ (NFL rule, break-even last season)': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
@@ -257,7 +268,7 @@ def page():
 <div class="legend"><b>Rules, re-tested Oct 30</b> on all of last season (1,306 games) and checked against this season. Last season's spreads are graded against the line implied by Kalshi's closing moneyline (it matches Pinnacle's line within half a point), at a 51¢ ask plus the fee. An older test used spread lines picked partly by in-game trading, which flattered several rules; those numbers are replaced below.<br>
 <b>BET</b> on a spread = the team that <i>won its last game by 18+</i>, when its opponent also won its last game <i>or</i> it is the underdog: covered 62% (+18%), 61% and 63% in the two halves of the season, 8-2 so far this season. The market prices in a letdown after a blowout that doesn't come.
 <b>STRONG BET</b> = both (opponent won its last <i>and</i> it is the underdog). If <i>both</i> teams qualify, only the underdog is the bet (16-9 vs 9-16 for the favorite). <b>No longer a bet:</b> the blowout team favored against an opponent that lost its last game (48% last season, 0-4 this season).
-<b>LEAN</b> on a moneyline = the same blowout team (+15%). <b>Tracked, no longer a pick:</b> <i>the better team priced as the moneyline underdog</i> (+33% on 47 games last season, 4-8 this season). <b>LEAN</b> on a spread = <i>the underdog getting 10-12.5 points</i>: 57% both halves (+8%); smaller and bigger underdogs didn't cover. <b>LEAN</b> on a spread = <i>the underdog in the lone first or last game of the day</i> (on a slate of 3+ games, the only game in the earliest or latest tip-off slot): 56% in each half of last season and this season. If several games share that slot, no edge. <b>LEAN</b> on a total = the under below 220: not confirmed (last season's totals data isn't reliable), so keep it small.
+<b>LEAN</b> on a moneyline = the same blowout team (+15%). <b>Tracked, no longer a pick:</b> <i>the better team priced as the moneyline underdog</i> (+33% on 47 games last season, 4-8 this season). <b>LEAN</b> on a spread = <i>the underdog getting 10-12.5 points</i>: 57% both halves (+8%); smaller and bigger underdogs didn't cover. <b>LEAN</b> on a spread = <i>against a team that won its last game by 1-3 points</i>: 62% (66% and 56% in the two halves of last season, 9-6 this season). A narrow win gets overrated. When the other team is also a blowout BET, it was 25-5, so that becomes a STRONG BET. <b>LEAN</b> on a spread = <i>the underdog in the lone first or last game of the day</i> (on a slate of 3+ games, the only game in the earliest or latest tip-off slot): 56% in each half of last season and this season. If several games share that slot, no edge. <b>LEAN</b> on a total = the under below 220: not confirmed (last season's totals data isn't reliable), so keep it small.
 <b>Dropped:</b> fading a line move. On clean prices, fading a 3¢+ move in the last 6 hours covered only 43%; following the move did better (57%), best when it moves toward an underdog that stays the underdog. That one is tracked on the scorecard, not a pick yet.
 What did <i>not</i> work: the crowd's money of any kind (moneyline or spread, big or small bets, early or late), back-to-backs and rest, win or losing streaks, home/road. The rule needs each team's previous game, so it starts with each team's second game. Regular season only: in the playoffs it was flat.</div>
 </div>
