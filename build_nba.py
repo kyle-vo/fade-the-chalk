@@ -176,8 +176,14 @@ function render(){
     : '<div class="tm" style="padding:8px 2px">No picks today. Both rules need each team\'s earlier games this season, so most early-season days are quiet. That is the rules working, not missing.</div>';
   renderSpreads();
   const tk = games.reduce((a, g) => a + (g.took || 0) + (g.spTook || 0), 0), pd = games.reduce((a, g) => a + (g.paid || 0) + (g.spPaid || 0), 0), anyF = games.some(g => g.took != null || g.spTook != null);
+  // units at 1u per pick at the Robinhood ask (no fee): this day, and the season through this day (today's rules applied to every day)
+  const tally = xs => { const g = xs.filter(x => x.hit != null && x.ask); return { w: g.reduce((a, x) => a + x.hit, 0), n: g.length, u: g.reduce((a, x) => a + (x.hit ? 1 / x.ask - 1 : -1), 0) }; };
+  const uTile = (lab, t, tip) => t.n ? `<div title="${tip}">${lab}<b class="${t.u >= 0 ? 'pos' : 'neg'}">${t.w}-${t.n - t.w} · ${t.u >= 0 ? '+' : ''}${t.u.toFixed(1)}u</b></div>` : '';
+  const isBet = x => x.v.endsWith('BET'), seasonPicks = Object.keys(DAYS).filter(d => d <= day).flatMap(d => (DAYS[d] || []).flatMap(r => sides(r).filter(x => x.v !== 'PASS')));
+  const unitTiles = uTile('day: bets', tally(picks.filter(isBet)), 'STRONG BET + BET on this day, 1 unit each at the Robinhood ask') + uTile('day: all picks', tally(picks), 'every BET and LEAN on this day, 1 unit each') +
+    uTile('season: bets', tally(seasonPicks.filter(isBet)), 'every STRONG BET + BET through this day') + uTile('season: all picks', tally(seasonPicks), 'every BET and LEAN through this day (today\'s rules applied to every day)');
   $('#kpi').innerHTML = `<div>games<b>${games.length}</b></div><div>bets<b>${picks.filter(x => x.v.endsWith('BET')).length}</b></div><div>leans<b>${picks.filter(x => x.v === 'LEAN').length}</b></div><div>final<b>${games.filter(g => g.r.final).length}</b></div>` +
-    (anyF ? `<div title="crowd money on losing sides (moneyline + spread) on finished games">book took<b class="pos">${money(tk)}</b></div><div title="profit paid to the winning sides at their prices">book paid<b class="neg">${money(pd)}</b></div><div title="took minus paid">book net<b class="${tk - pd >= 0 ? 'pos' : 'neg'}">${tk - pd >= 0 ? '+' : '−'}${money(Math.abs(tk - pd))}</b></div>` : '');
+    (anyF ? `<div title="crowd money on losing sides (moneyline + spread) on finished games">book took<b class="pos">${money(tk)}</b></div><div title="profit paid to the winning sides at their prices">book paid<b class="neg">${money(pd)}</b></div><div title="took minus paid">book net<b class="${tk - pd >= 0 ? 'pos' : 'neg'}">${tk - pd >= 0 ? '+' : '−'}${money(Math.abs(tk - pd))}</b></div>` : '') + unitTiles;
 }
 // ---- Spreads tab: both sides of every spread, with the crowd's money on each ----
 let spKey = 'game', spDir = 1;
