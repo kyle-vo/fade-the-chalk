@@ -1,50 +1,4 @@
-﻿  NFL JAX@NYG: $43,106 on NYG / $64,401 on JAX (5,300 trades)  (partial, game not started)
-  NFL MIN@SF: $308,126 on SF / $495,050 on MIN (26,401 trades)  (partial, game not started)
-  NFL CIN@WSH: $11,940 on WSH / $61,008 on CIN (3,882 trades)  (partial, game not started)
-taker tape attached to 418 locked games
-  NFL JAX@NYG: $554 on NYG / $1,905 on JAX (67 trades, $4,556 traded)  (partial, game not started)
-  NFL MIN@SF: $5,184 on SF / $4,577 on MIN (202 trades, $19,978 traded)  (partial, game not started)
-  NFL CIN@WSH: $1,673 on WSH / $672 on CIN (60 trades, $6,898 traded)  (partial, game not started)
-polymarket tape attached to 13 games
-  nba 2026-11-22: 7 games (0 final, 0 with a Kalshi spread)
-  nflprops 2026_wk11: 12/12 upcoming games priced, 3930 markets saved
-  nbaprops 2026-11-21: 0 games pulled now, 1 saved (0 tipping within 3h)
-  ev: 254 prices vs Pinnacle, 16 at +2% EV or better, 0 newly logged (7170 tracked)
-archive.html: 11 NFL weeks, 49 MLB days
-ml.html: 40 MLB days, 11 NFL weeks, 402 graded games
-lines.html: 28 MLB days, 9 NFL weeks, 218 games
-done 11:06
-=== 2026-11-21 14:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL D'Andre Swift          CHI  RB p=0.632 fair -172 heat 69 share 0.29
-  NFL Christian McCaffrey    SF   RB p=0.580 fair -138 heat 84 share 0.302
-  NFL Tony Pollard           TEN  RB p=0.571 fair -133 heat 44 share 0.313
-  NFL Chase Brown            CIN  RB p=0.554 fair -124 heat 70 share 0.232
-  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 06:42))
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #9 used this run
-snapshot 15 saved for 2026-11-21
-  Kalshi NFL 2026-11-22: 245 players, $1,738,402 traded
-  Kalshi NFL 2026-11-23: 25 players, $188,813 traded
-  Kalshi NFL 2026-11-25: 2 players, $18 traded
-  Kalshi NFL 2026-11-26: 2 players, $0 traded
-  ML 2026_wk6: 14/14 graded
-  ML 2026_wk7: 14/14 graded
-  ML 2026_wk8: 14/14 graded
-  ML 2026_wk9: 15/15 graded
-NFL 2026_wk11: kept 15 frozen, refreshed 227, late 0
-NFL stats 2026_wk6: 14/14 games (0 new)
-NFL stats 2026_wk7: 14/14 games (0 new)
-NFL stats 2026_wk8: 14/14 games (0 new)
-NFL stats 2026_wk9: 15/15 games (0 new)
-fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, 2026_wk10, 2026_wk11, current 2026_wk11: 241 players; check rows 8
-nba.html: 33 days, showing 2026-11-21: 6 games
-ev.html: 1470 prices now, 60 at +2%+, 7215 tracked (6641 graded)
-book.html: 9 NFL weeks, 122 games
-  NFL JAX@NYG: $44,957 on NYG / $69,707 on JAX (5,554 trades)  (partial, game not started)
+﻿  NFL JAX@NYG: $44,957 on NYG / $69,707 on JAX (5,554 trades)  (partial, game not started)
   NFL MIN@SF: $328,262 on SF / $510,036 on MIN (27,618 trades)  (partial, game not started)
   NFL CIN@WSH: $12,280 on WSH / $62,189 on CIN (3,979 trades)  (partial, game not started)
 taker tape attached to 418 locked games
@@ -240,6 +194,52 @@ polymarket tape attached to 13 games
   nflprops 2026_wk11: 12/12 upcoming games priced, 4084 markets saved
   nbaprops 2026-11-22: 0 games pulled now, 0 saved (0 tipping within 3h)
   ev: 262 prices vs Pinnacle, 15 at +2% EV or better, 0 newly logged (7353 tracked)
+archive.html: 11 NFL weeks, 49 MLB days
+ml.html: 40 MLB days, 11 NFL weeks, 402 graded games
+lines.html: 28 MLB days, 9 NFL weeks, 218 games
+done 02:07
+=== 2026-11-22 05:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL D'Andre Swift          CHI  RB p=0.632 fair -172 heat 69 share 0.29
+  NFL Christian McCaffrey    SF   RB p=0.580 fair -138 heat 84 share 0.302
+  NFL Tony Pollard           TEN  RB p=0.571 fair -133 heat 44 share 0.313
+  NFL Bucky Irving           TB   RB p=0.557 fair -126 heat 41 share 0.322
+  NFL touchdown props: skipped, 0 credits (already pulled for the Saturday morning window (Sat 06:42))
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #4 used this run
+snapshot 4 saved for 2026-11-22
+  Kalshi NFL 2026-11-22: 251 players, $2,451,020 traded
+  Kalshi NFL 2026-11-23: 25 players, $417,605 traded
+  Kalshi NFL 2026-11-25: 2 players, $74 traded
+  Kalshi NFL 2026-11-26: 6 players, $0 traded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 14/14 graded
+  ML 2026_wk8: 14/14 graded
+  ML 2026_wk9: 15/15 graded
+NFL 2026_wk11: kept 15 frozen, refreshed 228, late 0
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 14/14 games (0 new)
+NFL stats 2026_wk8: 14/14 games (0 new)
+NFL stats 2026_wk9: 15/15 games (0 new)
+fantasy.html: weeks 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, 2026_wk10, 2026_wk11, current 2026_wk11: 242 players; check rows 8
+nba.html: 34 days, showing 2026-11-22: 7 games
+ev.html: 260 prices now, 10 at +2%+, 7357 tracked (6819 graded)
+book.html: 9 NFL weeks, 122 games
+  NFL JAX@NYG: $64,837 on NYG / $108,419 on JAX (7,671 trades)  (partial, game not started)
+  NFL MIN@SF: $443,200 on SF / $617,685 on MIN (34,628 trades)  (partial, game not started)
+  NFL CIN@WSH: $14,159 on WSH / $85,918 on CIN (4,738 trades)  (partial, game not started)
+taker tape attached to 418 locked games
+  NFL JAX@NYG: $5,151 on NYG / $55,099 on JAX (137 trades, $95,016 traded)  (partial, game not started)
+  NFL MIN@SF: $14,762 on SF / $6,181 on MIN (259 trades, $39,344 traded)  (partial, game not started)
+  NFL CIN@WSH: $1,760 on WSH / $711 on CIN (76 trades, $7,261 traded)  (partial, game not started)
+polymarket tape attached to 13 games
+  nba 2026-11-23: 10 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk11: 12/12 upcoming games priced, 4084 markets saved
+  nbaprops 2026-11-22: 0 games pulled now, 0 saved (0 tipping within 3h)
+  ev: 260 prices vs Pinnacle, 10 at +2% EV or better, 0 newly logged (7357 tracked)
 archive.html: 11 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 11 NFL weeks, 402 graded games
 lines.html: 28 MLB days, 9 NFL weeks, 218 games
