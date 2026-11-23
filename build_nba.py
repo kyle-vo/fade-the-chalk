@@ -177,8 +177,9 @@ function render(){
   renderSpreads();
   const tk = games.reduce((a, g) => a + (g.took || 0) + (g.spTook || 0), 0), pd = games.reduce((a, g) => a + (g.paid || 0) + (g.spPaid || 0), 0), anyF = games.some(g => g.took != null || g.spTook != null);
   // units at 1u per pick at the Robinhood ask (no fee): this day, and the season through this day (today's rules applied to every day)
-  const tally = xs => { const g = xs.filter(x => x.hit != null && x.ask); return { w: g.reduce((a, x) => a + x.hit, 0), n: g.length, u: g.reduce((a, x) => a + (x.hit ? 1 / x.ask - 1 : -1), 0) }; };
-  const uTile = (lab, t, tip) => t.n ? `<div title="${tip}">${lab}<b class="${t.u >= 0 ? 'pos' : 'neg'}">${t.w}-${t.n - t.w} · ${t.u >= 0 ? '+' : ''}${t.u.toFixed(1)}u</b></div>` : '';
+  // the record counts every graded pick; units only the ones Robinhood priced (a total with no posted price can't be sized)
+  const tally = xs => { const g = xs.filter(x => x.hit != null), pr = g.filter(x => x.ask); return { w: g.reduce((a, x) => a + x.hit, 0), n: g.length, np: g.length - pr.length, u: pr.reduce((a, x) => a + (x.hit ? 1 / x.ask - 1 : -1), 0) }; };
+  const uTile = (lab, t, tip) => t.n ? `<div title="${tip}${t.np ? ` · ${t.np} graded pick${t.np > 1 ? 's' : ''} had no Robinhood price: in the record, not in the units` : ''}">${lab}<b class="${t.u >= 0 ? 'pos' : 'neg'}">${t.w}-${t.n - t.w} · ${t.u >= 0 ? '+' : ''}${t.u.toFixed(1)}u${t.np ? '*' : ''}</b></div>` : '';
   const isBet = x => x.v.endsWith('BET'), seasonPicks = Object.keys(DAYS).filter(d => d <= day).flatMap(d => (DAYS[d] || []).flatMap(r => sides(r).filter(x => x.v !== 'PASS')));
   const unitTiles = uTile('day: bets', tally(picks.filter(isBet)), 'STRONG BET + BET on this day, 1 unit each at the Robinhood ask') + uTile('day: all picks', tally(picks), 'every BET and LEAN on this day, 1 unit each') +
     uTile('season: bets', tally(seasonPicks.filter(isBet)), 'every STRONG BET + BET through this day') + uTile('season: all picks', tally(seasonPicks), 'every BET and LEAN through this day (today\'s rules applied to every day)');
