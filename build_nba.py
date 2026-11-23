@@ -50,7 +50,8 @@ _pt = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-
 cur = _pt if _pt in days else (min([d for d in order if d >= _pt], default=None) or (order[0] if order else None))
 
 JS = r"""
-const $ = s => document.querySelector(s); let day = CUR;
+const $ = s => document.querySelector(s); let day = CUR; let TOP = [];   // TOP: the scorecard's top-5 strategies, filled once the scorecard is built
+const topTag = x => { const t = TOP.filter(s => s.f(x)); return t.length ? `<span class="tg top" title="${t.map(s => '#' + s.rank + ' ' + s.n.trim() + ': ' + s.w + '-' + s.l + ', ' + (s.roi * 100).toFixed(0) + '% ROI').join('\n')}">★ top-5 strategy${t.length > 1 ? ' ×' + t.length : ''}: ${t.map(s => '#' + s.rank).join(' ')}</span>` : ''; };
 window.onNavSlate = (sp, v) => { day = v; render(); };
 const cents = p => p == null ? '—' : Math.round(p * 100) + '¢';
 const amer = p => { if (!p || p <= 0 || p >= 1) return ''; return p >= .5 ? '−' + Math.round(100 * p / (1 - p)) : '+' + Math.round(100 * (1 - p) / p); };
@@ -172,7 +173,7 @@ function render(){
   $('#tG').innerHTML = '<tr>' + HEAD.map(([k, l]) => `<th data-k="${k}" style="cursor:pointer">${l}${k === sortKey ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '</tr>' +
     (list.map(rowHtml).join('') || `<tr><td colspan="9" class="tm" style="text-align:center;padding:14px">${hide ? 'no picks on this day' : 'nothing yet: Robinhood posts NBA lines the day before'}</td></tr>`);
   const picks = games.flatMap(g => g.picks).sort((a, b) => VRANK[b.v] - VRANK[a.v] || (a.r.time < b.r.time ? -1 : 1));
-  $('#picks').innerHTML = picks.length ? picks.map(x => `<div class="pk">${chip(x.v)} <b>${pickText(x)}</b> <span class="tm">${cents(x.ask)} ${amer(x.ask)}</span> ${resMark(x)}<div class="tm">${x.r.away} @ ${x.r.home} · ${when(x.r.time)}</div><div class="why">${x.why}</div></div>`).join('')
+  $('#picks').innerHTML = picks.length ? picks.map(x => `<div class="pk">${chip(x.v)} <b>${pickText(x)}</b> <span class="tm">${cents(x.ask)} ${amer(x.ask)}</span> ${resMark(x)} ${topTag(x)}<div class="tm">${x.r.away} @ ${x.r.home} · ${when(x.r.time)}</div><div class="why">${x.why}</div></div>`).join('')
     : '<div class="tm" style="padding:8px 2px">No picks today. Both rules need each team\'s earlier games this season, so most early-season days are quiet. That is the rules working, not missing.</div>';
   renderSpreads();
   const tk = games.reduce((a, g) => a + (g.took || 0) + (g.spTook || 0), 0), pd = games.reduce((a, g) => a + (g.paid || 0) + (g.spPaid || 0), 0), anyF = games.some(g => g.took != null || g.spTook != null);
@@ -215,28 +216,32 @@ showTab(tab);
 $('#hidepass').addEventListener('input', render);
 // ---- scorecard: every graded side across every day ----
 const G = Object.values(DAYS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
-const strat = {
-  'Spread BET: won last by 18+, and opponent won its last or it is the underdog': G.filter(x => x.kind === 'spread' && x.blow),
-  '   of which STRONG (both)': G.filter(x => x.kind === 'spread' && x.v === 'STRONG BET'),
-  'PASS now: won last by 18+, favored, opponent lost its last (old BET)': G.filter(x => x.kind === 'spread' && x.blowFav),
-  'Moneyline LEAN: same blowout team': G.filter(x => x.kind === 'ml' && x.blow),
-  'Tracked (was LEAN): better team (season margin +4/game) priced as underdog, moneyline': G.filter(x => x.kind === 'ml' && x.under),
-  '   same, spread (not a pick)': G.filter(x => x.kind === 'spread' && x.under),
-  'LEAN: underdog getting 10-12.5 points': G.filter(x => x.kind === 'spread' && x.bigDog),
-  'LEAN: underdog in the lone first / last game of the day': G.filter(x => x.kind === 'spread' && x.edgeDog),
-  'LEAN: against a team that won its last game by 1-3': G.filter(x => x.kind === 'spread' && x.closeFade),
-  'Tracked: follow a 2¢+ line move toward the underdog': G.filter(x => x.kind === 'spread' && x.toDog),
-  'Total LEAN: under when the total is below 220': G.filter(x => x.kind === 'total' && x.v === 'LEAN'),
-  'Spread: side with LESS of the crowd $ (NFL rule, break-even last season)': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
-  'Spread: side with MORE of the crowd $': G.filter(x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd >= 0.5),
-  'Spread: every favorite': G.filter(x => x.kind === 'spread' && x.fav), 'Spread: every underdog': G.filter(x => x.kind === 'spread' && !x.fav),
-  'Moneyline: Robinhood 3+ pts under Pinnacle (untested)': G.filter(x => x.kind === 'ml' && x.edge != null && x.edge >= 3),
-  'Moneyline: team with less of the crowd $': G.filter(x => x.kind === 'ml' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
-  'Moneyline: every favorite': G.filter(x => x.kind === 'ml' && x.fav), 'Moneyline: every underdog': G.filter(x => x.kind === 'ml' && !x.fav),
-  'Total: the crowd side': G.filter(x => x.kind === 'total' && x.crowd != null && x.tape >= 10000 && x.crowd > 0.5), 'Total: every over': G.filter(x => x.kind === 'total' && x.side.startsWith('Over')),
+const STRATF = {   // name -> which sides belong to it; the scorecard and the top-5 tags both use these
+  'Spread BET: won last by 18+, and opponent won its last or it is the underdog': (x => x.kind === 'spread' && x.blow),
+  '   of which STRONG (both)': (x => x.kind === 'spread' && x.v === 'STRONG BET'),
+  'PASS now: won last by 18+, favored, opponent lost its last (old BET)': (x => x.kind === 'spread' && x.blowFav),
+  'Moneyline LEAN: same blowout team': (x => x.kind === 'ml' && x.blow),
+  'Tracked (was LEAN): better team (season margin +4/game) priced as underdog, moneyline': (x => x.kind === 'ml' && x.under),
+  '   same, spread (not a pick)': (x => x.kind === 'spread' && x.under),
+  'LEAN: underdog getting 10-12.5 points': (x => x.kind === 'spread' && x.bigDog),
+  'LEAN: underdog in the lone first / last game of the day': (x => x.kind === 'spread' && x.edgeDog),
+  'LEAN: against a team that won its last game by 1-3': (x => x.kind === 'spread' && x.closeFade),
+  'Tracked: follow a 2¢+ line move toward the underdog': (x => x.kind === 'spread' && x.toDog),
+  'Total LEAN: under when the total is below 220': (x => x.kind === 'total' && x.v === 'LEAN'),
+  'Spread: side with LESS of the crowd $ (NFL rule, break-even last season)': (x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
+  'Spread: side with MORE of the crowd $': (x => x.kind === 'spread' && x.crowd != null && x.tape >= 25000 && x.crowd >= 0.5),
+  'Spread: every favorite': (x => x.kind === 'spread' && x.fav), 'Spread: every underdog': (x => x.kind === 'spread' && !x.fav),
+  'Moneyline: Robinhood 3+ pts under Pinnacle (untested)': (x => x.kind === 'ml' && x.edge != null && x.edge >= 3),
+  'Moneyline: team with less of the crowd $': (x => x.kind === 'ml' && x.crowd != null && x.tape >= 25000 && x.crowd < 0.5),
+  'Moneyline: every favorite': (x => x.kind === 'ml' && x.fav), 'Moneyline: every underdog': (x => x.kind === 'ml' && !x.fav),
+  'Total: the crowd side': (x => x.kind === 'total' && x.crowd != null && x.tape >= 10000 && x.crowd > 0.5), 'Total: every over': (x => x.kind === 'total' && x.side.startsWith('Over')),
 };
+const strat = Object.fromEntries(Object.entries(STRATF).map(([n, f]) => [n, G.filter(f)]));
 const SC = Object.entries(strat).map(([n, b], i) => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.ask - 1 : -1), 0);
   return { i, n, bets: b.length, w, l: b.length - w, units: b.length ? u : null, roi: b.length ? u / b.length : null, win: b.length ? w / b.length : null }; });
+// top 5 by ROI (15+ graded bets, ROI above zero), recomputed from the scorecard on every build; today's picks that belong to one get a tag
+TOP = SC.filter(x => x.bets >= 15 && x.roi > 0).sort((a, b) => b.roi - a.roi).slice(0, 5).map((x, k) => ({ ...x, rank: k + 1, f: STRATF[x.n] }));
+render();
 let scKey = 'i', scDir = 1;
 const SCHEAD = [['n', 'Strategy (1u each at the Robinhood ask)', ''], ['bets', 'Bets', 'num'], ['win', 'Record', 'num'], ['units', 'Units', 'num'], ['roi', 'ROI', 'num']];
 function renderScore(){
@@ -254,7 +259,7 @@ def page():
     from navbar import navbar, day_label
     nav = navbar('nba', '', {'mlb': [], 'nfl': [], 'nba': [(d, day_label(d), '') for d in order]}, {'nba': cur}, fixed='nba')
     return f"""<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fade The Chalk</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">NBA · moneyline, spread, total · Robinhood vs Pinnacle · crowd money by side · built {datetime.datetime.now().isoformat(timespec="minutes")}</div></header>{nav}
-<style>h2.mk{{margin:16px 0 8px}}
+<style>.tg.top{{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;margin-left:4px;background:#3a2f0b;color:#f5c542;cursor:help}}</style><style>h2.mk{{margin:16px 0 8px}}
 #picks{{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;margin:6px 0 14px}}
 .pk{{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px;line-height:1.5}}
 .why{{font-size:12px;color:var(--mute)}}
