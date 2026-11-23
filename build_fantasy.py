@@ -154,15 +154,17 @@ import props_rules as PR
 norm = lambda n: re.sub(r'[^a-z]', '', (n or '').lower().replace(' jr.', '').replace(' jr', '').replace(' sr.', '').replace(' iii', '').replace(' ii', ''))
 kfee = lambda p: 0.07 * p * (1 - p)
 def props_week(t):
-    """weeks with history use the price at kickoff (research/, +1c slippage); this week uses the live ask (backtest/nflprops_<week>.json)"""
+    """finished games use the price at kickoff and the crowd's pre-kick $ (research/, +1c slippage); games research/ hasn't
+    pulled yet (this week's) use the live ask and the money so far (backtest/nflprops_<week>.json)"""
     hp, lp = os.path.join(HERE, 'research', f'nflprops_{t}.json'), os.path.join(BT, f'nflprops_{t}.json')
-    hist = os.path.exists(hp); src = J(hp) if hist else (J(lp) if os.path.exists(lp) else {})
+    src = {ev: (g, False) for ev, g in (J(lp) if os.path.exists(lp) else {}).items()}
+    src.update({ev: (g, True) for ev, g in (J(hp) if os.path.exists(hp) else {}).items()})
     if not src: return []
     who = {norm(r['name']): r for r in locks.get(t, [])}
     mf = os.path.join(BT, f'ml_{t}.json'); ml = {str(g['eventId']): g for g in J(mf)} if os.path.exists(mf) else {}
     act = {norm(g['name']): g for (w, pid), g in games.items() if w == t}
     out = []
-    for ev, g in src.items():
+    for ev, (g, hist) in src.items():
         if hist:
             ms = [dict(m, name=(m.get('title') or '').split(':')[0].strip()) for m in g['markets'] if m.get('pxKick') is not None and 'Protected' not in (m.get('title') or '')]
             mid = lambda m: m['pxKick']
@@ -174,16 +176,21 @@ def props_week(t):
             pos = (r.get('pos') or '')[:2]; gm = ml.get(str(r['eventId'])) or {}; k = gm.get('kalshi')
             winP = None if k is None else (k if gm.get('home') == r['team'] else 1 - k)
             v, side = PR.verdict(pos, m['series'], winP)
-            if not side: continue
+            yd, nd = m.get('yes$'), m.get('no$'); mside = PR.money(m['series'], yd, nd)
+            if mside and side and mside != side: mside = None                     # never happens with today's rules; the underdog rule wins
+            if not side and not mside: continue
+            side = side or mside
             px = mid(m)
             if hist: cost = (px if side == 'OVER' else 1 - px) + 0.01
             else: cost = m['ask'] if side == 'OVER' else (1 - m['bid'] if m.get('bid') else None)
             if not cost: continue
             a = act.get(norm(m['name'])); val = a[PR.STAT[m['series']]] if a else None
+            tot = (yd or 0) + (nd or 0)
             out.append({'name': m['name'], 'team': r['team'], 'opp': r['opp'], 'pos': pos, 'game': r['game'], 'time': r['time'], 'stat': PR.LABEL[m['series']],
                         'line': float(m['strike']), 'side': side, 'price': round(cost, 3), 'cost': round(min(0.99, cost + kfee(cost)), 3), 'winP': None if winP is None else round(winP, 3),
-                        'v': v or 'PASS', 'actual': val, 'hit': None if val is None else int((val > float(m['strike'])) == (side == 'OVER')), 'hist': hist})
-    return sorted(out, key=lambda x: (x['v'] != 'BET', x['time'], x['name']))
+                        'v': ('STRONG BET' if mside else 'BET') if v else ('LEAN' if mside == 'OVER' else 'PASS'), 'mv': 1 if mside else 0, 'money': round(tot) if yd is not None else None, 'overSh': round(yd / tot, 3) if tot else None,
+                        'actual': val, 'hit': None if val is None else int((val > float(m['strike'])) == (side == 'OVER')), 'hist': hist})
+    return sorted(out, key=lambda x: ({'STRONG BET': 0, 'BET': 1, 'LEAN': 2}.get(x['v'], 3), x['time'], x['name']))
 props = {t: props_week(t) for t in weeks}
 props = {t: v for t, v in props.items() if v}
 
@@ -201,7 +208,7 @@ td.act{{color:var(--mute)}}</style>
 <h2 style="margin:10px 0 6px">Prop bets <small>Kalshi / Robinhood main lines</small></h2>
 <div class="ctl"><label>unit size $ <input type="number" id="unit" min="1" step="1" style="width:70px"></label> <span id="propWeek"></span></div>
 <div class="wrap"><table class="lt" id="props"></table></div>
-<div class="legend"><b>The prop rule.</b> Main line = the strike priced nearest 50¢. <b>BET</b> = a player on the <b>underdog</b> (his team under 45% to win on Kalshi), with one of: <b>RB rushing yards UNDER</b>, <b>QB rushing yards UNDER</b>, <b>TE receiving yards UNDER</b>, <b>QB passing yards OVER</b>. That made <b>+11.8% on 358 bets</b> at the price at kickoff plus the fee, and it was positive in all 6 weeks (+3, +17, +21, +12, +4, +13%). It was found on weeks 1-4 and held on weeks 5-6, which weren't used to find it. The same four props on favorites were break-even, so they show as PASS. Edges are single digits per bet: it pays over many bets, not on one. <b>Not a bet:</b> first-TD and 2+ TD props (they lost 35-47% every week), overs in general (−9%), and our own projections vs the line (they lost at every threshold). For anytime TDs, use the BET / AVOID calls on the main board.</div>
+<div class="legend"><b>The prop rule.</b> Main line = the strike priced nearest 50¢. <b>BET</b> = a player on the <b>underdog</b> (his team under 45% to win on Kalshi), with one of: <b>RB rushing yards UNDER</b>, <b>QB rushing yards UNDER</b>, <b>TE receiving yards UNDER</b>, <b>QB passing yards OVER</b>. That made <b>+11.8% on 358 bets</b> at the price at kickoff plus the fee, and it was positive in all 6 weeks (+3, +17, +21, +12, +4, +13%). It was found on weeks 1-4 and held on weeks 5-6, which weren't used to find it. The same four props on favorites were break-even, so they show as PASS. Edges are single digits per bet: it pays over many bets, not on one. <b>Not a bet:</b> first-TD and 2+ TD props (they lost 35-47% every week), overs in general (−9%), and our own projections vs the line (they lost at every threshold). For anytime TDs, use the BET / AVOID calls on the main board.<br><b>💰 Crowd money</b> = the crowd's taker dollars on the main line before kickoff. The signal: <b>rushing yards with 60%+ of the money on the over ($2k+ traded) → the UNDER</b>, and <b>passing yards with 60%+ on the over and $20k+ traded → the OVER</b>. The crowd mostly bets overs: on rushing yards it loses, on the busiest passing lines it wins. <b>STRONG BET</b> = the underdog rule and the money signal agree: <b>120-70, +18.6%</b> (weeks 3-6 +16.1%, weeks 7-11 +21.6%). <b>BET</b> without the money signal: 247-213, +1.2% (−5.9% in weeks 7-11), so size those smaller. <b>LEAN</b> = the passing-yards signal on a team that isn't the underdog (19-11, +15%, a small sample). The rushing signal on its own was break-even (154-140), so it stays PASS. Fading the money on receiving yards, receptions and TDs flipped between halves of the season or lost. <b>Crowd $ on over</b> for this week's games is the money so far (pulled for games in the next 36 hours, growing until kickoff), so a STRONG BET can appear or drop: recheck close to the game. Finished weeks use all the money before kickoff.</div>
 <div id="propScore"></div>
 <h2 style="margin:16px 0 6px">Start / sit</h2>
 <div class="pt" id="posTabs"><button data-p="ALL">All</button><button data-p="QB">QB</button><button data-p="RB">RB</button><button data-p="WR">WR</button><button data-p="TE">TE</button><button data-p="RISING">Waiver risers</button></div>
@@ -233,26 +240,27 @@ function leanCell(x){ const [k, lab, sd] = statFor(x), key = week + '|' + x.id, 
 let unit = 10; try { unit = +(localStorage.getItem('ftc_unit') || 10) || 10; } catch (e) {}
 function renderProps(){
   const xs = PROPS[week] || [], hide = $('#hidestart').checked;
-  const list = xs.filter(x => x.v === 'BET' || !hide).filter(x => !hide || x.hist || new Date(x.time).getTime() > Date.now());
+  const list = xs.filter(x => x.v !== 'PASS' || !hide).filter(x => !hide || x.hist || new Date(x.time).getTime() > Date.now());
   // 1 unit on every BET at the price shown + Kalshi's fee: a win pays (1 - cost) / cost units, a loss is -1u
   const pl = x => x.hit == null ? null : x.hit ? 1 / x.cost - 1 : -1;
-  const head = '<tr><th>Player</th><th>Game</th><th>Prop</th><th class="num">Price</th><th class="num">Team win %</th><th>Verdict</th><th class="num">Actual</th><th class="num">1 unit</th></tr>';
-  $('#props').innerHTML = head + (list.map(x => { const u = x.v === 'BET' ? pl(x) : null; return `<tr><td><span class="nm">${x.name}</span> <span class="tm">${x.pos} · ${x.team}</span></td><td class="tm">${x.game}<br>${when(x.time)}</td>
+  const head = '<tr><th>Player</th><th>Game</th><th>Prop</th><th class="num">Price</th><th class="num">Team win %</th><th class="num">Crowd $ on over</th><th>Verdict</th><th class="num">Actual</th><th class="num">1 unit</th></tr>';
+  $('#props').innerHTML = head + (list.map(x => { const u = x.v !== 'PASS' ? pl(x) : null; return `<tr><td><span class="nm">${x.name}</span> <span class="tm">${x.pos} · ${x.team}</span></td><td class="tm">${x.game}<br>${when(x.time)}</td>
     <td class="nm">${x.side} ${x.line} ${x.stat}</td><td class="num">${Math.round(x.price * 100)}¢</td><td class="num ${x.winP != null && x.winP < .45 ? 'pos' : ''}">${x.winP == null ? '—' : Math.round(x.winP * 100) + '%'}</td>
-    <td><span class="v ${x.v === 'BET' ? 'BET' : 'PASS'}">${x.v}</span>${x.v === 'PASS' ? ' <span class="tm">team not the underdog</span>' : ''}</td>
-    <td class="num">${x.actual == null ? '—' : x.actual + (x.v === 'BET' ? (x.hit ? ' <span class="res y">✓</span>' : ' <span class="res n">✗</span>') : ' <span class="tm">' + (x.hit ? 'won' : 'lost') + ' (no bet)</span>')}</td>
+    <td class="num">${x.money == null ? '<span class="tm">—</span>' : (x.overSh == null ? '—' : Math.round(x.overSh * 100) + '%') + '<br><span class="tm">of $' + x.money.toLocaleString() + (x.hist ? '' : ' so far') + '</span>'}</td>
+    <td><span class="v ${x.v.replace(' ', '')}">${x.v}</span>${x.mv ? ' <span class="tm">💰 crowd money agrees</span>' : ''}${x.v === 'PASS' ? ' <span class="tm">' + (x.mv ? 'rushing money alone was break-even' : 'team not the underdog') + '</span>' : ''}</td>
+    <td class="num">${x.actual == null ? '—' : x.actual + (x.v !== 'PASS' ? (x.hit ? ' <span class="res y">✓</span>' : ' <span class="res n">✗</span>') : ' <span class="tm">' + (x.hit ? 'won' : 'lost') + ' (no bet)</span>')}</td>
     <td class="num">${u == null ? '<span class="tm">—</span>' : `<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}u</b><br><span class="tm">${u >= 0 ? '+' : '−'}$${Math.abs(u * unit).toFixed(2)}</span>`}</td></tr>`; }).join('') ||
-    '<tr><td colspan="8" class="tm" style="text-align:center;padding:14px">no Kalshi prop lines yet for this week: they post a few days before each game</td></tr>');
+    '<tr><td colspan="9" class="tm" style="text-align:center;padding:14px">no Kalshi prop lines yet for this week: they post a few days before each game</td></tr>');
   // this week so far: every graded BET at 1 unit
-  const done = xs.filter(x => x.v === 'BET' && x.hit != null), units = done.reduce((a, x) => a + pl(x), 0), wins = done.filter(x => x.hit).length;
-  $('#propWeek').innerHTML = done.length ? `<b>Week ${week.split('wk')[1]} so far:</b> ${wins}-${done.length - wins} on BETs · <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)} units</b> = <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : '−'}$${Math.abs(units * unit).toFixed(2)}</b> at $${unit} a unit (${Math.round(units / done.length * 100)}% return on $${(done.length * unit).toFixed(0)} staked) · ${xs.filter(x => x.v === 'BET' && x.hit == null).length} still to play`
-    : `<span class="tm">${xs.filter(x => x.v === 'BET').length} BETs this week, none graded yet</span>`;
+  const done = xs.filter(x => x.v !== 'PASS' && x.hit != null), units = done.reduce((a, x) => a + pl(x), 0), wins = done.filter(x => x.hit).length;
+  $('#propWeek').innerHTML = done.length ? `<b>Week ${week.split('wk')[1]} so far:</b> ${wins}-${done.length - wins} on BETs + LEANs · <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)} units</b> = <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : '−'}$${Math.abs(units * unit).toFixed(2)}</b> at $${unit} a unit (${Math.round(units / done.length * 100)}% return on $${(done.length * unit).toFixed(0)} staked) · ${xs.filter(x => x.v !== 'PASS' && x.hit == null).length} still to play`
+    : `<span class="tm">${xs.filter(x => x.v === 'BET').length} BETs and ${xs.filter(x => x.v === 'LEAN').length} LEANs this week, none graded yet</span>`;
   // scorecard: every graded BET, by week
   const wks = Object.keys(PROPS).sort((a, b) => +a.split('wk')[1] - +b.split('wk')[1]);
   const rec = b => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.cost - 1 : -1), 0); return b.length ? `${w}-${b.length - w} · <span class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(1)}u (${Math.round(u / b.length * 100)}%)</span>` : '—'; };
   const g = k => wks.flatMap(w => PROPS[w]).filter(x => x.hit != null && k(x));
   $('#propScore').innerHTML = '<div class="wrap"><table class="lt"><thead><tr><th>Prop scorecard (1u per bet at the price + fee)</th>' + wks.map(w => `<th class="num">Wk ${w.split('wk')[1]}</th>`).join('') + '<th class="num">All</th></tr></thead><tbody>' +
-    [['BET (underdog)', x => x.v === 'BET'], ['same props, team not the underdog (no bet)', x => x.v !== 'BET']].map(([n, k]) =>
+    [['STRONG BET (underdog + crowd money)', x => x.v === 'STRONG BET'], ['BET (underdog, no money signal)', x => x.v === 'BET'], ['all BETs', x => x.v === 'BET' || x.v === 'STRONG BET'], ['LEAN (busy passing line, money on the over)', x => x.v === 'LEAN'], ['rushing money signal alone (no bet)', x => x.v === 'PASS' && x.mv], ['team not the underdog, no money signal (no bet)', x => x.v === 'PASS' && !x.mv]].map(([n, k]) =>
       `<tr><td class="nm">${n}</td>` + wks.map(w => `<td class="num">${rec(PROPS[w].filter(x => x.hit != null && k(x)))}</td>`).join('') + `<td class="num">${rec(g(k))}</td></tr>`).join('') + '</tbody></table></div>';
 }
 function render(){

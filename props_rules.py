@@ -8,11 +8,25 @@ Found on weeks 1-4 of every Kalshi prop market (research/nflprops_*.json: price 
 
 What was tried and dropped: our own projection vs the line (lost at every threshold), fading the crowd's money on the prop, the
 under after a big game (+8% weeks 1-4, -13% weeks 5-6), overs in general (-9%), longshot alt lines. First-TD and 2+ TD YES lose
-about a third of the stake every week (-35% to -47%). Anytime-TD calls stay on the main board (no TD yet + team the spread crowd is fading)."""
+about a third of the stake every week (-35% to -47%). Anytime-TD calls stay on the main board (no TD yet + team the spread crowd is fading).
+
+  Crowd money (taker $ before kickoff) on the same main lines, any player (weeks 1-11): rushing yards with 60%+ of the money on the
+  OVER and $2k+ traded -> UNDER; passing yards with 60%+ on the OVER and $20k+ traded -> OVER (money()).
+      STRONG BET = the underdog rule and the money signal agree: 120-70, +18.6% (wk 3-6 +16.1%, wk 7-11 +21.6%)
+      BET without it: 247-213, +1.2% (wk 7-11 -5.9%). LEAN = the passing signal on a non-underdog (19-11, small).
+      The rushing signal alone was break-even (154-140, +0.3%): not a bet. Money on rec yds / receptions / TDs: no edge.
+"""
 STAT = {'KXNFLREC': 'rec', 'KXNFLRECYDS': 'recYds', 'KXNFLRSHYDS': 'rushYds', 'KXNFLPASSYDS': 'passYds'}
 LABEL = {'KXNFLREC': 'receptions', 'KXNFLRECYDS': 'rec yds', 'KXNFLRSHYDS': 'rush yds', 'KXNFLPASSYDS': 'pass yds'}
 RULES = {('RB', 'KXNFLRSHYDS'): 'UNDER', ('QB', 'KXNFLRSHYDS'): 'UNDER', ('TE', 'KXNFLRECYDS'): 'UNDER', ('QB', 'KXNFLPASSYDS'): 'OVER'}
 DOG = 0.45
+MONEY = {'KXNFLRSHYDS': (0.6, 2000, 'UNDER'), 'KXNFLPASSYDS': (0.6, 20000, 'OVER')}   # series -> (share of $ on the over, min $ traded, side to bet)
+
+def money(series, yes_d, no_d):
+    """-> the side the crowd-money rule bets on this main line, else None"""
+    r = MONEY.get(series); y, n = yes_d or 0, no_d or 0
+    if not r or y + n < r[1] or y / (y + n) < r[0]: return None
+    return r[2]
 
 def main_lines(markets, mid):
     """one market per (player, series): the yardage / reception strike priced nearest 50c (mid = YES price estimate)"""
