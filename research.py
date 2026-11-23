@@ -61,7 +61,7 @@ def props(code):
     for path in sorted(os.listdir(os.path.join(HERE, 'backtest'))):
         if not path.startswith('lines_2026'): continue
         for r in json.load(open(os.path.join(HERE, 'backtest', path), encoding='utf-8')):
-            if (r.get('spread') or {}).get('ticker', '').split('-')[1:2] == [code]: kick = datetime.datetime.fromisoformat(r['time'].replace('Z', '+00:00')).timestamp()
+            if ((r.get('spread') or {}).get('ticker') or '').split('-')[1:2] == [code]: kick = datetime.datetime.fromisoformat(r['time'].replace('Z', '+00:00')).timestamp()
     print("  kickoff", kick and datetime.datetime.fromtimestamp(kick, datetime.timezone.utc).isoformat())
     ms = []
     for s in sers:
