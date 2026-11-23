@@ -348,6 +348,30 @@ def nba_smart():
             print(f"  {len(done)} games ({time.time() - T0:.0f}s)")
     print(f"nba_smart: +{n}, {len(done)} total")
 
+def first_td():
+    """The first touchdown of every graded 2026 NFL game (ESPN scoring plays): who scored, his team, how (run / pass / return), quarter and clock.
+    Used to test whether the first scorer tends to be a player with little Kalshi TD money on him. -> research/first_td_2026.json"""
+    import glob
+    path = os.path.join(OUT, 'first_td_2026.json'); out = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
+    for lock in sorted(glob.glob(os.path.join(HERE, 'backtest', 'nfl_2026_wk*.json')), key=lambda p: int(re.search(r'wk(\d+)', p).group(1))):
+        wk = re.search(r'(2026_wk\d+)', lock).group(1); evs = {}
+        for r in json.load(open(lock, encoding='utf-8')): evs.setdefault(str(r['eventId']), (r['game'], r['time']))
+        for ev, (game, t) in evs.items():
+            if ev in out: continue
+            try: sm = L.S.get("https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary", params={'event': ev}, timeout=40).json()
+            except Exception as e: print(f"  {ev}: {e}"); continue
+            if sm.get('header', {}).get('competitions', [{}])[0].get('status', {}).get('type', {}).get('completed') is not True: continue
+            first = next((p for p in sm.get('scoringPlays', []) if 'touchdown' in (p.get('type', {}).get('text') or '').lower() or 'TD' == (p.get('scoringType', {}).get('abbreviation'))), None)
+            if not first: out[ev] = {'week': wk, 'game': game, 'none': True}; continue
+            txt = first.get('text') or ''
+            m = re.match(r"^(.*?)\s+\d+\s+(?:Yd|Yard|yd)", txt) or re.match(r"^(.*?)\s+\d+", txt)
+            out[ev] = {'week': wk, 'game': game, 'time': t, 'text': txt, 'scorer': m.group(1).strip() if m else None,
+                       'team': (first.get('team') or {}).get('abbreviation'), 'type': (first.get('type') or {}).get('text'),
+                       'q': (first.get('period') or {}).get('number'), 'clock': (first.get('clock') or {}).get('displayValue')}
+            time.sleep(0.2)
+    json.dump(out, open(path, 'w', encoding='utf-8'), indent=0)
+    print(f"first_td: {len(out)} games, {sum(1 for v in out.values() if v.get('scorer'))} with a first TD scorer")
+
 if __name__ == '__main__':
     job = sys.argv[1] if len(sys.argv) > 1 else ''
     arg = sys.argv[2] if len(sys.argv) > 2 else ''
@@ -357,4 +381,5 @@ if __name__ == '__main__':
     elif job == 'books': books()
     elif job == 'props_books': props_books()
     elif job == 'nba_smart': nba_smart()
+    elif job == 'first_td': first_td()
     else: print("unknown job", job)
