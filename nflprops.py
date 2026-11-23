@@ -1,9 +1,12 @@
 """This week's Kalshi (= Robinhood) NFL player-prop lines: anytime TD, receptions, receiving / rushing / passing yards.
 For every game on the current week's lock that hasn't kicked off, each open market's ask and bid, refreshed every run and frozen at kickoff.
-Writes backtest/nflprops_<week>.json = {eventId: {code, time, at, markets: [{ticker, series, name, strike, ask, bid, vol}]}}.
+Writes backtest/nflprops_<week>.json = {eventId: {code, time, at, markets: [{ticker, series, name, strike, ask, bid, vol, (yes$, no$)}]}}.
+yes$ / no$ = the crowd's taker dollars so far, on the main rushing / passing yards line of each player (props_rules.MONEY), for games
+in the next 36 hours: the money that props_rules' crowd-money rules read.
 build_fantasy.py turns these into prop verdicts. Run from lines.py (same workflow step); about 5 Kalshi calls per game."""
 import os, json, glob, datetime, re
 import lines as L
+import props_rules as PR
 HERE = os.path.dirname(os.path.abspath(__file__)); BT = os.path.join(HERE, 'backtest')
 SERIES = ('KXNFLTD', 'KXNFLREC', 'KXNFLRECYDS', 'KXNFLRSHYDS', 'KXNFLPASSYDS')
 f = L.f
@@ -37,6 +40,12 @@ def run():
                 if not ask and not bid: continue
                 ms.append({'ticker': m['ticker'], 'series': s, 'name': t.split(':')[0].strip(), 'strike': m.get('floor_strike'),
                            'ask': round(ask, 3) or None, 'bid': round(bid, 3) or None, 'vol': round(f(m.get('volume_fp')))})
+        kick = datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00'))
+        if ms and kick < now + datetime.timedelta(hours=36):
+            mid = lambda m: (m['ask'] + m['bid']) / 2 if m.get('ask') and m.get('bid') else None
+            for m in PR.main_lines([m for m in ms if m['series'] in PR.MONEY], mid):
+                try: y, n_, _ = L.tape(m['ticker'], now.timestamp()); m['yes$'], m['no$'] = round(y), round(n_)
+                except Exception as x: print(f"  nflprops tape {m['ticker']}: {type(x).__name__}")
         if ms: out[ev] = {'code': code, 'time': g['time'], 'at': now.isoformat(timespec='minutes'), 'markets': ms}; n += 1
     json.dump(out, open(path, 'w', encoding='utf-8'))
     print(f"  nflprops {wk}: {n}/{len(todo)} upcoming games priced, {sum(len(v['markets']) for v in out.values())} markets saved")
