@@ -1,7 +1,7 @@
 """One navigation bar for every page: pick the sport once (MLB / NFL), then the page (props, moneyline, spreads & totals), then the slate.
 The sport choice rides in the URL hash (#mlb / #nfl) and in localStorage, so moving between pages keeps it.
 
-page   : 'props' | 'pbets' | 'ml' | 'lines' | 'fantasy' | 'nba' | 'ev' | 'book' | 'track' | 'archive'
+page   : 'props' | 'pbets' | 'ftd' | 'ml' | 'lines' | 'fantasy' | 'nba' | 'ev' | 'book' | 'track' | 'archive'
 root   : '' or '../' (day and week pages live one folder down)
 slates : {'mlb': [(value, label, href)], 'nfl': [...]}; href '' means the page switches in place through window.onNavSlate(sport, value)
 cur    : {'mlb': value, 'nfl': value}, the slate this page shows first for each sport
@@ -30,7 +30,7 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 
 JS = r"""<script>(function(){
 const NAV = __NAV__;
-const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html', pbets: 'props.html' };
+const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html', pbets: 'props.html', ftd: 'firsttd.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
 if (!sp) { try { sp = localStorage.getItem('ftc_sport'); } catch (e) {} }
@@ -45,7 +45,7 @@ window.navSport = function(s, cur){
   document.querySelectorAll('nav.nb .sp a').forEach(a => a.classList.toggle('on', a.dataset.sp === s));
   document.querySelectorAll('nav.nb .pg a[data-pg]').forEach(a => { a.href = link(a.dataset.pg, s); });
   const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
-  document.querySelectorAll('nav.nb .pg a[data-pg=fantasy], nav.nb .pg a[data-pg=pbets]').forEach(a => { a.hidden = s !== 'nfl'; });   // NFL only
+  document.querySelectorAll('nav.nb .pg a[data-pg=fantasy], nav.nb .pg a[data-pg=pbets], nav.nb .pg a[data-pg=ftd]').forEach(a => { a.hidden = s !== 'nfl'; });   // NFL only
   const pgs = document.querySelector('nav.nb .pg:not(.nbatabs)'); if (pgs) pgs.hidden = s === 'nba';     // MLB/NFL page links; the NBA page has its own tabs
   const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
   const opts = (NAV.slates || {})[s] || [];
@@ -85,7 +85,7 @@ def navbar(page, root='', slates=None, cur=None, fixed=None):
     return (CSS + '<nav class="nb">'
             f'<div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="{root}nba.html">NBA</a></div>'
             + ('<div class="pg nbatabs"><a data-nt="board" href="#board" class="on">Games</a><a data-nt="spread" href="#spread">Spreads</a><a data-nt="score" href="#score">Scorecard</a></div>' if fixed == 'nba' else
-               f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a><a data-pg="pbets" href="{root}props.html"{on("pbets")}>Prop bets</a><a data-pg="fantasy" href="{root}fantasy.html"{on("fantasy")}>Fantasy</a></div>') +
+               f'<div class="pg"><a data-pg="props" href="{root}index.html"{on("props")}>Home runs</a><a data-pg="ml" href="{root}ml.html"{on("ml")}>Moneyline</a><a data-pg="lines" href="{root}lines.html"{on("lines")}>Spreads &amp; Totals</a><a data-pg="pbets" href="{root}props.html"{on("pbets")}>Prop bets</a><a data-pg="ftd" href="{root}firsttd.html"{on("ftd")}>First TD / 2+</a><a data-pg="fantasy" href="{root}fantasy.html"{on("fantasy")}>Fantasy</a></div>') +
             f'{slate}'
             f'<div class="aux"><a href="{root}ev.html"{on("ev")} title="every price you can bet vs Pinnacle\'s fair line">+EV</a><a href="{root}book.html"{on("book")} title="what the book makes in each result, from all the crowd\'s spread + moneyline money">Book</a><a href="{root}track.html"{on("track")}>Track</a><a href="{root}archive.html"{on("archive")}>Archive</a>'
             '<span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" '
