@@ -74,6 +74,10 @@ jobs:
         run: python polymarket.py
         continue-on-error: true
 
+      - name: First-TD scorers of finished NFL games (ESPN scoring plays, new games only)
+        continue-on-error: true
+        run: python research.py first_td
+
       - name: Spreads and totals (Pinnacle fair vs Robinhood, crowd tape)
         continue-on-error: true
         env:

@@ -1,4 +1,4 @@
-"""This week's Kalshi (= Robinhood) NFL player-prop lines: anytime TD, receptions, receiving / rushing / passing yards.
+"""This week's Kalshi (= Robinhood) NFL player-prop lines: anytime / first / 2+ TD, receptions, receiving / rushing / passing yards.
 For every game on the current week's lock that hasn't kicked off, each open market's ask and bid, refreshed every run and frozen at kickoff.
 Writes backtest/nflprops_<week>.json = {eventId: {code, time, at, markets: [{ticker, series, name, strike, ask, bid, vol, (yes$, no$)}]}}.
 yes$ / no$ = the crowd's taker dollars so far, on the main rushing / passing yards line of each player (props_rules.MONEY), for games
@@ -8,7 +8,7 @@ import os, json, glob, datetime, re
 import lines as L
 import props_rules as PR
 HERE = os.path.dirname(os.path.abspath(__file__)); BT = os.path.join(HERE, 'backtest')
-SERIES = ('KXNFLTD', 'KXNFLREC', 'KXNFLRECYDS', 'KXNFLRSHYDS', 'KXNFLPASSYDS')
+SERIES = ('KXNFLTD', 'KXNFLFIRSTTD', 'KXNFLREC', 'KXNFLRECYDS', 'KXNFLRSHYDS', 'KXNFLPASSYDS')
 f = L.f
 
 def run():

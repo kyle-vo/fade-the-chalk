@@ -710,3 +710,6 @@ except Exception as e: print(f"ev.html failed: {type(e).__name__} {e}")
 try:
     import build_book  # noqa: F401  (builds docs/book.html on import)
 except Exception as e: print(f"book.html failed: {type(e).__name__} {e}")
+try:
+    import build_td  # noqa: F401  (builds docs/firsttd.html on import)
+except Exception as e: print(f"firsttd.html failed: {type(e).__name__} {e}")
