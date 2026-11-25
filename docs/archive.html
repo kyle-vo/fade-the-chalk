@@ -59,9 +59,9 @@ nav.nb{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px
 .panel.top{margin-top:16px}
 .nb [hidden]{display:none!important}
 @media(max-width:700px){nav.nb{padding:8px 10px;gap:8px 14px;position:static}.nb .aux{margin-left:0}}
-</style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="nba.html">NBA</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a><a data-pg="fantasy" href="fantasy.html">Fantasy &amp; Yards</a></div><div class="aux"><a href="ev.html" title="every price you can bet vs Pinnacle's fair line">+EV</a><a href="book.html" title="what the book makes in each result, from all the crowd's spread + moneyline money">Book</a><a href="track.html">Track</a><a href="archive.html" class="on">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
-const NAV = {"page": "archive", "root": "", "slates": {}, "cur": {"mlb": "2026-10-28", "nfl": "2026_wk12"}, "fixed": null, "built": "2026-11-25T14:38:16+00:00"};
-const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html' };
+</style><nav class="nb"><div class="sp"><a data-sp="mlb" href="#mlb">MLB</a><a data-sp="nfl" href="#nfl">NFL</a><a data-sp="nba" href="nba.html">NBA</a></div><div class="pg"><a data-pg="props" href="index.html">Home runs</a><a data-pg="ml" href="ml.html">Moneyline</a><a data-pg="lines" href="lines.html">Spreads &amp; Totals</a><a data-pg="pbets" href="props.html">Prop bets</a><a data-pg="fantasy" href="fantasy.html">Fantasy</a></div><div class="aux"><a href="ev.html" title="every price you can bet vs Pinnacle's fair line">+EV</a><a href="book.html" title="what the book makes in each result, from all the crowd's spread + moneyline money">Book</a><a href="track.html">Track</a><a href="archive.html" class="on">Archive</a><span class="upd" id="navupd"></span><a class="rr" href="https://github.com/kyle-vo/fade-the-chalk/actions/workflows/update.yml" target="_blank" rel="noopener" title="Opens GitHub. Click Run workflow, then Run workflow again: the cloud pulls fresh odds, money and results and the site updates in about 5 minutes. Needs you signed in to GitHub.">↻ Rerun</a></div></nav><script>(function(){
+const NAV = {"page": "archive", "root": "", "slates": {}, "cur": {"mlb": "2026-10-28", "nfl": "2026_wk12"}, "fixed": null, "built": "2026-11-25T15:30:17+00:00"};
+const PAGES = { props: 'index.html', ml: 'ml.html', lines: 'lines.html', fantasy: 'fantasy.html', pbets: 'props.html' };
 const h = (location.hash || '').slice(1).split(':')[0];
 let sp = NAV.fixed || ((h === 'mlb' || h === 'nfl') ? h : null);
 if (!sp) { try { sp = localStorage.getItem('ftc_sport'); } catch (e) {} }
@@ -76,7 +76,7 @@ window.navSport = function(s, cur){
   document.querySelectorAll('nav.nb .sp a').forEach(a => a.classList.toggle('on', a.dataset.sp === s));
   document.querySelectorAll('nav.nb .pg a[data-pg]').forEach(a => { a.href = link(a.dataset.pg, s); });
   const pr = document.querySelector('nav.nb .pg a[data-pg=props]'); if (pr) pr.textContent = s === 'mlb' ? 'Home runs' : 'Touchdowns';
-  const fz = document.querySelector('nav.nb .pg a[data-pg=fantasy]'); if (fz) fz.hidden = s !== 'nfl';   // NFL only
+  document.querySelectorAll('nav.nb .pg a[data-pg=fantasy], nav.nb .pg a[data-pg=pbets]').forEach(a => { a.hidden = s !== 'nfl'; });   // NFL only
   const pgs = document.querySelector('nav.nb .pg:not(.nbatabs)'); if (pgs) pgs.hidden = s === 'nba';     // MLB/NFL page links; the NBA page has its own tabs
   const sel = document.querySelector('nav.nb .sl select'), box = document.querySelector('nav.nb .sl');
   const opts = (NAV.slates || {})[s] || [];
