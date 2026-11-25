@@ -1763,5 +1763,27 @@
 "type": "Passing Touchdown",
 "q": 2,
 "clock": "14:50"
+},
+"401873077": {
+"week": "2026_wk11",
+"game": "MIN VS SF",
+"time": "2026-11-23T01:20Z",
+"text": "George Kittle 17 Yd pass from Brock Purdy (Eddy Pineiro Kick)",
+"scorer": "George Kittle",
+"team": "SF",
+"type": "Passing Touchdown",
+"q": 1,
+"clock": "11:16"
+},
+"401873078": {
+"week": "2026_wk11",
+"game": "CIN @ WSH",
+"time": "2026-11-24T01:15Z",
+"text": "Tee Higgins 31 Yd pass from Joe Burrow (Evan McPherson Kick)",
+"scorer": "Tee Higgins",
+"team": "CIN",
+"type": "Passing Touchdown",
+"q": 2,
+"clock": "1:55"
 }
 }
