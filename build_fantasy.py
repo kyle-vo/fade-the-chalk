@@ -205,19 +205,15 @@ def page():
 td.act{{color:var(--mute)}}</style>
 <div class="panel top">
 <div class="kpi" id="kpi"></div>
-<h2 style="margin:10px 0 6px">Prop bets <small>Kalshi / Robinhood main lines</small></h2>
-<div class="ctl"><label>unit size $ <input type="number" id="unit" min="1" step="1" style="width:70px"></label> <span id="propWeek"></span></div>
-<div class="wrap"><table class="lt" id="props"></table></div>
-<div class="legend"><b>The prop rule.</b> Main line = the strike priced nearest 50¢. <b>BET</b> = a player on the <b>underdog</b> (his team under 45% to win on Kalshi), with one of: <b>RB rushing yards UNDER</b>, <b>QB rushing yards UNDER</b>, <b>TE receiving yards UNDER</b>, <b>QB passing yards OVER</b>. That made <b>+11.8% on 358 bets</b> at the price at kickoff plus the fee, and it was positive in all 6 weeks (+3, +17, +21, +12, +4, +13%). It was found on weeks 1-4 and held on weeks 5-6, which weren't used to find it. The same four props on favorites were break-even, so they show as PASS. Edges are single digits per bet: it pays over many bets, not on one. <b>Not a bet:</b> first-TD and 2+ TD props (they lost 35-47% every week), overs in general (−9%), and our own projections vs the line (they lost at every threshold). For anytime TDs, use the BET / AVOID calls on the main board.<br><b>💰 Crowd money</b> = the crowd's taker dollars on the main line before kickoff. The signal: <b>rushing yards with 60%+ of the money on the over ($2k+ traded) → the UNDER</b>, and <b>passing yards with 60%+ on the over and $20k+ traded → the OVER</b>. The crowd mostly bets overs: on rushing yards it loses, on the busiest passing lines it wins. <b>STRONG BET</b> = the underdog rule and the money signal agree: <b>120-70, +18.6%</b> (weeks 3-6 +16.1%, weeks 7-11 +21.6%). <b>BET</b> without the money signal: 247-213, +1.2% (−5.9% in weeks 7-11), so size those smaller. <b>LEAN</b> = the passing-yards signal on a team that isn't the underdog (19-11, +15%, a small sample). The rushing signal on its own was break-even (154-140), so it stays PASS. Fading the money on receiving yards, receptions and TDs flipped between halves of the season or lost. <b>Crowd $ on over</b> for this week's games is the money so far (pulled for games in the next 36 hours, growing until kickoff), so a STRONG BET can appear or drop: recheck close to the game. Finished weeks use all the money before kickoff.</div>
-<div id="propScore"></div>
+<p class="tm" style="margin:10px 0">Yardage and catches bets moved to their own tab: <a href="props.html#nfl" style="color:var(--acc)">Prop bets →</a></p>
 <h2 style="margin:16px 0 6px">Start / sit</h2>
 <div class="pt" id="posTabs"><button data-p="ALL">All</button><button data-p="QB">QB</button><button data-p="RB">RB</button><button data-p="WR">WR</button><button data-p="TE">TE</button><button data-p="RISING">Waiver risers</button></div>
 <div class="ctl"><label>scoring <select id="scoring"><option value="half">half-PPR</option><option value="ppr">PPR</option><option value="std">standard</option></select></label><label>search <input id="q" placeholder="player or team"></label><label><input type="checkbox" id="hidestart"> hide started games</label></div>
 <div class="wrap"><table id="tbl" class="lt"><thead><tr><th data-k="rank">#</th><th data-k="name">Player</th><th data-k="game">Game</th><th class="num" data-k="pts">Proj pts</th><th class="num" data-k="avgPts">2026 avg</th><th data-k="v">Start / sit</th><th class="num" data-k="rec">Rec</th><th class="num" data-k="recYds">Rec yds</th><th class="num" data-k="rushYds">Rush yds</th><th class="num" data-k="passYds">Pass yds</th><th class="num" data-k="oppF">Matchup</th><th class="num" data-k="spTeam">Spread $ on team</th><th class="num" data-k="opps2">Touches+tgts L2</th><th>Your line</th><th class="num" data-k="actPts">Actual</th></tr></thead><tbody></tbody></table></div>
-<div class="legend"><b>How to read it.</b> <b>Proj pts</b> = projected fantasy points. It starts from his 2026 average, pulled toward the middle (early-season games are noisy), then nudged by what has held every week so far: players on the team with <i>less</i> of the crowd's spread money have beaten their average by about 2 points more than players on the crowd's team (running backs: about 12 more rushing yards); when the crowd's totals money is on the <b>under</b>, players have come in about 2 points and 8 receiving yards short; and the <b>Matchup</b> number is what the opponent has allowed to his position per game against the league (1.20 = 20% more, a soft matchup; 0.80 = a tough one). <b>START / FLEX / SIT</b> = his projected rank at the position (QB top 12, RB top 24 start / 36 flex, WR 30 / 42, TE 12 / 18). <b>BOOM</b> / <b>BUST</b> read only this week's situation (the money, the totals crowd, the matchup, the team total) against a normal week for the same player, so stars aren't tagged just for being stars. <b>BUST</b> = the situation puts him 1+ point below his normal: those players fell about 2.2 points short of it in every week so far (the most reliable tag here; usually the crowd's money is on his team and on the under). <b>BOOM</b> = 0.5+ above his normal: +1.3 on average, but only 2 of 4 weeks clearly positive, so a lean. <b>RISING</b> = his targets + carries over the last 2 games are 30%+ above his season rate: a waiver flag, not proven yet (only 37 players so far, about break-even). <b>Your line</b>: type the yardage line from your book (receiving yards for WR/TE, rushing for RB, passing for QB) and the page shows the chance of the over from the projection and how far real outcomes spread around it (about ±25 yards receiving/rushing, ±55 passing). It calls a lean only at 60%+. These are for fantasy, <b>not betting</b>: checked against Kalshi's real lines for weeks 3-4, betting wherever the projection disagreed with the price lost money. For yardage bets, use the Prop bets table above. Spread money moves until kickoff, so recheck close to the game. Finished weeks show the actual line and the scorecard below shows how each week's projections did (every week projected only from the weeks before it).</div>
+<div class="legend"><b>How to read it.</b> <b>Proj pts</b> = projected fantasy points. It starts from his 2026 average, pulled toward the middle (early-season games are noisy), then nudged by what has held every week so far: players on the team with <i>less</i> of the crowd's spread money have beaten their average by about 2 points more than players on the crowd's team (running backs: about 12 more rushing yards); when the crowd's totals money is on the <b>under</b>, players have come in about 2 points and 8 receiving yards short; and the <b>Matchup</b> number is what the opponent has allowed to his position per game against the league (1.20 = 20% more, a soft matchup; 0.80 = a tough one). <b>START / FLEX / SIT</b> = his projected rank at the position (QB top 12, RB top 24 start / 36 flex, WR 30 / 42, TE 12 / 18). <b>BOOM</b> / <b>BUST</b> read only this week's situation (the money, the totals crowd, the matchup, the team total) against a normal week for the same player, so stars aren't tagged just for being stars. <b>BUST</b> = the situation puts him 1+ point below his normal: those players fell about 2.2 points short of it in every week so far (the most reliable tag here; usually the crowd's money is on his team and on the under). <b>BOOM</b> = 0.5+ above his normal: +1.3 on average, but only 2 of 4 weeks clearly positive, so a lean. <b>RISING</b> = his targets + carries over the last 2 games are 30%+ above his season rate: a waiver flag, not proven yet (only 37 players so far, about break-even). <b>Your line</b>: type the yardage line from your book (receiving yards for WR/TE, rushing for RB, passing for QB) and the page shows the chance of the over from the projection and how far real outcomes spread around it (about ±25 yards receiving/rushing, ±55 passing). It calls a lean only at 60%+. These are for fantasy, <b>not betting</b>: checked against Kalshi's real lines for weeks 3-4, betting wherever the projection disagreed with the price lost money. For yardage bets, use the Prop bets tab. Spread money moves until kickoff, so recheck close to the game. Finished weeks show the actual line and the scorecard below shows how each week's projections did (every week projected only from the weeks before it).</div>
 <h2 style="margin-top:18px">How the projections did</h2><div class="wrap"><table class="lt"><thead><tr><th>Week</th><th class="num">Players</th><th class="num">Avg miss, pts</th><th class="num">…using his plain average</th><th class="num">Rec yds miss</th><th class="num">Rush yds miss</th><th class="num">BOOM vs his normal</th><th class="num">BUST vs his normal</th><th class="num">Others vs his normal</th></tr></thead><tbody id="chk"></tbody></table></div>
 </div>
-<script>const PROJ = {jd(proj)}; const CUR = {jd(cur)}; const CHECK = {jd(check)}; const PROPS = {jd(props)};{JS}</script>"""
+<script>const PROJ = {jd(proj)}; const CUR = {jd(cur)}; const CHECK = {jd(check)};{JS}</script>"""
 
 JS = r"""
 const $ = s => document.querySelector(s); let week = CUR, pos = 'ALL', sortKey = 'pts', sortDir = -1;
@@ -237,34 +233,7 @@ function leanCell(x){ const [k, lab, sd] = statFor(x), key = week + '|' + x.id, 
     out += pOver >= 0.6 ? ` <span class="lean o">OVER ${Math.round(pOver * 100)}%</span>` : pOver <= 0.4 ? ` <span class="lean u">UNDER ${Math.round((1 - pOver) * 100)}%</span>` : ` <span class="tm">${Math.round(pOver * 100)}% over</span>`;
     if (x.act) out += ` <span class="tm">${x.act[k] > +L ? '✓ over' : '✓ under'}</span>`; }
   return out; }
-let unit = 10; try { unit = +(localStorage.getItem('ftc_unit') || 10) || 10; } catch (e) {}
-function renderProps(){
-  const xs = PROPS[week] || [], hide = $('#hidestart').checked;
-  const list = xs.filter(x => x.v !== 'PASS' || !hide).filter(x => !hide || x.hist || new Date(x.time).getTime() > Date.now());
-  // 1 unit on every BET at the price shown + Kalshi's fee: a win pays (1 - cost) / cost units, a loss is -1u
-  const pl = x => x.hit == null ? null : x.hit ? 1 / x.cost - 1 : -1;
-  const head = '<tr><th>Player</th><th>Game</th><th>Prop</th><th class="num">Price</th><th class="num">Team win %</th><th class="num">Crowd $ on over</th><th>Verdict</th><th class="num">Actual</th><th class="num">1 unit</th></tr>';
-  $('#props').innerHTML = head + (list.map(x => { const u = x.v !== 'PASS' ? pl(x) : null; return `<tr><td><span class="nm">${x.name}</span> <span class="tm">${x.pos} · ${x.team}</span></td><td class="tm">${x.game}<br>${when(x.time)}</td>
-    <td class="nm">${x.side} ${x.line} ${x.stat}</td><td class="num">${Math.round(x.price * 100)}¢</td><td class="num ${x.winP != null && x.winP < .45 ? 'pos' : ''}">${x.winP == null ? '—' : Math.round(x.winP * 100) + '%'}</td>
-    <td class="num">${x.money == null ? '<span class="tm">—</span>' : (x.overSh == null ? '—' : Math.round(x.overSh * 100) + '%') + '<br><span class="tm">of $' + x.money.toLocaleString() + (x.hist ? '' : ' so far') + '</span>'}</td>
-    <td><span class="v ${x.v.replace(' ', '')}">${x.v}</span>${x.mv ? ' <span class="tm">💰 crowd money agrees</span>' : ''}${x.v === 'PASS' ? ' <span class="tm">' + (x.mv ? 'rushing money alone was break-even' : 'team not the underdog') + '</span>' : ''}</td>
-    <td class="num">${x.actual == null ? '—' : x.actual + (x.v !== 'PASS' ? (x.hit ? ' <span class="res y">✓</span>' : ' <span class="res n">✗</span>') : ' <span class="tm">' + (x.hit ? 'won' : 'lost') + ' (no bet)</span>')}</td>
-    <td class="num">${u == null ? '<span class="tm">—</span>' : `<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}u</b><br><span class="tm">${u >= 0 ? '+' : '−'}$${Math.abs(u * unit).toFixed(2)}</span>`}</td></tr>`; }).join('') ||
-    '<tr><td colspan="9" class="tm" style="text-align:center;padding:14px">no Kalshi prop lines yet for this week: they post a few days before each game</td></tr>');
-  // this week so far: every graded BET at 1 unit
-  const done = xs.filter(x => x.v !== 'PASS' && x.hit != null), units = done.reduce((a, x) => a + pl(x), 0), wins = done.filter(x => x.hit).length;
-  $('#propWeek').innerHTML = done.length ? `<b>Week ${week.split('wk')[1]} so far:</b> ${wins}-${done.length - wins} on BETs + LEANs · <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)} units</b> = <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : '−'}$${Math.abs(units * unit).toFixed(2)}</b> at $${unit} a unit (${Math.round(units / done.length * 100)}% return on $${(done.length * unit).toFixed(0)} staked) · ${xs.filter(x => x.v !== 'PASS' && x.hit == null).length} still to play`
-    : `<span class="tm">${xs.filter(x => x.v === 'BET').length} BETs and ${xs.filter(x => x.v === 'LEAN').length} LEANs this week, none graded yet</span>`;
-  // scorecard: every graded BET, by week
-  const wks = Object.keys(PROPS).sort((a, b) => +a.split('wk')[1] - +b.split('wk')[1]);
-  const rec = b => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + (x.hit ? 1 / x.cost - 1 : -1), 0); return b.length ? `${w}-${b.length - w} · <span class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(1)}u (${Math.round(u / b.length * 100)}%)</span>` : '—'; };
-  const g = k => wks.flatMap(w => PROPS[w]).filter(x => x.hit != null && k(x));
-  $('#propScore').innerHTML = '<div class="wrap"><table class="lt"><thead><tr><th>Prop scorecard (1u per bet at the price + fee)</th>' + wks.map(w => `<th class="num">Wk ${w.split('wk')[1]}</th>`).join('') + '<th class="num">All</th></tr></thead><tbody>' +
-    [['STRONG BET (underdog + crowd money)', x => x.v === 'STRONG BET'], ['BET (underdog, no money signal)', x => x.v === 'BET'], ['all BETs', x => x.v === 'BET' || x.v === 'STRONG BET'], ['LEAN (busy passing line, money on the over)', x => x.v === 'LEAN'], ['rushing money signal alone (no bet)', x => x.v === 'PASS' && x.mv], ['team not the underdog, no money signal (no bet)', x => x.v === 'PASS' && !x.mv]].map(([n, k]) =>
-      `<tr><td class="nm">${n}</td>` + wks.map(w => `<td class="num">${rec(PROPS[w].filter(x => x.hit != null && k(x)))}</td>`).join('') + `<td class="num">${rec(g(k))}</td></tr>`).join('') + '</tbody></table></div>';
-}
 function render(){
-  renderProps();
   const rows = (PROJ[week] || []).filter(x => (pos === 'ALL' || (pos === 'RISING' ? x.tags.includes('RISING') : x.pos === pos)) && (!$('#hidestart').checked || new Date(x.time).getTime() > Date.now()));
   const q = ($('#q').value || '').toLowerCase(); const list = rows.filter(x => !q || (x.name + ' ' + x.team + ' ' + x.opp).toLowerCase().includes(q));
   const val = x => ({ rank: x.rank, name: x.name, game: x.time, pts: pts(x), avgPts: avgPts(x), v: x.v, rec: x.rec, recYds: x.recYds, rushYds: x.rushYds, passYds: x.passYds, oppF: x.oppF, spTeam: x.spTeam ?? -1, opps2: x.opps2, actPts: x.act ? pts(x, true) : -99 })[sortKey];
@@ -285,7 +254,6 @@ document.querySelectorAll('#tbl thead th[data-k]').forEach(th => { th.dataset.l 
 document.querySelectorAll('#posTabs button').forEach(b => b.addEventListener('click', () => { pos = b.dataset.p; document.querySelectorAll('#posTabs button').forEach(x => x.classList.toggle('on', x === b)); if (pos !== 'ALL' && pos !== 'RISING') { sortKey = 'rank'; sortDir = 1; } render(); }));
 document.querySelector('#posTabs button').classList.add('on');
 ['#scoring', '#q', '#hidestart'].forEach(s => $(s).addEventListener('input', render));
-$('#unit').value = unit; $('#unit').addEventListener('input', e => { unit = +e.target.value || 10; try { localStorage.setItem('ftc_unit', unit); } catch (er) {} render(); });
 const f = ([d, n]) => n ? `<span class="${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '+' : ''}${d}</span> <span class="tm">(${n})</span>` : '—';
 $('#chk').innerHTML = CHECK.length ? CHECK.map(c => `<tr><td>${c.week.split('wk')[1]}</td><td class="num">${c.n}</td><td class="num">${c.maeFp}</td><td class="num tm">${c.maeAvgOnly}</td><td class="num">${c.maeRec}</td><td class="num">${c.maeRush}</td><td class="num">${f(c.boom)}</td><td class="num">${f(c.bust)}</td><td class="num">${f(c.rest)}</td></tr>`).join('') : '<tr><td colspan="9" class="tm">no finished weeks yet</td></tr>';
 render();
@@ -295,3 +263,124 @@ if cur:
     html = page()
     open(os.path.join(SITE, 'fantasy.html'), 'w', encoding='utf-8', newline='\n').write(html)
     print(f"fantasy.html: weeks {', '.join(sorted(proj, key=wn))}, current {cur}: {len(proj[cur])} players; check rows {len(check)}")
+
+
+# ---- Prop bets: its own page (docs/props.html), same data as above ----
+PLEGEND = '<div class="legend"><b>The prop rule.</b> Main line = the strike priced nearest 50¢. <b>BET</b> = a player on the <b>underdog</b> (his team under 45% to win on Kalshi), with one of: <b>RB rushing yards UNDER</b>, <b>QB rushing yards UNDER</b>, <b>TE receiving yards UNDER</b>, <b>QB passing yards OVER</b>. That made <b>+11.8% on 358 bets</b> at the price at kickoff plus the fee, and it was positive in all 6 weeks (+3, +17, +21, +12, +4, +13%). It was found on weeks 1-4 and held on weeks 5-6, which weren\'t used to find it. The same four props on favorites were break-even, so they show as PASS. Edges are single digits per bet: it pays over many bets, not on one. <b>Not a bet:</b> first-TD and 2+ TD props (they lost 35-47% every week), overs in general (−9%), and our own projections vs the line (they lost at every threshold). For anytime TDs, use the BET / AVOID calls on the main board.<br><b>💰 Crowd money</b> = the crowd\'s taker dollars on the main line before kickoff. The signal: <b>rushing yards with 60%+ of the money on the over ($2k+ traded) → the UNDER</b>, and <b>passing yards with 60%+ on the over and $20k+ traded → the OVER</b>. The crowd mostly bets overs: on rushing yards it loses, on the busiest passing lines it wins. <b>STRONG BET</b> = the underdog rule and the money signal agree: <b>120-70, +18.6%</b> (weeks 3-6 +16.1%, weeks 7-11 +21.6%). <b>BET</b> without the money signal: 247-213, +1.2% (−5.9% in weeks 7-11), so size those smaller. <b>LEAN</b> = the passing-yards signal on a team that isn\'t the underdog (19-11, +15%, a small sample). The rushing signal on its own was break-even (154-140), so it stays PASS. Fading the money on receiving yards, receptions and TDs flipped between halves of the season or lost. <b>Crowd $ on over</b> for this week\'s games is the money so far (pulled for games in the next 36 hours, growing until kickoff), so a STRONG BET can appear or drop: recheck close to the game. Finished weeks use all the money before kickoff.</div>'
+
+def props_page():
+    from navbar import navbar, week_label
+    ws = sorted(props, key=wn, reverse=True); pc = cur if cur in props else (ws[0] if ws else cur)
+    nav = navbar('pbets', '', {'mlb': [], 'nfl': [(w, week_label(w), '') for w in ws]}, {'nfl': pc}, fixed='nfl')
+    return (f"""<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prop Bets</title>{FONTS}{CSS}<header><h1><a href="index.html">FADE THE <span>CHALK</span></a></h1><div class="sub">NFL player props · Kalshi / Robinhood main lines · underdog rule + crowd money · built {datetime.datetime.now().isoformat(timespec="minutes")}</div></header>{nav}"""
+    + """<style>
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chips button{background:var(--panel);color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:700 12px var(--font);cursor:pointer}
+.chips button.on{color:var(--ink);border-color:var(--acc)}#pb th[data-k]{cursor:pointer;user-select:none;white-space:nowrap}#pb th[data-k]:hover{color:var(--ink)}
+#pb tbody tr:hover{background:rgba(255,255,255,.03)}.cnt{color:var(--mute);font-size:12px}.ctl button.rs{background:none;border:1px solid var(--line);color:var(--mute);border-radius:6px;padding:5px 10px;cursor:pointer;font:inherit}
+.ctl button.rs:hover{color:var(--ink);border-color:var(--acc)}.sum{margin:4px 0 10px;font-size:13px}#pb td.gm{cursor:pointer}#pb td.gm:hover{color:var(--ink)}
+</style>
+<div class="panel top">
+<div class="kpi" id="pkpi"></div>
+<div class="ctl">
+ <label>game <select id="fgame"></select></label>
+ <label>prop <select id="fstat"><option value="">all props</option><option>rush yds</option><option>pass yds</option><option>rec yds</option><option>receptions</option></select></label>
+ <label>side <select id="fside"><option value="">over + under</option><option value="OVER">over</option><option value="UNDER">under</option></select></label>
+ <label>search <input type="text" id="fq" placeholder="player or team" style="width:140px"></label>
+ <label>unit $ <input type="number" id="unit" min="1" step="1" style="width:64px"></label>
+</div>
+<div class="ctl">
+ <div class="chips" id="fv"><button data-v="STRONG BET">STRONG BET</button><button data-v="BET">BET</button><button data-v="LEAN">LEAN</button><button data-v="PASS">PASS</button></div>
+ <label><input type="checkbox" id="fmoney"> 💰 money signal only</label>
+ <label><input type="checkbox" id="fstart"> hide started</label>
+ <label><input type="checkbox" id="fgraded"> hide graded</label>
+ <button class="rs" id="freset">reset filters</button> <span class="cnt" id="fcnt"></span>
+</div>
+<div class="sum" id="psum"></div>
+<div class="wrap"><table class="lt" id="pb"><thead><tr></tr></thead><tbody></tbody></table></div>
+<p class="tm" style="font-size:12px">Click a column to sort (click again to flip) · click a game to filter to it · filters are remembered on this device.</p>
+<h2 style="margin:18px 0 6px">Scorecard <small>every graded call, 1u at the price + fee</small></h2>
+<div id="pscore"></div>
+""" + PLEGEND + f"""
+</div>
+<script>const PROPS = {jd(props)}; const PCUR = {jd(pc)};""" + PJS + "</script>")
+
+PJS = r"""
+const $ = s => document.querySelector(s); let week = PCUR;
+window.onNavSport = s => { if (s === 'mlb') { location.href = 'index.html#mlb'; return true; } return true; };
+window.onNavSlate = (sp, v) => { week = v; F.game = ''; render(); };
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const DEF = { game: '', stat: '', side: '', q: '', v: ['STRONG BET', 'BET', 'LEAN'], money: false, start: false, graded: false };
+let F = Object.assign({}, DEF, store.get('ftc_pb_f', {})); F.game = '';
+let S = store.get('ftc_pb_s', { k: 'v', d: 1 }); let unit = +store.get('ftc_unit', 10) || 10;
+const VR = { 'STRONG BET': 0, BET: 1, LEAN: 2, PASS: 3 };
+const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+const pl = x => x.hit == null ? null : x.hit ? 1 / x.cost - 1 : -1;
+const COLS = [
+  { k: 'name', l: 'Player', v: x => x.name },
+  { k: 'game', l: 'Game', v: x => x.time + x.game },
+  { k: 'stat', l: 'Prop', v: x => x.stat + x.side },
+  { k: 'line', l: 'Line', v: x => x.line, n: 1 },
+  { k: 'price', l: 'Price', v: x => x.price, n: 1 },
+  { k: 'winP', l: 'Team win %', v: x => x.winP ?? -1, n: 1 },
+  { k: 'overSh', l: '$ on over', v: x => x.overSh ?? -1, n: 1 },
+  { k: 'money', l: 'Money', v: x => x.money ?? -1, n: 1 },
+  { k: 'v', l: 'Verdict', v: x => VR[x.v] * 10 - (x.mv || 0) },
+  { k: 'actual', l: 'Actual', v: x => x.actual ?? -1e9, n: 1 },
+  { k: 'u', l: '1 unit', v: x => (x.v === 'PASS' ? null : pl(x)) ?? -1e9, n: 1 } ];
+const save = () => { store.set('ftc_pb_f', F); store.set('ftc_pb_s', S); };
+function filt(xs) { const q = F.q.trim().toLowerCase(), now = Date.now();
+  return xs.filter(x => (!F.game || x.game === F.game) && (!F.stat || x.stat === F.stat) && (!F.side || x.side === F.side) && F.v.includes(x.v)
+    && (!F.money || x.mv) && (!F.start || x.hist || new Date(x.time).getTime() > now) && (!F.graded || x.hit == null)
+    && (!q || (x.name + ' ' + x.team + ' ' + x.opp + ' ' + x.game).toLowerCase().includes(q))); }
+const rec = b => { const w = b.filter(x => x.hit).length, u = b.reduce((s, x) => s + pl(x), 0); return b.length ? `${w}-${b.length - w} · <span class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(1)}u (${Math.round(u / b.length * 100)}%)</span>` : '—'; };
+function render() {
+  const all = PROPS[week] || [];
+  // game dropdown from this week's games, in kickoff order
+  const gs = [...new Map(all.map(x => [x.game, x.time])).entries()].sort((a, b) => a[1] < b[1] ? -1 : 1);
+  if (F.game && !gs.some(g => g[0] === F.game)) F.game = '';
+  $('#fgame').innerHTML = '<option value="">all games</option>' + gs.map(([g, t]) => `<option value="${g}">${g} · ${when(t)}</option>`).join(''); $('#fgame').value = F.game;
+  $('#fstat').value = F.stat; $('#fside').value = F.side; $('#fq').value = F.q; $('#fmoney').checked = F.money; $('#fstart').checked = F.start; $('#fgraded').checked = F.graded; $('#unit').value = unit;
+  document.querySelectorAll('#fv button').forEach(b => b.classList.toggle('on', F.v.includes(b.dataset.v)));
+  const c = COLS.find(c => c.k === S.k) || COLS[8];
+  const list = filt(all).sort((a, b) => { const A = c.v(a), B = c.v(b); return (A > B ? 1 : A < B ? -1 : (a.time < b.time ? -1 : 1)) * S.d; });
+  $('#pb thead tr').innerHTML = COLS.map(x => `<th data-k="${x.k}"${x.n ? ' class="num"' : ''}>${x.l}${x.k === S.k ? (S.d > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('');
+  document.querySelectorAll('#pb th[data-k]').forEach(th => th.onclick = () => { const k = th.dataset.k; if (S.k === k) S.d = -S.d; else { S.k = k; S.d = COLS.find(x => x.k === k).n ? -1 : 1; } save(); render(); });
+  $('#pb tbody').innerHTML = list.map(x => { const u = x.v !== 'PASS' ? pl(x) : null; return `<tr>
+    <td><span class="nm">${x.name}</span> <span class="tm">${x.pos} · ${x.team}</span></td>
+    <td class="tm gm" data-g="${x.game}" title="show only this game">${x.game}<br>${when(x.time)}</td>
+    <td class="nm">${x.side} ${x.stat}</td><td class="num">${x.line}</td><td class="num">${Math.round(x.price * 100)}¢</td>
+    <td class="num ${x.winP != null && x.winP < .45 ? 'pos' : ''}">${x.winP == null ? '—' : Math.round(x.winP * 100) + '%'}</td>
+    <td class="num">${x.overSh == null ? '<span class="tm">—</span>' : Math.round(x.overSh * 100) + '%'}</td>
+    <td class="num">${x.money == null ? '<span class="tm">—</span>' : '$' + x.money.toLocaleString() + (x.hist ? '' : '<br><span class="tm">so far</span>')}</td>
+    <td><span class="v ${x.v.replace(' ', '')}">${x.v}</span>${x.mv ? ' <span title="the crowd-money signal agrees">💰</span>' : ''}${x.v === 'PASS' ? '<br><span class="tm">' + (x.mv ? 'rush money alone: break-even' : 'team not the underdog') + '</span>' : ''}</td>
+    <td class="num">${x.actual == null ? '—' : x.actual + (x.hit ? ' <span class="res y">✓</span>' : ' <span class="res n">✗</span>')}</td>
+    <td class="num">${u == null ? '<span class="tm">—</span>' : `<b class="${u >= 0 ? 'pos' : 'neg'}">${u >= 0 ? '+' : ''}${u.toFixed(2)}u</b><br><span class="tm">${u >= 0 ? '+' : '−'}$${Math.abs(u * unit).toFixed(2)}</span>`}</td></tr>`; }).join('')
+    || `<tr><td colspan="${COLS.length}" class="tm" style="text-align:center;padding:16px">${all.length ? 'nothing matches these filters' : 'no Kalshi prop lines yet for this week: they post a few days before each game'}</td></tr>`;
+  document.querySelectorAll('#pb td.gm').forEach(td => td.onclick = () => { F.game = F.game === td.dataset.g ? '' : td.dataset.g; save(); render(); });
+  $('#fcnt').textContent = `showing ${list.length} of ${all.length}`;
+  // what's on screen: graded bets (anything but PASS) at 1 unit
+  const bets = list.filter(x => x.v !== 'PASS'), done = bets.filter(x => x.hit != null), units = done.reduce((a, x) => a + pl(x), 0), w = done.filter(x => x.hit).length;
+  $('#psum').innerHTML = `<b>Shown:</b> ${bets.length} bets` + (done.length ? ` · graded ${w}-${done.length - w} · <b class="${units >= 0 ? 'pos' : 'neg'}">${units >= 0 ? '+' : ''}${units.toFixed(2)}u = ${units >= 0 ? '+' : '−'}$${Math.abs(units * unit).toFixed(2)}</b> at $${unit} a unit` : '') + ` · ${bets.filter(x => x.hit == null).length} not graded yet`;
+  const cnt = v => all.filter(x => x.v === v).length, open = all.filter(x => x.v !== 'PASS' && x.hit == null && new Date(x.time).getTime() > Date.now()).length;
+  $('#pkpi').innerHTML = `<div>week<b>${week.split('wk')[1]}</b></div><div>STRONG BET<b>${cnt('STRONG BET')}</b></div><div>BET<b>${cnt('BET')}</b></div><div>LEAN<b>${cnt('LEAN')}</b></div><div>not kicked off<b>${open}</b></div>`;
+  // scorecard: every week, by verdict
+  const wks = Object.keys(PROPS).sort((a, b) => +a.split('wk')[1] - +b.split('wk')[1]);
+  const rows = [['STRONG BET (underdog + crowd money)', x => x.v === 'STRONG BET'], ['BET (underdog, no money signal)', x => x.v === 'BET'], ['all BETs', x => x.v === 'BET' || x.v === 'STRONG BET'],
+    ['LEAN (busy passing line, money on the over)', x => x.v === 'LEAN'], ['rushing money signal alone (no bet)', x => x.v === 'PASS' && x.mv], ['team not the underdog, no money signal (no bet)', x => x.v === 'PASS' && !x.mv]];
+  $('#pscore').innerHTML = '<div class="wrap"><table class="lt"><thead><tr><th>Verdict</th>' + wks.map(w => `<th class="num">Wk ${w.split('wk')[1]}</th>`).join('') + '<th class="num">All</th></tr></thead><tbody>' +
+    rows.map(([n, k]) => `<tr><td class="nm">${n}</td>` + wks.map(w => `<td class="num">${rec(PROPS[w].filter(x => x.hit != null && k(x)))}</td>`).join('') + `<td class="num">${rec(wks.flatMap(w => PROPS[w]).filter(x => x.hit != null && k(x)))}</td></tr>`).join('') + '</tbody></table></div>';
+}
+$('#fgame').onchange = e => { F.game = e.target.value; save(); render(); };
+$('#fstat').onchange = e => { F.stat = e.target.value; save(); render(); };
+$('#fside').onchange = e => { F.side = e.target.value; save(); render(); };
+$('#fq').oninput = e => { F.q = e.target.value; save(); render(); $('#fq').focus(); };
+[['#fmoney', 'money'], ['#fstart', 'start'], ['#fgraded', 'graded']].forEach(([s, k]) => $(s).onchange = e => { F[k] = e.target.checked; save(); render(); });
+document.querySelectorAll('#fv button').forEach(b => b.onclick = () => { const v = b.dataset.v; F.v = F.v.includes(v) ? F.v.filter(x => x !== v) : [...F.v, v]; save(); render(); });
+$('#unit').oninput = e => { unit = +e.target.value || 10; store.set('ftc_unit', unit); render(); };
+$('#freset').onclick = () => { F = Object.assign({}, DEF, { v: [...DEF.v] }); S = { k: 'v', d: 1 }; save(); render(); };
+render();
+"""
+
+if props:
+    open(os.path.join(SITE, 'props.html'), 'w', encoding='utf-8', newline='\n').write(props_page())
+    print(f"props.html: weeks {', '.join(sorted(props, key=wn))}")
