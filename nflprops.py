@@ -2,7 +2,7 @@
 For every game on the current week's lock that hasn't kicked off, each open market's ask and bid, refreshed every run and frozen at kickoff.
 Writes backtest/nflprops_<week>.json = {eventId: {code, time, at, markets: [{ticker, series, name, strike, ask, bid, vol, (yes$, no$)}]}}.
 yes$ / no$ = the crowd's taker dollars so far, on the main rushing / passing yards line of each player (props_rules.MONEY), for games
-in the next 36 hours: the money that props_rules' crowd-money rules read.
+in the next 36 hours: the money that props_rules' crowd-money rules read. Same for every first-TD market (shown on the First TD page).
 build_fantasy.py turns these into prop verdicts. Run from lines.py (same workflow step); about 5 Kalshi calls per game."""
 import os, json, glob, datetime, re
 import lines as L
@@ -43,7 +43,7 @@ def run():
         kick = datetime.datetime.fromisoformat(g['time'].replace('Z', '+00:00'))
         if ms and kick < now + datetime.timedelta(hours=36):
             mid = lambda m: (m['ask'] + m['bid']) / 2 if m.get('ask') and m.get('bid') else None
-            for m in PR.main_lines([m for m in ms if m['series'] in PR.MONEY], mid):
+            for m in PR.main_lines([m for m in ms if m['series'] in PR.MONEY], mid) + [m for m in ms if m['series'] == 'KXNFLFIRSTTD' and m.get('vol')]:
                 try: y, n_, _ = L.tape(m['ticker'], now.timestamp()); m['yes$'], m['no$'] = round(y), round(n_)
                 except Exception as x: print(f"  nflprops tape {m['ticker']}: {type(x).__name__}")
         if ms: out[ev] = {'code': code, 'time': g['time'], 'at': now.isoformat(timespec='minutes'), 'markets': ms}; n += 1
