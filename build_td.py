@@ -85,11 +85,14 @@ def week_rows(t):
                 td_n = res.get(str(r['id']), {}).get('td') if r and isinstance(res.get(str(r['id'])), dict) and res[str(r['id'])].get('played') is not False else None
             out.append({'ev': str(ev), 'game': game, 'time': when, 'name': n, 'team': r['team'] if r else '', 'pos': (r.get('pos') or '') if r else ('D/ST' if 'D/ST' in n else ''),
                         'any': round(any_[n][0], 3) if n in any_ else None, 'qf': None if qf is None else round(qf, 4), 'q2': None if q2 is None else round(q2, 4),
-                        'kf': None if not fp else round(fp[1] or fp[0], 3), 'k2': None if not f2 else round(f2[1] or f2[0], 3),
+                        'kf': None if not fp else round(fp[1] or fp[0], 3), 'fy': None if not fp or fp[2].get('yes$') is None else round(fp[2]['yes$']), 'fn': None if not fp or fp[2].get('no$') is None else round(fp[2]['no$']), 'k2': None if not f2 else round(f2[1] or f2[0], 3),
                         'h': hist(norm(n), w), 'sf': scored_first, 'td': td_n, 'done': done, 'hist': hist_})
         teams = sorted(team_sh.items(), key=lambda x: -x[1]); tot = sum(v for _, v in teams) or 1
+        mine = [x for x in out if x['ev'] == str(ev) and x['fy']]
+        top = max(mine, key=lambda x: x['fy'], default=None); fyes = sum(x['fy'] for x in mine)
         gms.append({'ev': str(ev), 'game': game, 'time': when, 'teams': [(k, round(v / tot, 3)) for k, v in teams],
-                    'first': fs.get('scorer'), 'firstTeam': fs.get('team'), 'firstText': fs.get('text'), 'done': done})
+                    'first': fs.get('scorer'), 'firstTeam': fs.get('team'), 'firstText': fs.get('text'), 'done': done,
+                    'top': top and {'name': top['name'], 'fy': top['fy'], 'sh': round(top['fy'] / fyes, 3)}, 'fyes': fyes})
     return out, sorted(gms, key=lambda x: x['time'] or '')
 
 DATA = {}
@@ -129,6 +132,19 @@ for d in DATA.values():
 TEAM = {'n': len(tf), 'buckets': [{'lo': lo, 'hi': hi, 'n': len(xs), 'ours': sum(a for a, _ in xs) / len(xs), 'act': sum(b for _, b in xs) / len(xs)}
                                   for lo, hi in ((.5, .55), (.55, .6), (.6, .65), (.65, 1.0)) for xs in [[x for x in tf if lo <= x[0] < hi]] if xs]}
 
+# does the first-TD money pick the scorer? within each finished game, players with a 5%+ chance split into thirds by $ on YES
+MONEY = {}
+for lab in ('least', 'middle', 'most', 'single most'): MONEY[lab] = [0, 0.0, 0]          # first scorers, expected (sum of our chances), games
+for d in DATA.values():
+    for g in d['games']:
+        if not g['first']: continue
+        xs = sorted([x for x in d['rows'] if x['ev'] == g['ev'] and x['hist'] and x['fy'] is not None and (x['qf'] or 0) >= .05 and x['sf'] is not None], key=lambda x: x['fy'])
+        if len(xs) < 6: continue
+        k = len(xs) // 3
+        for lab, grp in (('least', xs[:k]), ('middle', xs[k:-k]), ('most', xs[-k:]), ('single most', xs[-1:])):
+            a = MONEY[lab]; a[0] += sum(1 for x in grp if x['sf']); a[1] += sum(x['qf'] for x in grp); a[2] += 1
+MONEY = [{'lab': k, 'games': v[2], 'hit': v[0], 'exp': round(v[1], 1)} for k, v in MONEY.items() if v[2]]
+
 cur = max(DATA, key=wn) if DATA else None
 
 def page():
@@ -164,10 +180,11 @@ def page():
 • <b>Team scores first</b> = the sum of its players' first-TD chances.<br>
 <b>Season</b> columns are his 2026 games before this week: games with a TD / games played, total TDs, games with 2+ TDs, how many times he scored his game's first TD, and TDs last game. They're for context: in weeks 1-11, players who had scored first before, had a 2+ game, or scored in half their games did no better than their price said once the price was known. <b>The price already has the history in it.</b></div>
 <div class="two" style="margin-top:12px"><div><h3 style="margin:4px 0">First TD: price vs what happened</h3><table class="lt" id="calf"></table></div><div><h3 style="margin:4px 0">2+ TDs: price vs what happened</h3><table class="lt" id="cal2"></table></div></div>
+<div class="two" style="margin-top:12px"><div><h3 style="margin:4px 0">Does the money pick the first scorer?</h3><table class="lt" id="mtab"></table></div><div class="legend" style="margin:0"><b>1st TD $</b> = the crowd's taker dollars on <b>YES</b> for that player's first-TD market (before kickoff for finished games, so far for upcoming ones), and <b>pays</b> = what the book pays out if he scores first. Each finished game's players with a 5%+ chance are split into thirds by that money. If the money knew something, the "most" group would score first more often than our chances said. Compare the two columns: if they're close, a lot of money on a player isn't a reason to bet or fade him, though it still shows where the book is exposed.</div></div>
 <div class="two" style="margin-top:12px"><div><h3 style="margin:4px 0">Bets tested (1u at kickoff price + 1¢ + fee)</h3><table class="lt" id="bets"></table></div><div><h3 style="margin:4px 0">Team to score first</h3><table class="lt" id="teamcal"></table></div></div>
 <div class="legend" style="margin-top:10px"><b>What the numbers say.</b> Our chances line up with Kalshi's own first-TD and 2+ prices, and both line up with what happened, except at the bottom: <b>longshots are overpriced</b>. Players priced 3-6¢ to score first actually did it about 2.4% of the time, so buying every first-TD or 2+ YES lost about 40%. The few players priced 10¢+ came out close to fair (some weeks up, some down), and no rule from price, money or history beat the price in both halves of the season. <b>Use this page to price a bet, not to find one:</b> if your book offers a first-TD or 2+ price better than the fair odds here, that's value; at Kalshi's own price it usually isn't. For anytime TDs, the BET / AVOID calls on the Touchdowns page are the tested rule.</div>
 </div>
-""" + f"<script>const D = {jd(DATA)}; const CUR = {jd(cur)}; const ST = {jd(STUDY)}; const TEAM = {jd(TEAM)};" + JS + "</script>")
+""" + f"<script>const D = {jd(DATA)}; const CUR = {jd(cur)}; const ST = {jd(STUDY)}; const TEAM = {jd(TEAM)}; const MONEY = {jd(MONEY)};" + JS + "</script>")
 
 JS = r"""
 const $ = s => document.querySelector(s); let week = CUR;
@@ -187,6 +204,7 @@ const COLS = [
   { k: 'any', l: 'Anytime', v: x => x.any ?? -1, n: 1 },
   { k: 'qf', l: 'First TD (ours)', v: x => x.qf ?? -1, n: 1 },
   { k: 'kf', l: 'Kalshi 1st', v: x => x.kf ?? -1, n: 1 },
+  { k: 'fy', l: '1st TD $', v: x => x.fy ?? -1, n: 1 },
   { k: 'q2', l: '2+ TDs (ours)', v: x => x.q2 ?? -1, n: 1 },
   { k: 'k2', l: 'Kalshi 2+', v: x => x.k2 ?? -1, n: 1 },
   { k: 'tdg', l: 'TD games', v: x => x.h.gp ? x.h.tdg / x.h.gp : -1, n: 1 },
@@ -200,6 +218,7 @@ function render() {
   $('#gcards').innerHTML = d.games.map(g => { const [a, b] = g.teams, sa = a ? Math.round(a[1] * 100) : 50;
     return `<div class="gc ${g.ev === G ? 'on' : ''}" data-ev="${g.ev}"><div class="t">${g.game}</div><div class="s">${when(g.time)}${g.done ? ' · final' : ''}</div>
       ${a && b ? `<div class="bar"><i style="width:${sa}%"></i><i style="width:${100 - sa}%"></i></div><div class="s"><b style="color:var(--ink)">${a[0]} ${sa}%</b> · ${b[0]} ${100 - sa}% to score first</div>` : ''}
+      ${g.top ? `<div class="r">most 1st-TD $: <b>${g.top.name}</b> $${g.top.fy.toLocaleString()} <span class="tm">(${Math.round(g.top.sh * 100)}% of $${g.fyes.toLocaleString()}${g.done ? '' : ' so far'})</span></div>` : ''}
       ${g.first ? `<div class="r">1st TD: <b>${g.first}</b> <span class="tm">${g.firstTeam || ''}</span></div>` : g.done ? '<div class="r tm">first scorer not in yet</div>' : ''}</div>`; }).join('') || '<div class="tm">no Kalshi TD prices for this week yet</div>';
   document.querySelectorAll('.gc').forEach(c => c.onclick = () => { G = G === c.dataset.ev ? '' : c.dataset.ev; render(); });
   $('#tq').value = F.q; $('#tpos').value = F.pos; $('#tmin').value = F.min;
@@ -212,6 +231,7 @@ function render() {
   $('#ft tbody').innerHTML = list.map(x => `<tr><td><span class="nm">${x.name}</span> <span class="tm">${x.pos}${x.team ? ' · ' + x.team : ''}</span></td>
     <td class="tm">${x.game}<br>${when(x.time)}</td><td class="num">${ck(x.any)}</td>
     <td class="num"><b>${pct(x.qf, 1)}</b><br><span class="tm">${odds(x.qf)}</span></td><td class="num">${ck(x.kf)}${tag(x.kf, x.qf)}</td>
+    <td class="num">${x.fy == null ? '<span class="tm">—</span>' : '$' + x.fy.toLocaleString() + (x.kf ? `<br><span class="tm" title="what the book pays out if he scores first (the YES money's profit)">pays $${Math.round(x.fy * (1 - x.kf) / x.kf).toLocaleString()}</span>` : '')}</td>
     <td class="num"><b>${pct(x.q2, 1)}</b><br><span class="tm">${odds(x.q2)}</span></td><td class="num">${ck(x.k2)}${tag(x.k2, x.q2)}</td>
     <td class="num ls">${x.h.gp ? x.h.tdg + '/' + x.h.gp : '—'}${x.h.last != null ? '<br><span class="tm">last: ' + x.h.last + '</span>' : ''}</td><td class="num ls">${x.h.gp ? x.h.tds : '—'}</td><td class="num ls">${x.h.gp ? x.h.multi : '—'}</td><td class="num ls">${x.h.first || (x.h.gp ? 0 : '—')}</td>
     <td class="num">${x.sf ? '<span class="hl">1st TD ✓</span><br>' : ''}${x.td == null ? (x.done ? '<span class="tm">—</span>' : '') : x.td + ' TD' + (x.td === 1 ? '' : 's') + (x.td >= 2 ? ' <span class="res y">2+</span>' : '')}</td></tr>`).join('')
@@ -227,6 +247,8 @@ $('#bets').innerHTML = '<thead><tr><th>Bet</th><th class="num">Record</th><th cl
   [['First TD', ST.f], ['2+ TDs', ST['2']]].flatMap(([n, s]) => s.tests.map(t => `<tr><td>${n}: ${t.name}</td><td class="num">${t.w}-${t.n - t.w}</td><td class="num ${t.roi >= 0 ? 'pos' : 'neg'}">${t.roi >= 0 ? '+' : ''}${(t.roi * 100).toFixed(1)}%</td></tr>`)).join('') + '</tbody>';
 $('#teamcal').innerHTML = '<thead><tr><th>Our chance for the likelier team</th><th class="num">games</th><th class="num">ours</th><th class="num">it scored first</th></tr></thead><tbody>' +
   TEAM.buckets.map(b => `<tr><td>${Math.round(b.lo * 100)}–${b.hi >= 1 ? '100' : Math.round(b.hi * 100)}%</td><td class="num">${b.n}</td><td class="num">${pct(b.ours)}</td><td class="num"><b>${pct(b.act)}</b></td></tr>`).join('') + '</tbody>';
+$('#mtab').innerHTML = '<thead><tr><th>Players with the…</th><th class="num">games</th><th class="num">scored first</th><th class="num">our chances said</th></tr></thead><tbody>' +
+  MONEY.map(m => `<tr><td>${m.lab === 'single most' ? 'single most 1st-TD $ in the game' : m.lab + ' third of the 1st-TD $'}</td><td class="num">${m.games}</td><td class="num"><b>${m.hit}</b></td><td class="num">${m.exp}</td></tr>`).join('') + '</tbody>';
 $('#tq').oninput = e => { F.q = e.target.value; save(); render(); $('#tq').focus(); };
 $('#tpos').onchange = e => { F.pos = e.target.value; save(); render(); };
 $('#tmin').onchange = e => { F.min = e.target.value; save(); render(); };
