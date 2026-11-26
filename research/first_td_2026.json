@@ -1785,5 +1785,16 @@
 "type": "Passing Touchdown",
 "q": 2,
 "clock": "1:55"
+},
+"401873079": {
+"week": "2026_wk12",
+"game": "GB @ LAR",
+"time": "2026-11-26T01:00Z",
+"text": "Kyren Williams 7 Yd Rush (Brandon McManus Kick)",
+"scorer": "Kyren Williams",
+"team": "LAR",
+"type": "Rushing Touchdown",
+"q": 2,
+"clock": "11:29"
 }
 }
