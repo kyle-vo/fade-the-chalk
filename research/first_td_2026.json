@@ -1818,5 +1818,16 @@
 "type": "Rushing Touchdown",
 "q": 1,
 "clock": "8:50"
+},
+"401873082": {
+"week": "2026_wk12",
+"game": "KC @ BUF",
+"time": "2026-11-27T01:20Z",
+"text": "James Cook III 5 Yd Rush (Tyler Bass Kick)",
+"scorer": "James Cook III",
+"team": "BUF",
+"type": "Rushing Touchdown",
+"q": 2,
+"clock": "14:32"
 }
 }

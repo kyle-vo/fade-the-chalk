@@ -53,9 +53,31 @@ def game(r, m):
     bs, bv = board_verdict(s, 'fav', r['time']); board = None if bs is None else (f'{fav} −{line}' if bs == 'fav' else f'{dog} +{line}')
     cover = s.get('favCovered'); hit = lambda side: None if cover is None else int((side.startswith(fav + ' ')) == bool(cover))
     team_all = {fav: sf + mf, dog: sd + md}
+    alt = None
+    A = s.get('alts') or []
+    if A:
+        # YES on 'T wins by over x' is money on T; NO on it is money on the other team
+        side = {fav: 0.0, dog: 0.0}
+        for a in A:
+            if a['t'] not in side: continue
+            side[a['t']] += a['y']; side[dog if a['t'] == fav else fav] += a['n']
+        def net_at(M):                                           # M = favorite's final margin (negative = the underdog won)
+            n = 0.0
+            for a in A:
+                p = a.get('p') or 0.5; p = min(0.99, max(0.01, p)); mT = M if a['t'] == fav else -M; won = mT > a['x']
+                n += -a['y'] * (1 - p) / p if won else a['y']   # YES side
+                n += a['n'] if won else -a['n'] * p / (1 - p)    # NO side
+            fw = M > 0
+            n += (-pays[2] if fw else mf) + (md if fw else -pays[3])   # moneyline
+            return n
+        rng = list(range(-14, 0)) + list(range(1, 22))
+        curve = [(M, round(net_at(M))) for M in rng]
+        main_sh = sf / (sf + sd) if sf + sd else None
+        alt = {'side': {k: round(v) for k, v in side.items()}, 'favSh': round(side[fav] / max(1, sum(side.values())), 3), 'mainSh': None if main_sh is None else round(main_sh, 3),
+               'altOnly': round(sum(a['y'] + a['n'] for a in A) - sf - sd), 'curve': curve, 'lines': len(A)}
     return {'g': f"{r['away']} @ {r['home']}", 'time': r['time'], 'prime': prime(r['time']), 'at': r.get('at') or m.get('takerAt'), 'fav': fav, 'dog': dog, 'line': line,
             'bets': [(b[0], b[2] or 0, b[3], p) for b, p in zip(bets, pays)], 'res': res, 'best': best, 'worst': worst, 'act': act, 'head': head, 'shape': shape,
-            'bookSide': book_side, 'bookHit': hit(book_side), 'antiSide': anti_side, 'antiHit': hit(anti_side), 'week': None, 'board': board, 'boardV': bv, 'boardHit': hit(board) if board else None, 'all': team_all,
+            'bookSide': book_side, 'bookHit': hit(book_side), 'antiSide': anti_side, 'antiHit': hit(anti_side), 'week': None, 'board': board, 'boardV': bv, 'boardHit': hit(board) if board else None, 'all': team_all, 'alt': alt,
             'final': None if r.get('finalHome') is None else f"{r['away']} {r['finalAway']} – {r['home']} {r['finalHome']}"}
 
 weeks = {}
@@ -82,13 +104,29 @@ def card(g):
     tot = sum(g['all'].values()) or 1
     allm = ' · '.join(f'{t} {money(v)} ({v / tot:.0%})' for t, v in sorted(g['all'].items(), key=lambda kv: -kv[1]))
     agree = g['board'] and g['board'] == g['bookSide']
+    altb = ''
+    if g.get('alt'):
+        a = g['alt']; fav, dog = g['fav'], g['dog']
+        # margins grouped where the book's net is the same (the lines sit on half points, so the net only changes at whole numbers)
+        segs = []
+        for M, n in a['curve']:
+            if segs and segs[-1][2] == n: segs[-1][1] = M
+            else: segs.append([M, M, n])
+        lab = lambda lo, hi: (f'{dog} by {-hi}' + (f'–{-lo}' if lo != hi else '') + ('+' if lo == a['curve'][0][0] else '')) if hi < 0 else (f'{fav} by {lo}' + (f'–{hi}' if lo != hi else '') + ('+' if hi == a['curve'][-1][0] else ''))
+        best = max(segs, key=lambda x: x[2]); worst = min(segs, key=lambda x: x[2])
+        cells = ''.join(f'<tr class="{"best" if sg is best else ""}"><td>{lab(sg[0], sg[1])}</td><td class="num"><b class="{"pos" if sg[2] >= 0 else "neg"}">{signed(sg[2])}</b></td></tr>' for sg in segs)
+        sh = a['favSh']; msh = a['mainSh']
+        altb = (f'<details class="alts"><summary>Alt spreads: <b>{fav} {sh:.0%}</b> · {dog} {1 - sh:.0%} of all spread $ across {a["lines"]} lines'
+                + (f' <span class="tm">(main line alone: {fav} {msh:.0%})</span>' if msh is not None else '') + f' · book’s best: {lab(best[0], best[1])} ({signed(best[2])}), worst: {lab(worst[0], worst[1])} ({signed(worst[2])})</summary>'
+                f'<p class="tm">Every line of the spread ladder, main and alternate: {money(a["side"][fav])} on {fav}, {money(a["side"][dog])} on {dog} ({money(a["altOnly"])} of it on alternate lines). YES on “{fav} wins by over 7.5” is money on {fav}; NO on it is money on {dog}. Below: what the book makes from all of it plus the moneyline, for each final margin.</p>'
+                f'<table class="bt" style="max-width:380px"><thead><tr><th>Final margin</th><th class="num">Book net</th></tr></thead><tbody>{cells}</tbody></table></details>')
     return f'''<div class="card {'done' if g['final'] else ''}" data-done="{1 if g['final'] else 0}">
 <div class="ch"><div><span class="gm">{g['g']}</span> <span class="tm" data-t="{g['time']}"></span>{' 🌙' if g['prime'] else ''}<br><span class="tm">spread {g['fav']} −{g['line']} · money as of <span data-t="{g['at']}"></span></span></div>
 <div class="fin">{g['final'] or ''}</div></div>
 <div class="head {g['shape']}">{g['head']}</div>
 <div class="two"><div><h4>The money</h4><table class="bt"><thead><tr><th>Bet</th><th class="num">$ on it</th><th class="num">Price</th><th class="num">Profit if it wins</th></tr></thead><tbody>{rows}</tbody></table></div>
 <div><h4>What the book makes</h4><table class="bt"><thead><tr><th>Result</th><th class="num">Keeps</th><th class="num">Pays</th><th class="num">Book net</th></tr></thead><tbody>{outs}</tbody></table></div></div>
-<div class="foot"><span>Book’s side: <b>{g['bookSide']}</b> {res_tag(g['bookHit'])}</span><span>Against the book’s worst: <b>{g['antiSide']}</b> {res_tag(g['antiHit'])}</span><span>Board: <b>{(g['boardV'] + ' ' + g['board']) if g['board'] else '—'}</b> {res_tag(g['boardHit']) if g['boardV'] and not g['boardV'].startswith('PASS') else ''}{' <span class="agree">same side</span>' if agree else ' <span class="split">different sides</span>' if g['board'] else ''}</span><span class="tm">all $ (spread + ML): {allm}</span></div></div>'''
+<div class="foot"><span>Book’s side: <b>{g['bookSide']}</b> {res_tag(g['bookHit'])}</span><span>Against the book’s worst: <b>{g['antiSide']}</b> {res_tag(g['antiHit'])}</span><span>Board: <b>{(g['boardV'] + ' ' + g['board']) if g['board'] else '—'}</b> {res_tag(g['boardHit']) if g['boardV'] and not g['boardV'].startswith('PASS') else ''}{' <span class="agree">same side</span>' if agree else ' <span class="split">different sides</span>' if g['board'] else ''}</span><span class="tm">all $ (spread + ML): {allm}</span></div>{altb}</div>'''
 
 def week_html(w):
     gs = weeks[w]; done = [g for g in gs if g['act'] is not None]
@@ -136,6 +174,7 @@ h4{margin:4px 0 6px;font-size:.85em;text-transform:uppercase;letter-spacing:.04e
 table.bt{width:100%;min-width:0;border-collapse:collapse;font-size:.92em}table.bt th,table.bt td{padding:5px 6px;border-bottom:1px solid rgba(128,128,128,.18);text-align:left}table.bt .num{text-align:right}
 tr.best td{background:rgba(224,160,48,.13)}tr.act td{background:rgba(76,175,80,.16)}b.tagb,b.taga{font-size:.75em;padding:1px 6px;border-radius:6px;margin-left:4px;white-space:nowrap}
 b.tagb{background:rgba(224,160,48,.3)}b.taga{background:rgba(76,175,80,.35)}
+details.alts{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}details.alts summary{cursor:pointer;color:var(--mute)}details.alts summary b{color:var(--ink)}details.alts p{margin:6px 0}
 .foot{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:10px;align-items:center}.agree{color:#4caf50;font-size:.85em}.split{color:#e0a030;font-size:.85em}
 .ctl{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:8px 0}
 </style>"""

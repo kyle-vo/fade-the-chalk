@@ -2,6 +2,9 @@
 For every game on today's MLB lock and the current NFL week lock:
   Pinnacle main spread/total (The Odds API, 2 credits per sport per pull) -> de-vigged fair % for each side
   Kalshi ladder (KXMLBSPREAD/KXMLBTOTAL/KXNFLSPREAD/KXNFLTOTAL, free) -> the strike matching Pinnacle's line: ask for each side, volume, taker tape split
+NFL spreads also keep every line of the ladder (alternate spreads) with its crowd tape as spread['alts'] = [{t: team, x: 'wins by over x',
+y: taker $ on YES, n: on NO, p: YES price}], for games in the next 3 days: build_book.py turns them into money per side and the book's net
+at every final margin.
 Rows are locked pre-game into backtest/lines_<tag>.json (volumes only ever go up), graded from final scores, and rendered by build_lines.py.
 Question this board exists to answer: does the side with more crowd money on spreads and totals cover less than its price says?"""
 import os, sys, json, glob, re, time, datetime, requests
@@ -124,6 +127,16 @@ def build(sport, lock_rows, now):
                 d.update({'favAsk': round(ya, 3) if ya else None, 'dogAsk': round(1 - yb, 3) if yb else None, 'vol': round(f(m.get('volume_fp')))})
                 y, n, k = tape(m['ticker'], cut); d.update({'tapeFav$': round(y), 'tapeDog$': round(n), 'tapeTrades': k})
             else: d['note'] = 'no Kalshi market at Pinnacle line'
+            if sport == 'NFL' and not started and start - now < datetime.timedelta(days=3):
+                alts = []
+                for x in ms:                                                            # every line of the ladder, main one included
+                    if f(x.get('volume_fp')) < 1000: continue
+                    try: y, n, _ = tape(x['ticker'], cut)
+                    except Exception as e: print(f"  alt tape {x['ticker']}: {type(e).__name__}"); continue
+                    ya, yb = f(x.get('yes_ask_dollars')), f(x.get('yes_bid_dollars'))
+                    alts.append({'t': canon(x['ticker'].rsplit('-', 1)[-1].rstrip('0123456789'), sport), 'x': f(x.get('floor_strike')),
+                                 'y': round(y), 'n': round(n), 'p': round((ya + yb) / 2 if ya and yb else (ya or yb), 3)})
+                d['alts'] = sorted(alts, key=lambda a: (a['t'], a['x']))
             row['spread'] = d
         # ---- total ----
         ev, ms = find_event(lad_t, r['home'], r['away'], sport)
@@ -156,6 +169,7 @@ def merge(old, new):
                     for fld in ('vol', 'ladderVol', 'tapeFav$', 'tapeDog$', 'tapeOver$', 'tapeUnder$', 'tapeTrades'):
                         if (o[mk].get(fld) or 0) > (r[mk].get(fld) or 0): r[mk][fld] = o[mk][fld]
                 elif mk in o: r[mk] = o[mk]
+            if 'spread' in o and 'spread' in r and o['spread'].get('alts') and not r['spread'].get('alts'): r['spread']['alts'] = o['spread']['alts']
         out[k] = r
     for r in out.values():
         if datetime.datetime.fromisoformat(r['time'].replace('Z', '+00:00')) <= now: r['frozen'] = True
