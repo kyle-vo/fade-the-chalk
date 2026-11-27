@@ -1,49 +1,4 @@
-﻿book.html: 10 NFL weeks, 137 games
-firsttd.html: weeks 2026_wk1, 2026_wk2, 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, 2026_wk10, 2026_wk11, 2026_wk12; studied 3565 first-TD and 2226 2+ markets, 163 games for team-first
-  NFL SEA@SF: $287,153 on SF / $339,560 on SEA (9,254 trades)  (partial, game not started)
-  NFL LV@CLE: $15,871 on CLE / $24,636 on LV (2,800 trades)  (partial, game not started)
-  NFL CAR@TB: $6,523 on TB / $14,695 on CAR (1,584 trades)  (partial, game not started)
-taker tape attached to 434 locked games
-  NFL SEA@SF: $4,796 on SF / $11,485 on SEA (157 trades, $24,807 traded)  (partial, game not started)
-  NFL LV@CLE: $3,261 on CLE / $279 on LV (40 trades, $5,595 traded)  (partial, game not started)
-  NFL CAR@TB: $549 on TB / $512 on CAR (59 trades, $2,162 traded)  (partial, game not started)
-polymarket tape attached to 17 games
-  nba 2026-11-27: 11 games (0 final, 11 with a Kalshi spread)
-  nflprops 2026_wk12: 12/12 upcoming games priced, 4458 markets saved
-  nbaprops 2026-11-26: 0 games pulled now, 0 saved (0 tipping within 3h)
-  ev: 246 prices vs Pinnacle, 3 at +2% EV or better, 0 newly logged (8381 tracked)
-archive.html: 12 NFL weeks, 49 MLB days
-ml.html: 40 MLB days, 12 NFL weeks, 416 graded games
-lines.html: 28 MLB days, 10 NFL weeks, 234 games
-done 14:07
-=== 2026-11-26 17:05 ===
-  saved nfl_depth.json
-  depth charts: 32 teams
-  saved nfl_team_stats_prev.json
-done
-  NFL Christian McCaffrey    SF   RB p=0.555 fair -125 heat 80 share 0.303
-  NFL Chase Brown            CIN  RB p=0.545 fair -120 heat 69 share 0.23
-  NFL Bhayshul Tuten         JAX  RB p=0.539 fair -117 heat 52 share 0.21
-  NFL Javonte Williams       DAL  RB p=0.522 fair -109 heat 67 share 0.292
-  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
-  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
-key #2 used this run
-snapshot 12 saved for 2026-11-26
-  Kalshi NFL 2026-11-26: 42 players, $6,778,840 traded
-  Kalshi NFL 2026-11-27: 22 players, $45,867 traded
-  Kalshi NFL 2026-11-29: 209 players, $279,969 traded
-  Kalshi NFL 2026-11-30: 20 players, $741 traded
-  ML 2026_wk6: 14/14 graded
-  ML 2026_wk7: 14/14 graded
-  ML 2026_wk8: 14/14 graded
-  ML 2026_wk9: 15/15 graded
-NFL 2026_wk12: kept 52 frozen, refreshed 247, late 0
-NFL stats 2026_wk6: 14/14 games (0 new)
-NFL stats 2026_wk7: 14/14 games (0 new)
-NFL stats 2026_wk8: 14/14 games (0 new)
-NFL stats 2026_wk9: 15/15 games (0 new)
-nba.html: 37 days, showing 2026-11-27: 11 games
-ev.html: 246 prices now, 3 at +2%+, 8381 tracked (7814 graded)
+﻿ev.html: 246 prices now, 3 at +2%+, 8381 tracked (7814 graded)
 book.html: 10 NFL weeks, 137 games
 firsttd.html: weeks 2026_wk1, 2026_wk2, 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, 2026_wk10, 2026_wk11, 2026_wk12; studied 3565 first-TD and 2226 2+ markets, 163 games for team-first
   NFL SEA@SF: $292,686 on SF / $341,976 on SEA (9,764 trades)  (partial, game not started)
@@ -239,6 +194,51 @@ polymarket tape attached to 16 games
   nflprops 2026_wk12: 12/12 upcoming games priced, 4980 markets saved
   nbaprops 2026-11-27: 0 games pulled now, 0 saved (0 tipping within 3h)
   ev: 292 prices vs Pinnacle, 3 at +2% EV or better, 1 newly logged (8385 tracked)
+archive.html: 12 NFL weeks, 49 MLB days
+ml.html: 40 MLB days, 12 NFL weeks, 418 graded games
+lines.html: 28 MLB days, 10 NFL weeks, 234 games
+done 05:07
+=== 2026-11-27 08:05 ===
+  saved nfl_depth.json
+  depth charts: 32 teams
+  saved nfl_team_stats_prev.json
+done
+  NFL James Cook III         BUF  RB p=0.549 fair -122 heat 71 share 0.315
+  NFL Chase Brown            CIN  RB p=0.545 fair -120 heat 69 share 0.23
+  NFL Javonte Williams       DAL  RB p=0.539 fair -117 heat 68 share 0.306
+  NFL Bhayshul Tuten         JAX  RB p=0.531 fair -113 heat 52 share 0.21
+  NFL touchdown props: skipped, 0 credits (outside the Wed-night / Sat-morning / Sun-night windows)
+  baseball_mlb/batter_home_runs: 0 players priced, 0 on Fliff, 0 Underdog-only (credits used this month: 0)
+key #7 used this run
+snapshot 6 saved for 2026-11-27
+  Kalshi NFL 2026-11-27: 22 players, $1,208,585 traded
+  Kalshi NFL 2026-11-29: 208 players, $364,462 traded
+  Kalshi NFL 2026-11-30: 20 players, $908 traded
+  ML 2026_wk6: 14/14 graded
+  ML 2026_wk7: 14/14 graded
+  ML 2026_wk8: 14/14 graded
+  ML 2026_wk9: 15/15 graded
+NFL 2026_wk12: kept 71 frozen, refreshed 227, late 0
+NFL stats 2026_wk6: 14/14 games (0 new)
+NFL stats 2026_wk7: 14/14 games (0 new)
+NFL stats 2026_wk8: 14/14 games (0 new)
+NFL stats 2026_wk9: 15/15 games (0 new)
+nba.html: 38 days, showing 2026-11-27: 11 games
+ev.html: 292 prices now, 3 at +2%+, 8386 tracked (7818 graded)
+book.html: 10 NFL weeks, 137 games
+firsttd.html: weeks 2026_wk1, 2026_wk2, 2026_wk3, 2026_wk4, 2026_wk5, 2026_wk6, 2026_wk7, 2026_wk8, 2026_wk9, 2026_wk10, 2026_wk11, 2026_wk12; studied 3565 first-TD and 2226 2+ markets, 166 games for team-first
+  NFL SEA@SF: $356,556 on SF / $363,709 on SEA (13,026 trades)  (partial, game not started)
+  NFL LV@CLE: $18,429 on CLE / $36,206 on LV (3,497 trades)  (partial, game not started)
+  NFL CAR@TB: $7,972 on TB / $18,236 on CAR (1,940 trades)  (partial, game not started)
+taker tape attached to 434 locked games
+  NFL SEA@SF: $6,297 on SF / $11,799 on SEA (181 trades, $38,615 traded)  (partial, game not started)
+  NFL LV@CLE: $3,733 on CLE / $397 on LV (51 trades, $6,648 traded)  (partial, game not started)
+  NFL CAR@TB: $554 on TB / $517 on CAR (62 trades, $2,183 traded)  (partial, game not started)
+polymarket tape attached to 16 games
+  nba 2026-11-28: 5 games (0 final, 0 with a Kalshi spread)
+  nflprops 2026_wk12: 12/12 upcoming games priced, 4985 markets saved
+  nbaprops 2026-11-27: 0 games pulled now, 0 saved (0 tipping within 3h)
+  ev: 274 prices vs Pinnacle, 1 at +2% EV or better, 0 newly logged (8386 tracked)
 archive.html: 12 NFL weeks, 49 MLB days
 ml.html: 40 MLB days, 12 NFL weeks, 418 graded games
 lines.html: 28 MLB days, 10 NFL weeks, 234 games
