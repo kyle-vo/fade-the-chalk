@@ -205,9 +205,10 @@ def markets_of(params):
             if not cur or not d.get('markets'): break
     return list(out.values())
 
-def props_hist():
+def props_hist(series=PROP_SERIES, name='nflprops'):
     """For each 2026 NFL game already played: every TD / receptions / yards market with its last price before kickoff, the crowd's taker $
-    before kickoff and the settlement. One file per week, resumable: research/nflprops_<week>.json"""
+    before kickoff and the settlement. One file per week, resumable: research/nflprops_<week>.json
+    (spreads_hist: the same for every line of the spread ladder, main and alternate -> research/spreadalts_<week>.json)"""
     from concurrent.futures import ThreadPoolExecutor
     games = {}
     for path in sorted(os.listdir(os.path.join(HERE, 'backtest'))):
@@ -222,7 +223,7 @@ def props_hist():
     for m in gm: lad.setdefault(m['event_ticker'], []).append(m)
     print(f"props_hist: {len(games)} finished games, {len(lad)} KXNFLGAME events on Kalshi")
     for wk in sorted({g['week'] for g in games.values()}):
-        path = os.path.join(OUT, f'nflprops_{wk}.json')
+        path = os.path.join(OUT, f'{name}_{wk}.json')
         have = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
         for g in [g for g in games.values() if g['week'] == wk and g['eventId'] not in have]:
             if time.time() - T0 > 80 * 60: break
@@ -232,7 +233,7 @@ def props_hist():
             ev, _ = L.find_event(sub, g['home'], g['away'], 'NFL')
             if not ev: print(f"  {wk} {g['away']}@{g['home']}: no Kalshi event ({et})"); continue
             code = ev.split('-', 1)[1]
-            ms = [m for s in PROP_SERIES for m in markets_of({'event_ticker': f'{s}-{code}'})]
+            ms = [m for s in series for m in markets_of({'event_ticker': f'{s}-{code}'})]
             ms = [m for m in ms if f(m.get('volume_fp') or m.get('volume')) >= 50]
             def one(m):
                 t = trades(m['ticker'], max_ts=kick.timestamp())
@@ -378,6 +379,7 @@ if __name__ == '__main__':
     if job == 'props': props(arg or '26OCT19WASSF')
     elif job == 'nba_hist': nba_hist()
     elif job == 'props_hist': props_hist()
+    elif job == 'spreads_hist': props_hist(('KXNFLSPREAD',), 'spreadalts')
     elif job == 'books': books()
     elif job == 'props_books': props_books()
     elif job == 'nba_smart': nba_smart()
