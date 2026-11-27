@@ -1829,5 +1829,16 @@
 "type": "Rushing Touchdown",
 "q": 2,
 "clock": "14:32"
+},
+"401873083": {
+"week": "2026_wk12",
+"game": "DEN @ PIT",
+"time": "2026-11-27T20:00Z",
+"text": "T.J. Watt Fumble Recovery in End Zone (Chris Boswell Kick)",
+"scorer": null,
+"team": "PIT",
+"type": "Sack Opp Fumble Recovery",
+"q": 1,
+"clock": "6:03"
 }
 }
