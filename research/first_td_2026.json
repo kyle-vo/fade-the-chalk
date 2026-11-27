@@ -1796,5 +1796,27 @@
 "type": "Rushing Touchdown",
 "q": 2,
 "clock": "11:29"
+},
+"401873081": {
+"week": "2026_wk12",
+"game": "CHI @ DET",
+"time": "2026-11-26T18:00Z",
+"text": "Jahmyr Gibbs 1 Yd Rush (Jake Bates Kick)",
+"scorer": "Jahmyr Gibbs",
+"team": "DET",
+"type": "Rushing Touchdown",
+"q": 2,
+"clock": "12:51"
+},
+"401873080": {
+"week": "2026_wk12",
+"game": "PHI @ DAL",
+"time": "2026-11-26T21:30Z",
+"text": "Javonte Williams 1 Yd Rush (Brandon Aubrey Kick)",
+"scorer": "Javonte Williams",
+"team": "DAL",
+"type": "Rushing Touchdown",
+"q": 1,
+"clock": "8:50"
 }
 }
