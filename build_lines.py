@@ -28,6 +28,8 @@ def head():
 JS = r"""
 const $ = s => document.querySelector(s); let tab = window.NAV_SPORT === 'nfl' ? 'nfl' : 'mlb'; let day = TODAY; let week = WEEK;
 let sortKey = 'edge', sortDir = -1;
+let TOP = [];   // the scorecard's 5 most profitable strategies (15+ bets, ROI above 0), filled once the scorecard is built
+const topTag = x => { const t = TOP.filter(s => { try { return s.f(x); } catch (e) { return false; } }); return t.length ? `<br><span class="tg top" title="${t.map(s => '#' + s.rank + ' ' + s.name + ': ' + s.w + '-' + s.l + ', ' + (s.roi * 100).toFixed(0) + '% ROI').join('\n')}">★ top-5 strategy${t.length > 1 ? ' ×' + t.length : ''}: ${t.map(s => '#' + s.rank).join(' ')}</span>` : ''; };
 const pct = p => p == null ? '—' : Math.round(p * 100) + '%'; const cents = p => p == null ? '—' : Math.round(p * 100) + '¢';
 const money = v => v == null ? '—' : '$' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1000 ? Math.round(v / 1000) + 'k' : v);
 const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
@@ -119,7 +121,7 @@ function render(){
     tr.innerHTML = `<td><span class="nm">${r.away} @ ${r.home}</span><br><span class="tm">${when(r.time)}</span></td><td><span class="nm">${x.side}</span>${x.shift ? `<br><span class="tm" title="Pinnacle's line is ${x.pinLine}; Robinhood only lists half points, so this is the nearest strike and Pinnacle's fair price is nudged for the half point">Pinnacle ${x.pinLine}~</span>` : ''}</td>
       <td class="num">${cents(x.ask)}</td><td class="num">${pct(x.fair)}</td><td class="num ${x.edge == null ? '' : x.edge >= 2 ? 'pos' : x.edge <= -2 ? 'neg' : ''}">${x.edge == null ? '—' : (x.edge >= 0 ? '+' : '') + x.edge.toFixed(1)}</td>
       <td class="num" title="share of the crowd's taker dollars on this side (trade tape)"><span class="bar"><i style="width:${x.crowd == null ? 0 : x.crowd * 100}%"></i></span> ${pct(x.crowd)}${x.mlCrowd == null ? '' : `<br><span class="tm" title="moneyline crowd on ${x.side.split(' ')[0]}: ${money(Math.round(x.mlOwn))} of ${money(Math.round(x.mlOwn / x.mlCrowd))}">ML $ ${pct(x.mlCrowd)}</span>${x.crowd != null && (x.crowd < 0.5) !== (x.mlCrowd < 0.5) ? ` <span class="tm" style="color:#e0a030" title="spread money and moneyline money are on different teams. The verdict follows the spread money: in these games (weeks 3-7) fading the spread money covered 17-8, fading the moneyline money 8-17.">⚠ ML split</span>` : ''}`}</td><td class="num">${x.tape ? money(Math.round(x.own)) : '—'}</td><td class="num" title="${x.allOwn == null ? '' : 'spread ' + money(Math.round(x.own || 0)) + ' + moneyline ' + money(Math.round(x.mlOwn)) + ' on ' + x.side.split(' ')[0]}">${x.allOwn == null ? '—' : `<b class="${x.allShare >= 0.5 ? 'neg' : ''}">${money(Math.round(x.allOwn))}</b><br><span class="tm">${pct(x.allShare)} of all $${x.allShare >= 0.5 ? ' · most $' : ''}</span>`}</td><td class="num">${money(x.tape)}</td><td class="num">${money(x.vol)}</td>
-      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span></td><td>${x.hit == null ? '<span class="res n">—</span>' : x.v.startsWith('PASS') ? '<span class="res d" title="not a bet: the other side was the play">no bet</span>' : x.hit ? '<span class="res y">✓ ' + (x.kind === 'spread' ? 'covered' : 'hit') + '</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>
+      <td><span class="v ${x.v.replace(/[^A-Za-z]/g, '')}">${x.v}</span>${topTag(x)}</td><td>${x.hit == null ? '<span class="res n">—</span>' : x.v.startsWith('PASS') ? '<span class="res d" title="not a bet: the other side was the play">no bet</span>' : x.hit ? '<span class="res y">✓ ' + (x.kind === 'spread' ? 'covered' : 'hit') + '</span>' : '<span class="res n">✗</span>'}${r.finalHome != null ? ' <span class="tm">' + r.finalAway + '-' + r.finalHome + '</span>' : ''}</td>
       <td class="num neg">${x.take == null ? '' : money(Math.round(x.take))}</td><td class="num pos">${x.gave == null ? '' : money(Math.round(x.gave))}</td>`;
     if (x.kind === 'spread') { tbS.appendChild(tr); nS++; } else { tbT.appendChild(tr); nT++; } }
   const empty = '<tr><td colspan="14" class="tm" style="text-align:center;padding:16px">nothing matches the filters</td></tr>';
@@ -138,39 +140,51 @@ setTab(tab);
 // ---- scorecard over every graded side ----
 const G = Object.values(BOARDS).flat().flatMap(sides).filter(x => x.hit != null && x.ask);
 const pay = x => x.hit ? (1 / x.ask - 1) : -1;
-const strat = {
-  'Every side, 1u each (should be about -vig)': G,
-  'CROWD side (more taker $ on it)': G.filter(x => x.crowd != null && x.crowd > 0.5),
-  'FADE the crowd (less taker $ on it)': G.filter(x => x.crowd != null && x.crowd < 0.5),
-  'Heavy crowd: 70%+ of the $ on it': G.filter(x => x.crowd != null && x.crowd >= 0.7),
-  'Fade heavy crowd: under 30% of the $ on it': G.filter(x => x.crowd != null && x.crowd < 0.3),
-  'CURRENT LEAN: MLB run-line favorite and MLB over': G.filter(x => x.v === 'LEAN' && x.r.sport === 'MLB'),
-  'NFL primetime: underdog spread': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && isPrime(x.r.time) && x.side.includes(' +')),
-  'NFL primetime: over': G.filter(x => x.r.sport === 'NFL' && x.kind === 'total' && isPrime(x.r.time) && x.side.startsWith('Over')),
-  'CURRENT NFL STRONG BET: primetime spread, side with less of the crowd $': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && x.v === 'STRONG BET'),
-  'CURRENT NFL BET: Sunday spread, less of the crowd $, $300k+ market': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && x.v === 'BET'),
-  'NFL: spread side with less of the crowd $, every game': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && x.crowd != null && x.tape >= 1000 && x.crowd < 0.5),
-  'OLD NFL BET (Oct 5-15): spread underdog with less of the crowd $': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && x.crowd != null && x.tape >= 1000 && x.crowd < 0.5 && x.side.includes(' +')),
-  'OLD NFL LEAN (to 10-04): spread favorite with less of the crowd $': G.filter(x => x.r.sport === 'NFL' && x.kind === 'spread' && x.side.includes(' -') && x.crowd != null && x.crowd < 0.5),
-  'CURRENT NFL LEAN: total, the crowd side': G.filter(x => x.r.sport === 'NFL' && x.kind === 'total' && x.v === 'LEAN'),
-  'OLD verdict: Robinhood cheaper than Pinnacle fair by 2+ (BET)': G.filter(x => x.edge != null && x.edge >= 2),
-  'Robinhood dearer than Pinnacle fair by 2+': G.filter(x => x.edge != null && x.edge <= -2),
-  'Favorite covers': G.filter(x => x.kind === 'spread' && x.side.includes(' -')),
-  'Underdog covers': G.filter(x => x.kind === 'spread' && x.side.includes(' +')),
-  'Over': G.filter(x => x.kind === 'total' && x.side.startsWith('Over')),
-  'Under': G.filter(x => x.kind === 'total' && x.side.startsWith('Under')),
-  'MLB only: crowd side': G.filter(x => x.r.sport === 'MLB' && x.crowd != null && x.crowd > 0.5),
-  'NFL only: crowd side': G.filter(x => x.r.sport === 'NFL' && x.crowd != null && x.crowd > 0.5),
+const bookSide = x => { const b = bookNeeds(x.r); return !!b && x.kind === 'spread' && x.side === b.side; };
+const antiWorst = x => { const b = bookNeeds(x.r); if (!b || x.kind !== 'spread') return false; const worst = b.out.indexOf(Math.min(...b.out)); return x.side === (worst === 0 ? b.s.dog + ' +' + b.s.line : b.s.fav + ' -' + b.s.line); };
+const nflS = x => x.r.sport === 'NFL' && x.kind === 'spread';
+const STRATF = {
+  'Every side, 1u each (should be about -vig)': x => true,
+  'CROWD side (more taker $ on it)': (x => x.crowd != null && x.crowd > 0.5),
+  'FADE the crowd (less taker $ on it)': (x => x.crowd != null && x.crowd < 0.5),
+  'Heavy crowd: 70%+ of the $ on it': (x => x.crowd != null && x.crowd >= 0.7),
+  'Fade heavy crowd: under 30% of the $ on it': (x => x.crowd != null && x.crowd < 0.3),
+  'CURRENT LEAN: MLB run-line favorite and MLB over': (x => x.v === 'LEAN' && x.r.sport === 'MLB'),
+  'NFL primetime: underdog spread': (x => x.r.sport === 'NFL' && x.kind === 'spread' && isPrime(x.r.time) && x.side.includes(' +')),
+  'NFL primetime: over': (x => x.r.sport === 'NFL' && x.kind === 'total' && isPrime(x.r.time) && x.side.startsWith('Over')),
+  'CURRENT NFL STRONG BET: primetime spread, side with less of the crowd $': (x => x.r.sport === 'NFL' && x.kind === 'spread' && x.v === 'STRONG BET'),
+  'CURRENT NFL BET: Sunday spread, less of the crowd $, $300k+ market': (x => x.r.sport === 'NFL' && x.kind === 'spread' && x.v === 'BET'),
+  'NFL: spread side with less of the crowd $, every game': (x => x.r.sport === 'NFL' && x.kind === 'spread' && x.crowd != null && x.tape >= 1000 && x.crowd < 0.5),
+  'OLD NFL BET (Oct 5-15): spread underdog with less of the crowd $': (x => x.r.sport === 'NFL' && x.kind === 'spread' && x.crowd != null && x.tape >= 1000 && x.crowd < 0.5 && x.side.includes(' +')),
+  'OLD NFL LEAN (to 10-04): spread favorite with less of the crowd $': (x => x.r.sport === 'NFL' && x.kind === 'spread' && x.side.includes(' -') && x.crowd != null && x.crowd < 0.5),
+  'CURRENT NFL LEAN: total, the crowd side': (x => x.r.sport === 'NFL' && x.kind === 'total' && x.v === 'LEAN'),
+  'OLD verdict: Robinhood cheaper than Pinnacle fair by 2+ (BET)': (x => x.edge != null && x.edge >= 2),
+  'Robinhood dearer than Pinnacle fair by 2+': (x => x.edge != null && x.edge <= -2),
+  'Favorite covers': (x => x.kind === 'spread' && x.side.includes(' -')),
+  'Underdog covers': (x => x.kind === 'spread' && x.side.includes(' +')),
+  'Over': (x => x.kind === 'total' && x.side.startsWith('Over')),
+  'Under': (x => x.kind === 'total' && x.side.startsWith('Under')),
+  'MLB only: crowd side': (x => x.r.sport === 'MLB' && x.crowd != null && x.crowd > 0.5),
+  'NFL only: crowd side': (x => x.r.sport === 'NFL' && x.crowd != null && x.crowd > 0.5),
+  "NFL: the book's side (wins in the book's best result)": (x => nflS(x) && bookSide(x)),
+  "NFL: against the book's worst result": (x => nflS(x) && antiWorst(x)),
+  "NFL: less spread $ AND less of all $ (spread + ML)": (x => nflS(x) && x.crowd != null && x.tape >= 1000 && x.crowd < 0.5 && x.allShare != null && x.allShare < 0.5),
+  "NFL: less spread $, $300k+ market, underdog": (x => nflS(x) && x.crowd != null && x.crowd < 0.5 && x.tape >= 300000 && x.side.includes(' +')),
+  "NFL: less spread $, $300k+ market, favorite": (x => nflS(x) && x.crowd != null && x.crowd < 0.5 && x.tape >= 300000 && x.side.includes(' -')),
+  "NFL: board pick that is also the book's side": (x => nflS(x) && !x.v.startsWith('PASS') && bookSide(x)),
 };
+const strat = Object.fromEntries(Object.entries(STRATF).map(([n, f]) => [n, G.filter(f)]));
 const SROWS = Object.entries(strat).map(([name, b]) => { const w = b.filter(x => x.hit).length, pnl = b.reduce((s, x) => s + pay(x), 0); return { name, bets: b.length, w, l: b.length - w, pct: b.length ? w / b.length : -1, pnl, roi: b.length ? pnl / b.length : -99 }; });
 let sSort = null, sDir = -1;
+TOP = SROWS.filter(x => x.bets >= 15 && x.roi > 0 && !x.name.startsWith('Every side')).sort((a, b) => b.roi - a.roi).slice(0, 5).map((x, k) => ({ ...x, rank: k + 1, f: STRATF[x.name] }));
+render();
 function scoreRows(){ const rows = sSort ? [...SROWS].sort((a, b) => ((a[sSort] > b[sSort] ? 1 : a[sSort] < b[sSort] ? -1 : 0) * sDir)) : SROWS;
-  return rows.map(x => `<tr><td class="nm">${x.name}</td><td class="num">${x.bets}</td><td class="num">${x.w}-${x.l}</td><td class="num">${x.bets ? (x.pct * 100).toFixed(0) + '%' : '—'}</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.pnl >= 0 ? '+' : ''}${x.pnl.toFixed(1)}u</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.bets ? (x.roi * 100).toFixed(0) + '%' : '—'}</td></tr>`).join(''); }
+  return rows.map(x => { const t = TOP.find(s => s.name === x.name); return t ? { ...x, star: t.rank } : x; }).map(x => `<tr><td class="nm">${x.star ? '<span class="tg top">★ #' + x.star + '</span> ' : ''}${x.name}</td><td class="num">${x.bets}</td><td class="num">${x.w}-${x.l}</td><td class="num">${x.bets ? (x.pct * 100).toFixed(0) + '%' : '—'}</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.pnl >= 0 ? '+' : ''}${x.pnl.toFixed(1)}u</td><td class="num ${x.pnl >= 0 ? 'pos' : 'neg'}">${x.bets ? (x.roi * 100).toFixed(0) + '%' : '—'}</td></tr>`).join(''); }
 const TK = G.reduce((a, x) => a + (x.take || 0), 0), GV = G.reduce((a, x) => a + (x.gave || 0), 0);
 const BIG = G.filter(x => x.crowd != null && x.crowd > 0.5), BIGW = BIG.filter(x => x.hit).length;
 $('#score').innerHTML = `<div class="kpi"><div>graded sides<b>${G.length}</b></div><div>games<b>${new Set(G.map(x => x.r.date + (x.r.gamePk || x.r.eventId))).size}</b></div><div>book take<b class="neg">${money(Math.round(TK))}</b></div><div>book gave<b class="pos">${money(Math.round(GV))}</b></div><div>bigger-$ side won<b>${BIGW} of ${BIG.length}</b></div></div>
   <div class="wrap"><table id="stbl"><thead><tr><th data-s="name">Strategy (flat 1u at Robinhood)</th><th class="num" data-s="bets">Bets</th><th class="num" data-s="pct">Record</th><th class="num" data-s="pct">Win %</th><th class="num" data-s="pnl">Units</th><th class="num" data-s="roi">ROI</th></tr></thead><tbody>${scoreRows()}</tbody></table></div>
-  <p class="note">Click a header to sort. Every side of every graded market is counted once, so "every side" is what a coin flip returns minus the spread. The crowd rows are the test: if the side with more money covers less than its price, the fade rows go green.</p>`;
+  <p class="note">★ #1-5 = the five most profitable strategies here with 15+ bets: any side on the board that fits one carries a ★ top-5 tag next to its verdict (hover it for the record). They are picked by past results, so they can fall out of the top 5 as weeks are added. Click a header to sort. Every side of every graded market is counted once, so "every side" is what a coin flip returns minus the spread. The crowd rows are the test: if the side with more money covers less than its price, the fade rows go green.</p>`;
 $('#stbl thead').querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.s; if (sSort === k) sDir = -sDir; else { sSort = k; sDir = k === 'name' ? 1 : -1; } $('#stbl tbody').innerHTML = scoreRows(); }));
 """
 
@@ -187,7 +201,7 @@ def _check_page(html, name):
 
 def page():
     return f"""{head()}
-<style>h2.mk{{margin:16px 0 8px}}</style><div class="panel top">
+<style>h2.mk{{margin:16px 0 8px}}.tg.top{{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;margin-top:3px;background:#3a2f0b;color:#f5c542;cursor:help;white-space:nowrap}}</style><div class="panel top">
 <div class="kpi" id="kpi"></div>
 <div class="ctl"><label><input type="checkbox" id="onlyplays"> hide PASS</label><label><input type="checkbox" id="hidestart"> hide started games</label><label><input type="checkbox" id="hidefinal"> hide finished games</label><label>game <select id="game"><option value="">all games</option></select></label><label>show <select id="kind"><option value="all">spreads and totals</option><option value="spread">spreads only</option><option value="total">totals only</option></select></label></div>
 <style>td.bk{{background:rgba(224,160,48,.13)}}td.ac{{outline:2px solid #4caf50;outline-offset:-2px}}</style><div id="secB"><h2 class="mk">What the book needs <small id="cntB"></small></h2><p class="note">The book's net in each result, from all the crowd's money on the game (spread + moneyline). It keeps the losing stakes and pays the winners' profit. <b>Shaded</b> = the result that makes the book the most; <b>green outline</b> = what happened. <b>Book's side</b> = the spread bet that wins in the book's best result (weeks 3-7: 41-27, 12-3 in primetime). It's a cross-check on the verdicts below, not a separate pick.</p><div class="wrap"><table id="tblB" class="lt"><thead><tr><th>Game</th><th class="num">Spread</th><th class="num">Fav covers</th><th class="num">Fav wins, dog covers</th><th class="num">Dog wins outright</th><th class="num">All $ on game</th><th>Book's side</th><th>Result</th></tr></thead><tbody></tbody></table></div></div>
